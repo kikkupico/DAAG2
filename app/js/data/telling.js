@@ -158,7 +158,7 @@ commit: { hat: "merchant",
       out: { 3: "the granary was told the swap is on and has sent its 5 sacks of grain. The fishery has kept its fish. One side of the swap happened and the other did not" } },
   } },
 paxos: { hat: "legislator",
-  stage: { view: "paxos", A: "legislator A", B: "legislator B", C: "legislator C", P: "proposer P", Q: "proposer Q", also: ["temple"] }, role: "legislator", roles: { P: "proposer", Q: "proposer" }, client: "citizen", lex: [[/\bx\b/g, "red"], [/\by\b/g, "blue"], ["get red chosen", "paint the columns red"], ["get blue chosen", "paint the columns blue"]], peers: "legislators {A}, {B} and {C}",
+  stage: { view: "city", A: "fishery", B: "granary", C: "winery", P: "proposer P", Q: "proposer Q", also: ["temple"], client: "crossroads", labels: { fishery: "legislator A · fishery", granary: "legislator B · granary", winery: "legislator C · winery", crossroads: "a citizen" } }, role: "legislator", roles: { P: "proposer", Q: "proposer" }, client: "citizen", lex: [[/\bx\b/g, "red"], [/\by\b/g, "blue"], ["get red chosen", "paint the columns red"], ["get blue chosen", "paint the columns blue"]], peers: "legislators {A}, {B} and {C}",
   tale: "Red or blue for the temple columns? Legislators promise to ignore older rounds and accept proposals, and write both in the ledger. Once a majority accepts a colour in one round, every later round must propose that same colour. This is Leslie Lamport's part-time parliament, moved out of its Chamber: here nobody is ever in the same room.",
   gloss: [["legislator", "voter"], ["red, blue", "the two values, x and y"], ["successor", "a replacement node"]],
   scenes: {

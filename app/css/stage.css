@@ -66,7 +66,7 @@
 .stage.abs .nd .nl { font: 600 13px/1 var(--sans); fill: var(--soft); }
 
 /* the city stage: the picture is the svg itself, cropped by its viewBox; sizes are in em of the svg's font-size, which scales with the crop */
-.stage.city .stg { min-width: 560px; }
+.stage.city .stg { min-width: 0; }      /* the whole picture, sized to the room left on screen; its labels scale up when it is small */
 .stage.city svg { position: static; display: block; width: 100%; height: auto; cursor: pointer; }
 .stage.city text { font: 600 1em/1 var(--sans); stroke-width: .28em; }
 .stage.city .cpl .pin { fill: #fff; stroke: #06131a; stroke-width: .14em; }
@@ -83,13 +83,10 @@
 .stage.city .tmr text { fill: #ffe9a8; }
 .stage .replay { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--room); color: var(--ink); font: 600 12px/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .stage .replay:hover { background: var(--line); }
-.stepbar .stage.city .stv { max-width: calc(52vh * var(--ar, 2)); }      /* the city's crops are near 4:3, so they get more height than the wide island pictures */
 
 /* the player: the stepper and picture are the scene's main view, and the panel under them shows the chosen step */
 .player { display: grid; gap: 14px; margin-bottom: 24px; }
 .player .stepbar { position: static; margin: 0; }
-.player .stepbar .stv { max-width: calc(55vh * var(--ar, 2)); }
-.player .stepbar .stage.city .stv { max-width: calc(60vh * var(--ar, 2)); }
 .player .panel .band.core.solo { border-radius: 0 0 10px 10px; }
 .player .panel .band.core, .player .panel .band.end { animation: panel-in .25s ease-out; }
 @keyframes panel-in { from { opacity: 0; transform: translateY(4px); } }
@@ -122,4 +119,36 @@
   .panel .flow { grid-template-columns: minmax(0, 1fr); }
   .panel .fcol + .fcol { border-left: 0; border-top: 1px solid var(--line); }
   .panel .flow .wire { display: none; }      /* stacked, the arrows would point at nothing */
+}
+
+/* the city stage in the Abstraction register: the same geometry and messengers, on a plain ground with nodes as solid blocks */
+.stage.city.abs .gnd { fill: var(--room); }
+.stage.city.abs .rdn { fill: none; stroke: var(--line); stroke-linecap: round; stroke-linejoin: round; }
+.stage.city.abs .rdn.road { stroke-width: 7; } .stage.city.abs .rdn.street { stroke-width: 4; opacity: .7; }
+.stage.city.abs .blk .ft { fill: var(--room); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.stage.city.abs .blk .fs { fill: var(--line); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.stage.city.abs .blk .fe { fill: var(--soft); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+.stage.city.abs .blk.me .ft { fill: var(--node); } .stage.city.abs .blk.me .bl { fill: var(--on-node); }
+.stage.city.abs .blk.cl .ft, .stage.city.abs .blk.cl .fs, .stage.city.abs .blk.cl .fe { stroke-dasharray: 6 5; }
+.stage.city.abs .blk .bl { font: 700 1.25em/1 var(--mono); fill: var(--ink); stroke: none; }
+.stage.city.abs text { fill: var(--ink); stroke: var(--room); }
+.stage.city.abs .cpl.me text:not(.bl) { fill: var(--node); }
+.stage.city.abs .tag { font-family: var(--mono); font-weight: 500; }
+
+/* the whole box, stepper, picture and the step's panel, should fit on one screen: the picture takes the height the rest leaves */
+.player .stepbar .stv { max-width: max(260px * var(--ar, 2), calc((100svh - 480px) * var(--ar, 2))); }
+@media (max-width: 640px) {
+  .stepbar .skey { display: none; }                      /* the dots carry the same marks; the key costs three lines on a phone */
+  .stepbar .sfoot { padding-left: 0; justify-content: flex-end; }
+  .stepbar .sd:not(.skey .sd) { width: 23px; height: 23px; font-size: 11px; }      /* smaller dots, so a scene's steps fit on one row */
+  .stepbar .sd.r::before, .stepbar .sd.s::after { width: 5px; }
+  .stepbar .dots { gap: 7px; }
+  .stepbar .sg > .label { display: none; }      /* the panel names the current phase, so the groups can share one row */
+  .stepbar .sgs { gap: 8px 12px; }
+  .stepbar .arrow { width: 30px; height: 30px; }
+  .stepbar, .stepbar .sctl { gap: 8px 8px; }
+  .player .stepbar .stage.city .stv { max-width: 100%; }
+  .panel .sp { gap: 8px; padding-inline: 0; }
+  .panel .say { font-size: 15.5px; line-height: 1.45; }
+  .panel .fcol { padding: 8px 12px 10px; gap: 6px; }
 }

@@ -431,8 +431,19 @@ def app_js():
                     pts.append(r1(V.p(x, y, zroute(x, y))))
             pts.append(r1(V.p(*path[-1], zroute(*path[-1]))))
             routes[a + "|" + b] = [p for k, p in enumerate(pts) if k == 0 or p != pts[k - 1]]
+    # the Abstraction register's background: only the roads, as plain lines in two weights, and the projection, for drawing node blocks
+    plain = {"road": [], "street": []}
+    for w, k, pts in ROADS:
+        line = []
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+            n = max(1, int(math.hypot(x2 - x1, y2 - y1) / 3))
+            line += [V.p(x1 + (x2 - x1) * j / n, y1 + (y2 - y1) * j / n, zroute(x1 + (x2 - x1) * j / n, y1 + (y2 - y1) * j / n)) for j in range(n)]
+        line.append(V.p(*pts[-1], zroute(*pts[-1])))
+        plain["street" if k == "street" else "road"].append("M" + "L".join("%.1f,%.1f" % q for q in line))
+    o = V.p(0, 0, 0); vec = lambda q: [round(q[0] - o[0], 4), round(q[1] - o[1], 4)]
+    iso = dict(e=vec(V.p(1, 0, 0)), n=vec(V.p(0, 1, 0)), u=vec(V.p(0, 0, 1)))       # pixels per metre east, north and up
     import json
-    city = dict(w=AW, h=AH, svg=body, places=places, doors=doors, routes=routes)
+    city = dict(w=AW, h=AH, svg=body, plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
     frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
     return ("// The city stage, written by world/city_mockup.py --app: the southeast picture, its places and the road routes between them.\n"
             "const CITY = %s;\n"

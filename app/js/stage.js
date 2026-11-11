@@ -57,6 +57,7 @@ const cityRoute = (a, b) => {
 };
 const polyLen = pts => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
 const clamp01 = v => Math.max(0, Math.min(1, v));
+const edgeAnchor = x => x < CITY.w * .15 ? ["start", "-.8em"] : x > CITY.w * .85 ? ["end", ".8em"] : ["middle", "0"];     // labels near an edge read inward
 function cityCast(it, S) {
   const inScene = new Set([it.s.who, ...(it.s.peers.match(/\b[A-Z]\b/g) || [])]);
   return [...new Set(["A", "B", "C", "D", "P", "Q", "S", "K"].filter(k => inScene.has(k)).map(k => S[k]).filter(k => k && CITY.places[k]))];
@@ -77,26 +78,41 @@ function cityTrips(it, S) {        // this step's messages as walks along the ro
   return { r, me, trips };
 }
 const cityBox = () => [0, 0, CITY.w, CITY.h];      // the whole picture, at its own 4:3, for every scene
+const decided = r => r.perm && typeof r.perm.decided === "string" && r.perm.decided !== "none" ? r.perm.decided : "";
+function cityBlock(k, x, y, me, letter) {    // a node in the Abstraction register: a solid block standing where its place is
+  const { e, n, u } = CITY.iso, s = 7, h = 9, fx = v => v.toFixed(1);
+  const P = (a, b, c) => fx(x + e[0] * a + n[0] * b + u[0] * c) + "," + fx(y + e[1] * a + n[1] * b + u[1] * c);
+  const face = (cls, pts) => `<polygon class="${cls}" points="${pts.map(q => P(...q)).join(" ")}"/>`;
+  const [tx, ty] = [x + u[0] * h, y + u[1] * h];
+  return `<g class="blk${me ? " me" : ""}${letter ? "" : " cl"}">${face("fs", [[-s, -s, 0], [s, -s, 0], [s, -s, h], [-s, -s, h]])}${face("fe", [[s, -s, 0], [s, s, 0], [s, s, h], [s, -s, h]])}${face("ft", [[-s, -s, h], [s, -s, h], [s, s, h], [-s, s, h]])}`
+    + `<text class="bl" x="${fx(tx)}" y="${fx(ty)}" dy=".36em" text-anchor="middle">${letter || "·"}</text></g>`;
+}
 function cityPlaces(it, S) {       // the names of the scene's places, yours marked, and what you have decided
-  const { r, me, trips } = cityTrips(it, S), I = isleOf(it.p), fx = v => v.toFixed(1);
-  const title = k => (S.labels && S.labels[k]) || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
-  const shown = [...new Set([...cityCast(it, S), ...(trips.some(x => x.outside) ? [S.client] : []), ...(S.also || []).filter(k => CITY.places[k])])];
-  const decided = r.perm && typeof r.perm.decided === "string" && r.perm.decided !== "none" ? (I ? lexT(r.perm.decided, I) : r.perm.decided) : "";
+  const { r, me, trips } = cityTrips(it, S), I = isleOf(it.p), fx = v => v.toFixed(1), plain = reg !== "isle";
+  const letterOf = k => Object.keys(S).find(l => /^[A-Z]$/.test(l) && S[l] === k);
+  const title = k => plain ? (k === S.client ? U().client : "") : (S.labels && S.labels[k]) || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
+  const shown = [...new Set([...cityCast(it, S), ...(trips.some(x => x.outside) ? [S.client] : []), ...(plain ? [] : (S.also || []).filter(k => CITY.places[k]))])];
+  if (plain) return shown.map(k => { const [x, y] = CITY.places[k], name = title(k) + (k === me ? "you" : "");
+    return `<g class="cpl${k === me ? " me" : ""}">${cityBlock(k, x, y, k === me, letterOf(k))}${name ? `<text x="${fx(x)}" y="${fx(y)}" dy="2.1em" dx="${edgeAnchor(x)[1]}" text-anchor="${edgeAnchor(x)[0]}">${esc(name)}${k === me && decided(r) ? ", decided " + esc(decided(r)) : ""}</text>` : ""}</g>`; }).join("");
+  const decidedV = decided(r), dv = decidedV && I ? lexT(decidedV, I) : decidedV;
   return shown.map(k => { const [x, y] = CITY.places[k], name = title(k) + (k === me ? " (you)" : "");
-    return `<g class="cpl${k === me ? " me" : ""}"><circle class="pin" cx="${fx(x)}" cy="${fx(y)}" r=".4em"/><text x="${fx(x)}" y="${fx(y)}" dy="1.9em" text-anchor="middle">${esc(name)}</text>${k === me && decided ? `<circle class="dec d${esc(decided)}" cx="${fx(x)}" cy="${fx(y)}" r=".55em" transform="translate(0 -40)"/><text class="dect" x="${fx(x)}" y="${fx(y - 40)}" dx=".9em" dy=".35em">decided ${esc(decided)}</text>` : ""}</g>`; }).join("");
+    return `<g class="cpl${k === me ? " me" : ""}"><circle class="pin" cx="${fx(x)}" cy="${fx(y)}" r=".4em"/><text x="${fx(x)}" y="${fx(y)}" dy="1.9em" dx="${edgeAnchor(x)[1]}" text-anchor="${edgeAnchor(x)[0]}">${esc(name)}</text>${k === me && dv ? `<circle class="dec d${esc(dv)}" cx="${fx(x)}" cy="${fx(y)}" r=".55em" transform="translate(0 -40)"/><text class="dect" x="${fx(x)}" y="${fx(y - 40)}" dx=".9em" dy=".35em">decided ${esc(dv)}</text>` : ""}</g>`; }).join("");
 }
 function cityHTML(it, S) {
   const [bx, by, bw, bh] = cityBox(it, S), u = bw / 650, me = S[it.s.who], [mx] = CITY.places[me];
-  return `<figure class="stage city" id="stage" data-scene="${esc(it.key)}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg">`
-    + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="The city from above: ${esc(cityCast(it, S).join(", "))}, and the roads between them. This step's messengers walk the roads.">`
-    + `<g class="world">${CITY.svg}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
+  const plain = reg !== "isle", world = plain ? `<rect class="gnd" width="${CITY.w}" height="${CITY.h}"/><path class="rdn street" d="${CITY.plain.street}"/><path class="rdn road" d="${CITY.plain.road}"/>` : CITY.svg;
+  return `<figure class="stage city${plain ? " abs" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg">`
+    + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
+    + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
     + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button></div></figure>`;
 }
 let cityAnim = 0;
 function playCity() {
   cancelAnimationFrame(cityAnim);
   const fig = $("stage"), it = byKey(sel), S = it && stageOf(it); if (!fig || !fig.classList.contains("city") || !S) return;
-  const { me, trips } = cityTrips(it, S), u = +fig.dataset.u, layer = fig.querySelector(".trips"), [px, py] = CITY.places[me], fx = v => v.toFixed(1);
+  const svg = fig.querySelector(".stg > svg"), W = svg.clientWidth || 1000, u = Math.max(+fig.dataset.u, 11.5 * CITY.w / (15 * W));    // on a small screen the text grows, so it stays about 11.5 px
+  svg.style.fontSize = (15 * u).toFixed(2) + "px";
+  const { me, trips } = cityTrips(it, S), layer = fig.querySelector(".trips"), [px, py] = CITY.places[me], fx = v => v.toFixed(1);
   // the schedule, in seconds: timers, then arrivals, then the step itself at your place, then departures
   const SPEED = 560, walk = (x, k, t0) => { x.stop = x.lost ? .55 : 1; x.start = t0 + .25 * k; x.dur = Math.min(2.8, Math.max(.9, x.len / SPEED)) * x.stop; x.end = x.start + x.dur; };
   const timers = trips.filter(x => x.kind === "here"), ins = trips.filter(x => x.dir === "in"), outs = trips.filter(x => x.dir === "out");
@@ -125,6 +141,7 @@ function playCity() {
       mx.setAttribute("opacity", t < x.start ? 0 : done ? 1 - after : 1);
       mx.setAttribute("transform", `translate(${fx(cx)} ${fx(cy)})`);
       mx.children[0].children[1].setAttribute("transform", `translate(0 ${done ? 0 : fx(-Math.abs(Math.sin(t * 11)) * 3)})`);   // a little bounce as it walks
+      const [an, dx] = edgeAnchor(cx); tag.setAttribute("text-anchor", an); tag.setAttribute("dx", dx);
       tag.setAttribute("opacity", t < x.start ? 0 : 1); tag.setAttribute("x", fx(cx)); tag.setAttribute("y", fx(cy - (28 + (done ? 22 * (x.stack - 1) : 0)) * u));
       if (x.lost) { xx.setAttribute("x", fx(cx)); xx.setAttribute("y", fx(cy)); xx.setAttribute("opacity", done ? after : 0); }
     });
@@ -138,8 +155,8 @@ document.addEventListener("click", e => { if (e.target.closest && (e.target.clos
 
 function stageHTML(it) {
   const S = stageOf(it); if (!S) return "";
+  if (S.view === "city") return cityHTML(it, S);      // both registers: only the background differs
   if (reg !== "isle") return diagramHTML(it, S, STAGES[S.view]);
-  if (S.view === "city") return cityHTML(it, S);
   const G = STAGES[S.view], I = isleOf(it.p), { rows } = tellOf(it), n = Math.min(stageStep, rows.length - 1), r = rows[n], W = 1000, H = Math.round(W * G.h / G.w), me = S[it.s.who];
   const px = p => [p[0] * W, p[1] * H], fx = v => v.toFixed(1), title = k => (S.labels && S.labels[k]) || G.label[k] || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
   let g = ""; const boxes = [];
@@ -203,7 +220,7 @@ function togglePic() {
 }
 function refreshStage() {
   const it = byKey(sel), el = $("stage"); if (!it || !el) return;
-  if (el.classList.contains("city") && el.dataset.scene === it.key && reg === "isle") { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
+  if (el.classList.contains("city") && el.dataset.scene === it.key && el.dataset.reg === reg) { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
   const keep = el.querySelector(".stw").scrollLeft; el.outerHTML = stageHTML(it); const s = $("stage") && $("stage").querySelector(".stw"); if (s) s.scrollLeft = keep; playCity();
 }
 
