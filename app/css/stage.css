@@ -1,0 +1,66 @@
+/* the stage: the island picture with couriers on its roads */
+.stage { position: relative; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--room); }
+.stage .stw { overflow-x: auto; }
+.stage .stg { position: relative; min-width: 620px; }
+.stage img { display: block; width: 100%; height: auto; }
+.stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage text { font: 600 15px/1 var(--sans); fill: #fff; paint-order: stroke; stroke: #06131a; stroke-width: 4px; stroke-linejoin: round; }
+.stage .pl.me text { fill: #ffe9a8; }
+.stage .dec { stroke: #fff; stroke-width: 2.5; fill: #888; } .stage .dec.dred { fill: #c0281c; } .stage .dec.dblue { fill: #1d4fc4; } .stage .dect { font-size: 14px; }
+.stage .cr polyline { fill: none; stroke: #fff; stroke-width: 3; stroke-dasharray: 1 8; stroke-linecap: round; opacity: .95; }
+.stage .cr circle { fill: #fff; stroke: #06131a; stroke-width: 2.5; }
+.stage .cr.out circle { fill: #ffd34d; }
+.stage .lostc polyline, .stage .lostc circle { stroke: #ff7aa8; } .stage .lostc text { fill: #ffc2d6; }
+.stage .inset { position: absolute; z-index: 2; width: clamp(120px, 26%, 250px); border: 2px solid #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 3px 14px rgba(0,0,0,.45); background: #06131a; }
+.stage .stv { position: relative; } .stage .stv > * { min-width: 0; } .stage .stw { max-width: 100%; contain: inline-size; } .stepbar, .stepbar .sgs { min-width: 0; }      /* the wide picture scrolls inside its frame; it must not widen the page */      /* the picture's frame: a corner close-up sits on it, not on the scrolling picture or the caption */
+.stage .inset.r { right: 10px; } .stage .inset.l { left: 10px; } .stage .inset.t { top: 10px; } .stage .inset.b { bottom: 10px; }
+.stage .inset.below { position: static; display: flex; align-items: center; gap: 10px; width: auto; margin: 10px 12px 0; box-shadow: none; border: 1px solid var(--line); }
+.stage .inset.below { background: var(--room); } .stage .inset.below img { width: 150px; flex: none; } .stage .inset.below span { color: var(--soft); font-size: 12px; }
+
+.stage .inset img { display: block; width: 100%; height: auto; }
+.stage .inset span { display: block; padding: 4px 7px; font: 600 11px/1.2 var(--sans); color: #fff; }
+@media (max-width: 640px) {    /* on a phone a corner close-up would cover a third of the picture, so it goes below */
+  .stage .stv { display: flex; flex-direction: column; } .stage .inset { order: 2; position: static; display: flex; align-items: center; gap: 10px; width: auto; margin: 10px 12px 0; box-shadow: none; border: 1px solid var(--line); background: none; }
+  .stage .inset { background: var(--room); } .stage .inset img { width: 130px; flex: none; } .stage .inset span { color: var(--soft); font-size: 12px; }
+}/* the stepper: pinned to the top of the screen while its scene's timeline is on screen */
+.stepbar { position: sticky; top: 52px; z-index: 6; margin: 0 0 18px; display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); box-shadow: 0 6px 18px -12px rgba(0,0,0,.5); }
+.stepbar .sgs { flex: 1; min-width: 0; }
+.stepbar .arrow { flex: none; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; line-height: 0; }
+.stepbar .arrow svg { display: block; }
+.stepbar .arrow[disabled] { opacity: .35; }
+.stepbar .sctl { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.stepbar .sfoot { flex: 1 1 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding-left: 48px; }
+.stepbar .skey { flex: 1 1 auto; }
+/* the picture rides inside the stepper box, and folds away */
+.stepbar .pict { flex: 1 1 100%; min-width: 0; }
+.stepbar .pict[hidden] { display: none; }
+.stepbar .stage { margin: 0; }
+.stepbar .stv { max-width: calc(40vh * var(--ar, 2)); margin-inline: auto; }      /* capped by width, so the box never outgrows the screen */
+@media (max-width: 640px) { .stepbar .stage .inset { display: none; } }      /* on a phone the close-up would drop below the picture and make the pinned box too tall */
+.pictog { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; font: 600 12px/1 var(--sans); color: var(--soft); background: none; border: 0; cursor: pointer; }
+.pictog:hover { color: var(--ink); }
+.pictog svg { transition: transform .2s; } .pictog[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.pictog:focus-visible { outline: 2px solid var(--out); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { .pictog svg { transition: none; } }
+/* the world view switch */
+.lsw { display: inline-flex; align-items: center; gap: 10px; flex: none; padding: 6px 4px; font: 600 13px/1 var(--sans); color: var(--ink); background: none; border: 0; cursor: pointer; }
+.lsw .tr { position: relative; width: 42px; height: 24px; border-radius: 99px; background: var(--line); transition: background .2s; }
+.lsw .kn { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--room); box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
+.lsw[aria-checked="true"] .tr { background: var(--out); } .lsw[aria-checked="true"] .kn { transform: translateX(18px); }
+.lsw:focus-visible { outline: 2px solid var(--out); outline-offset: 3px; border-radius: 6px; }
+.scrolly .band.core { scroll-margin-top: 200px; }
+.stage { margin-bottom: 12px; }
+/* the Abstraction register's diagram: the island's layout without the island */
+.stage.abs .stg { min-width: 520px; }
+.stage.abs svg { position: static; display: block; width: 100%; height: auto; }
+.stage.abs .rd { fill: none; stroke: var(--line); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.stage.abs .cr polyline { stroke: var(--ink); stroke-width: 2.5; opacity: .9; }
+.stage.abs .cr circle { fill: var(--room); stroke: var(--ink); stroke-width: 2.5; }
+.stage.abs .cr.out circle { fill: var(--node); stroke: var(--node); }
+.stage.abs .lostc polyline, .stage.abs .lostc circle { stroke: var(--out); } .stage.abs .lostc text { fill: var(--out); }
+.stage.abs text { font: 600 14px/1 var(--mono); fill: var(--ink); stroke: var(--room); stroke-width: 4px; paint-order: stroke; stroke-linejoin: round; }
+.stage.abs .nd circle, .stage.abs .nd rect { fill: var(--room); stroke: var(--ink); stroke-width: 2.5; }
+.stage.abs .nd.cl rect { stroke-dasharray: 4 3; stroke: var(--soft); }
+.stage.abs .nd .ll { font: 700 17px/1 var(--mono); stroke: none; }
+.stage.abs .nd.me circle { fill: var(--node); stroke: var(--node); } .stage.abs .nd.me .ll { fill: var(--on-node); }
+.stage.abs .nd .nl { font: 600 13px/1 var(--sans); fill: var(--soft); }

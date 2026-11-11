@@ -1,0 +1,129 @@
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Blender files and backups
+*.blend
+*.blend1
+*.blend2
+*.blend3
+*.blend4
+*.blend5
+*.blend@
+*.blend@1
+*.blend@2
+
+# 3D models and CAD/scene assets
+*.fbx
+*.obj
+*.mtl
+*.gltf
+*.glb
+*.dae
+*.3ds
+*.max
+*.c4d
+*.usd
+*.usdz
+*.abc
+*.ply
+*.stl
+
+# Image files (raster, vector, raw, textures, renders)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.tiff
+*.tif
+*.tga
+*.ico
+*.avif
+*.heic
+*.heif
+*.exr
+*.hdr
+*.svg
+
+# Design and layered project files
+*.psd
+*.psb
+*.ai
+*.eps
+*.raw
+*.cr2
+*.nef
+*.dng
+*.xcf
+*.kra
+*.ase
+*.aseprite
+
+# Video files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.flv
+*.wmv
+*.m4v
+
+# Audio files
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.aac
+*.m4a
+*.aiff
+*.wma
+
+# Compressed archives and disk images
+*.zip
+*.tar
+*.gz
+*.tgz
+*.rar
+*.7z
+*.bz2
+*.xz
+*.iso
+*.dmg
+
+# Large datasets, caches, point clouds & binaries
+*.bin
+*.dat
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.parquet
+*.feather
+*.las
+*.laz
+
+# Render and asset cache directories
+render/
+renders/
+cache/
+*.cache
+
+# Source data and assets
+sources/
+
+# Logs and environment / Python caches
+*.log
+__pycache__/
+*.py[cod]
+.venv/
+env/
+
+
