@@ -1,6 +1,9 @@
 """SVG mockup of the walled city: a top-down plan (north up) and the same plan seen from the southeast, as in the concept.
 Plan coordinates are metres, x east, y north, origin at the crossroads.
 Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app app/js/data/city.js]
+     python3 world/city_mockup.py --siege world/plan/siege-plan.svg [--app app/js/data/siege.js]
+--siege draws the soldiers' world instead: the same land, a flat walled town with its gates shut, and four camps round it
+(the commander's to the north, A, B and C to the east, south and west), linked only by the road round the walls.
 With --app it also writes the page's city stage: the southeast picture alone, where each place is in it, and the road route
 between every pair of places, lifted onto the stairs and terraces, all in the picture's own pixels."""
 import math, sys, heapq, random
@@ -11,6 +14,8 @@ CAM = (1 / R2, -1 / R2)          # where the camera stands, seen from the crossr
 UP = (-CAM[0], -CAM[1]); RIGHT = (UP[1], -UP[0])   # the picture's up and right, on the ground
 L = 215                           # the four axis ends (N, E, S, W) sit at the overview's corners, this far from the crossroads
 random.seed(3)
+SIEGE = "--siege" in sys.argv
+if SIEGE: sys.argv.remove("--siege")
 
 def shade(hex_, f):
     r, g, b = (int(hex_[i:i + 2], 16) for i in (1, 3, 5))
@@ -60,10 +65,12 @@ RING_N = outline(102, 88, 76, -25, 205, 64)                               # the 
 STAIR = dict(w=7, y0=40, y1=104)                                          # the broad stair, up the line of the main street
 POSTERN = min(WALL_N, key=lambda p: math.hypot(p[0] + 90, p[1] - 114))    # a small gate in the west wall
 WEST_STAIR = dict(y=114, x0=-46, x1=POSTERN[0])                          # a narrow stair down the far side to it
+if SIEGE: TIERS, PRECINCT = [], []                                        # the besieged town is flat
+CAMPS = {"commander's camp": ((0, 158), (0, 144)), "camp A": ((158, 0), (144, 0)), "camp B": ((0, -116), (0, -104)), "camp C": ((-158, 0), (-144, 0))}   # centre, gate
 
 def zat(x, y):
     """Ground height: only the acropolis stands up."""
-    if inpoly(x, y, PRECINCT): return TOP
+    if PRECINCT and inpoly(x, y, PRECINCT): return TOP
     for p, z0, h, _ in TIERS[::-1]:
         if inpoly(x, y, p): return z0 + h
     return 0
@@ -82,22 +89,35 @@ PLACES = {   # label position, door on the road network, group, second line (rol
     "proposer P": dict(at=(-47.5, 28.5), door=(-38, 28.5), group="legislators", sub=None),
     "proposer Q": dict(at=(47.5, -28.5), door=(38, -28.5), group="legislators", sub=None),
 }
+if SIEGE:
+    GROUP["soldiers"] = "#a23b2a"
+    PLACES = {k: dict(at=c, door=g, group="soldiers", sub=None) for k, (c, g) in CAMPS.items()}
+    PLACES["enemy city"] = dict(at=(0, 30), door=(0, 0), group="common", sub=None)
 
 # ------------------------------------------------------------------ roads: (width, kind, points)
 ROADS = []
 def road(w, kind, *pts): ROADS.append((w, kind, list(pts)))
-road(8, "street", (0, -W), (0, STAIR["y0"])); road(8, "street", (-W, 0), (W, 0))          # the main cross; north of the cross street it becomes the stair
-for s in (-38, 38):
-    road(5, "street", (s, -W + 4), (s, 72)); road(5, "street", (-W + 4, s), (W - 4, s))
-oc5 = octagon(-5); road(3.5, "street", (73, 62), oc5[1], oc5[0], oc5[7], oc5[6], oc5[5], oc5[4], (-73, 62))   # lane inside the wall, as far as the hill
-ring = octagon(12)
-road(6, "road", (90, 0), ring[1], *RING_N, ring[4], (-90, 0), ring[5], (-73.5, -73.5), ring[6], (0, -90), ring[7], (73.5, -73.5), ring[0], (90, 0))
-road(6, "road", (W, 0), (150, 0)); road(6, "road", (-W, 0), (-148, 0)); road(6, "road", (0, -W), (0, -114))
-road(4, "road", (-88, 64), (-99, 64)); road(4, "road", (73.5, -73.5), (80, -80)); road(4, "road", (-73.5, -73.5), (-80, -80))
-road(5, "road", (-80, -80), (-74, -104), (-40, -120), (0, -114))                         # coast path, pottery to fishery
-road(STAIR["w"], "stair", (0, STAIR["y0"]), (0, STAIR["y1"]))                             # up the broad stair
-road(5, "paving", (0, STAIR["y1"]), (0, 114), (WEST_STAIR["x0"], 114))                   # across the summit to its west gate
-road(3, "stair", (WEST_STAIR["x0"], 114), (POSTERN[0] - 24, 114))                         # down the west stair, out the postern, to the ring road
+if SIEGE:      # streets inside the walls go nowhere outside them: the gates are shut, so camps can only go round
+    road(8, "street", (0, -W), (0, W)); road(8, "street", (-W, 0), (W, 0))
+    for s_ in (-38, 38): road(5, "street", (s_, -W + 4), (s_, W - 4)); road(5, "street", (-W + 4, s_), (W - 4, s_))
+    oc5 = octagon(-5); road(3.5, "street", *oc5, oc5[0])
+    ring = octagon(12)
+    road(6, "road", (90, 0), ring[1], ring[2], (0, 90), ring[3], ring[4], (-90, 0), ring[5], ring[6], (0, -90), ring[7], ring[0], (90, 0))
+    road(6, "road", (0, 90), CAMPS["commander's camp"][1]); road(6, "road", (90, 0), CAMPS["camp A"][1])
+    road(6, "road", (0, -90), CAMPS["camp B"][1]); road(6, "road", (-90, 0), CAMPS["camp C"][1])
+else:
+    road(8, "street", (0, -W), (0, STAIR["y0"])); road(8, "street", (-W, 0), (W, 0))          # the main cross; north of the cross street it becomes the stair
+    for s in (-38, 38):
+        road(5, "street", (s, -W + 4), (s, 72)); road(5, "street", (-W + 4, s), (W - 4, s))
+    oc5 = octagon(-5); road(3.5, "street", (73, 62), oc5[1], oc5[0], oc5[7], oc5[6], oc5[5], oc5[4], (-73, 62))   # lane inside the wall, as far as the hill
+    ring = octagon(12)
+    road(6, "road", (90, 0), ring[1], *RING_N, ring[4], (-90, 0), ring[5], (-73.5, -73.5), ring[6], (0, -90), ring[7], (73.5, -73.5), ring[0], (90, 0))
+    road(6, "road", (W, 0), (150, 0)); road(6, "road", (-W, 0), (-148, 0)); road(6, "road", (0, -W), (0, -114))
+    road(4, "road", (-88, 64), (-99, 64)); road(4, "road", (73.5, -73.5), (80, -80)); road(4, "road", (-73.5, -73.5), (-80, -80))
+    road(5, "road", (-80, -80), (-74, -104), (-40, -120), (0, -114))                         # coast path, pottery to fishery
+    road(STAIR["w"], "stair", (0, STAIR["y0"]), (0, STAIR["y1"]))                             # up the broad stair
+    road(5, "paving", (0, STAIR["y1"]), (0, 114), (WEST_STAIR["x0"], 114))                   # across the summit to its west gate
+    road(3, "stair", (WEST_STAIR["x0"], 114), (POSTERN[0] - 24, 114))                         # down the west stair, out the postern, to the ring road
 
 # ------------------------------------------------------------------ solids: footprint, base z, height, colours
 SOLIDS, TREES, FLAT = [], [], []
@@ -120,10 +140,10 @@ for qx in (-1, 1):
                 for hx in (7, 24.5):
                     for hy in (7, 24.5):
                         x, y = qx * (bs + hx), qy * (bt + hy)
-                        if y < 0 and abs(x) + abs(y) > 110: TREES.append((x, y, "olive")); continue
-                        if abs(x) < 12 and y > 40:                                                  # the stair runs up an open court
+                        if (y < 0 or SIEGE) and abs(x) + abs(y) > 110: TREES.append((x, y, "olive")); continue
+                        if not SIEGE and abs(x) < 12 and y > 40:                                                  # the stair runs up an open court
                             TREES += [(x * 1.05, y - 4, "cypress"), (x * 1.05, y + 4, "cypress")]; continue
-                        p = (x, y) in ((-47.5, 28.5), (47.5, -28.5))
+                        p = not SIEGE and (x, y) in ((-47.5, 28.5), (47.5, -28.5))      # the proposers' houses
                         solid(rect(x, y, 14, 14), random.choice((6, 6, 7, 8)), "#7f9fdc" if p else random.choice((TILE, TILE2)), court=5)
 
 # the wall: the southern five sides of the octagon, then round the hill on the lowest terrace; towers and gates
@@ -138,52 +158,78 @@ def wall_run(pts, h=7, z=None, gaps=()):
             if any(math.hypot(mid[0] - g[0], mid[1] - g[1]) < 6 for g in gaps): continue
             dx, dy = q[0] - p[0], q[1] - p[1]; ln = math.hypot(dx, dy); nx, ny = -dy / ln * 1.6, dx / ln * 1.6
             solid([(p[0] + nx, p[1] + ny), (q[0] + nx, q[1] + ny), (q[0] - nx, q[1] - ny), (p[0] - nx, p[1] - ny)], h, "#d9cdb2", z=zat(*mid) if z is None else z, wall="#cbbd9e")
-GATES = [(W, 0), (0, -W), (-W, 0)]
-CIRCUIT = [oct_[4], oct_[5], oct_[6], oct_[7], oct_[0], oct_[1]] + WALL_N + [oct_[4]]
-wall_run(CIRCUIT, gaps=GATES + [POSTERN])
-for v in [oct_[i] for i in (0, 1, 4, 5, 6, 7)] + WALL_N[::8]: solid(rect(*v, 8, 8, 0), 10, "#d9cdb2", wall="#c4b594")
+if SIEGE:                                                                # four gates, all shut: the wall runs straight across them
+    GATES = [(W, 0), (0, -W), (-W, 0), (0, W)]
+    wall_run(oct_ + [oct_[0]], h=8)
+    for v in oct_: solid(rect(*v, 8, 8, 0), 11, "#d9cdb2", wall="#c4b594")
+else:
+    GATES = [(W, 0), (0, -W), (-W, 0)]
+    CIRCUIT = [oct_[4], oct_[5], oct_[6], oct_[7], oct_[0], oct_[1]] + WALL_N + [oct_[4]]
+    wall_run(CIRCUIT, gaps=GATES + [POSTERN])
+    for v in [oct_[i] for i in (0, 1, 4, 5, 6, 7)] + WALL_N[::8]: solid(rect(*v, 8, 8, 0), 10, "#d9cdb2", wall="#c4b594")
 for gx, gy in GATES:
     for s in (-1, 1): solid(rect(gx + (s * 8 if gx == 0 else 0), gy + (s * 8 if gy == 0 else 0), 7, 7), 10, "#d9cdb2", wall="#c4b594")
 
-# on the summit: its wall, the temple, the altar, the temple library, the gatehouse at the head of the stair
-wall_run(PRECINCT + [PRECINCT[0]], h=4, z=TOP, gaps=[(0, 104), (WEST_STAIR["x0"], 116)])
-solid(rect(8, 132, 30, 16), 10, "#d0603a", z=TOP, wall="#f2ece0")
-solid(rect(8, 117, 6, 3), 1.5, "#e8e2d4", z=TOP)
-solid(rect(-32, 132, 10, 26), 7, "#5aa37c", z=TOP, wall="#f2ece0")
-solid(rect(0, 107, 14, 6), 6, "#e8e2d4", z=TOP, wall="#f2ece0")
-# the broad stair, one prism per step from the street, with parapets; it stands in front of the terraces it cuts through
-N_STEPS = 20
-for i in range(N_STEPS):
-    y0 = STAIR["y0"] + (STAIR["y1"] - STAIR["y0"]) * i / N_STEPS; y1 = STAIR["y0"] + (STAIR["y1"] - STAIR["y0"]) * (i + 1) / N_STEPS
-    zt = TOP * (i + 1) / N_STEPS; hw = STAIR["w"] / 2
-    SOLIDS.append(mk([(-hw, y0), (hw, y0), (hw, y1), (-hw, y1)], zt, "#ece6d8", wall="#cfc5ae"))
-    for sx in (-1, 1):
-        x = sx * (hw + .5)
-        SOLIDS.append(mk([(x - .5, y0), (x + .5, y0), (x + .5, y1), (x - .5, y1)], zt + 1.2, "#d9cdb2", wall="#c4b594"))
-# the west stair: each step stands on whatever terrace is under it, so the terraces in front of it hide it properly
-for i in range(N_STEPS):
-    x0 = WEST_STAIR["x0"] + (WEST_STAIR["x1"] - WEST_STAIR["x0"]) * i / N_STEPS; x1 = WEST_STAIR["x0"] + (WEST_STAIR["x1"] - WEST_STAIR["x0"]) * (i + 1) / N_STEPS
-    zt = TOP - (TOP - 3) * (i + 1) / N_STEPS; zb = zat((x0 + x1) / 2, WEST_STAIR["y"])
-    SOLIDS.append(mk([(x1, WEST_STAIR["y"] - 2), (x0, WEST_STAIR["y"] - 2), (x0, WEST_STAIR["y"] + 2), (x1, WEST_STAIR["y"] + 2)], max(.4, zt - zb), "#ece6d8", z=zb, wall="#cfc5ae"))
+# on the summit: its wall, the temple, the altar, the temple library, the gatehouse at the head of the stair; then the stairs and estates
+if not SIEGE:
+    wall_run(PRECINCT + [PRECINCT[0]], h=4, z=TOP, gaps=[(0, 104), (WEST_STAIR["x0"], 116)])
+    solid(rect(8, 132, 30, 16), 10, "#d0603a", z=TOP, wall="#f2ece0")
+    solid(rect(8, 117, 6, 3), 1.5, "#e8e2d4", z=TOP)
+    solid(rect(-32, 132, 10, 26), 7, "#5aa37c", z=TOP, wall="#f2ece0")
+    solid(rect(0, 107, 14, 6), 6, "#e8e2d4", z=TOP, wall="#f2ece0")
+    # the broad stair, one prism per step from the street, with parapets; it stands in front of the terraces it cuts through
+    N_STEPS = 20
+    for i in range(N_STEPS):
+        y0 = STAIR["y0"] + (STAIR["y1"] - STAIR["y0"]) * i / N_STEPS; y1 = STAIR["y0"] + (STAIR["y1"] - STAIR["y0"]) * (i + 1) / N_STEPS
+        zt = TOP * (i + 1) / N_STEPS; hw = STAIR["w"] / 2
+        SOLIDS.append(mk([(-hw, y0), (hw, y0), (hw, y1), (-hw, y1)], zt, "#ece6d8", wall="#cfc5ae"))
+        for sx in (-1, 1):
+            x = sx * (hw + .5)
+            SOLIDS.append(mk([(x - .5, y0), (x + .5, y0), (x + .5, y1), (x - .5, y1)], zt + 1.2, "#d9cdb2", wall="#c4b594"))
+    # the west stair: each step stands on whatever terrace is under it, so the terraces in front of it hide it properly
+    for i in range(N_STEPS):
+        x0 = WEST_STAIR["x0"] + (WEST_STAIR["x1"] - WEST_STAIR["x0"]) * i / N_STEPS; x1 = WEST_STAIR["x0"] + (WEST_STAIR["x1"] - WEST_STAIR["x0"]) * (i + 1) / N_STEPS
+        zt = TOP - (TOP - 3) * (i + 1) / N_STEPS; zb = zat((x0 + x1) / 2, WEST_STAIR["y"])
+        SOLIDS.append(mk([(x1, WEST_STAIR["y"] - 2), (x0, WEST_STAIR["y"] - 2), (x0, WEST_STAIR["y"] + 2), (x1, WEST_STAIR["y"] + 2)], max(.4, zt - zb), "#ece6d8", z=zb, wall="#cfc5ae"))
 
-# estates: granary (east), winery (west), fishery (south), pottery (southwest), the two outer libraries
-solid(rect(168, 0, 16, 14), 9, TILE, wall="#e6d6b8")
-for x, y in ((158, 20), (178, 20), (186, -16), (158, -18)): solid(rect(x, y, 9, 8), 5, TILE2)
-flat([(150, -30), (195, -30), (195, 30), (150, 30)], "none", "#a08a68")
-FLAT.append(dict(circle=(175, -40, 7), fill="#e3cf8e", stroke="#b49a5a", z=0))          # threshing floor
-solid(rect(-160, -8, 20, 11), 5, TILE, wall="#e6d6b8")
-for x, y in ((-150, 16), (-172, 16), (-178, -14)): solid(rect(x, y, 9, 8), 5, TILE2)
-flat([(-188, -26), (-140, -26), (-140, 28), (-188, 28)], "none", "#a08a68")
-solid(rect(-16, -108, 18, 8), 4.5, TILE, wall="#e6d6b8")                                 # fishery shed
-for i in range(4): FLAT.append(dict(pts=rect(20 + (i % 2) * 9, -104 - (i // 2) * 7, 7, 5), fill="#9fd0d6", stroke="#7f9a94", z=0))   # salting tanks
-for x in (-30, -2, 22): FLAT.append(dict(pts=rect(x, shore(x) - 10, 3, 22), fill="#a7865b", stroke="#7e6240", z=0))                   # jetties
-for x, y in ((-24, -158), (6, -160), (30, -156), (-50, -146)): FLAT.append(dict(pts=rect(x, y, 3, 9, 20), fill="#7a5a3a", stroke=None, z=0))
-for i in range(3): solid(rect(-34 + i * 5, -112, 0.8, 7), 2.4, "#8a6a48", wall="#8a6a48")   # fish racks
-for x, y in ((-88, -77), (-77, -88)): solid(rect(x, y, 7, 7, 45), 5, "#b98a62", wall="#a9774e")                                  # kilns
-solid(rect(-91, -91, 12, 6, -45), 3.5, "#a7865b", wall="#d8c8a8")                         # drying shed
-FLAT.append(dict(pts=[(-112, -86), (-102, -92), (-100, -100), (-112, -98)], fill="#b79d78", stroke="#8c7352", z=0))               # clay pit
-solid(rect(-106, 64, 11, 24), 7, "#5aa37c", wall="#f2ece0")                               # northwest library, by the west wall's ring road
-solid(rect(88, -88, 24, 11, 45), 7, "#5aa37c", wall="#f2ece0")
+    # estates: granary (east), winery (west), fishery (south), pottery (southwest), the two outer libraries
+    solid(rect(168, 0, 16, 14), 9, TILE, wall="#e6d6b8")
+    for x, y in ((158, 20), (178, 20), (186, -16), (158, -18)): solid(rect(x, y, 9, 8), 5, TILE2)
+    flat([(150, -30), (195, -30), (195, 30), (150, 30)], "none", "#a08a68")
+    FLAT.append(dict(circle=(175, -40, 7), fill="#e3cf8e", stroke="#b49a5a", z=0))          # threshing floor
+    solid(rect(-160, -8, 20, 11), 5, TILE, wall="#e6d6b8")
+    for x, y in ((-150, 16), (-172, 16), (-178, -14)): solid(rect(x, y, 9, 8), 5, TILE2)
+    flat([(-188, -26), (-140, -26), (-140, 28), (-188, 28)], "none", "#a08a68")
+    solid(rect(-16, -108, 18, 8), 4.5, TILE, wall="#e6d6b8")                                 # fishery shed
+    for i in range(4): FLAT.append(dict(pts=rect(20 + (i % 2) * 9, -104 - (i // 2) * 7, 7, 5), fill="#9fd0d6", stroke="#7f9a94", z=0))   # salting tanks
+    for x in (-30, -2, 22): FLAT.append(dict(pts=rect(x, shore(x) - 10, 3, 22), fill="#a7865b", stroke="#7e6240", z=0))                   # jetties
+    for x, y in ((-24, -158), (6, -160), (30, -156), (-50, -146)): FLAT.append(dict(pts=rect(x, y, 3, 9, 20), fill="#7a5a3a", stroke=None, z=0))
+    for i in range(3): solid(rect(-34 + i * 5, -112, 0.8, 7), 2.4, "#8a6a48", wall="#8a6a48")   # fish racks
+    for x, y in ((-88, -77), (-77, -88)): solid(rect(x, y, 7, 7, 45), 5, "#b98a62", wall="#a9774e")                                  # kilns
+    solid(rect(-91, -91, 12, 6, -45), 3.5, "#a7865b", wall="#d8c8a8")                         # drying shed
+    FLAT.append(dict(pts=[(-112, -86), (-102, -92), (-100, -100), (-112, -98)], fill="#b79d78", stroke="#8c7352", z=0))               # clay pit
+    solid(rect(-106, 64, 11, 24), 7, "#5aa37c", wall="#f2ece0")                               # northwest library, by the west wall's ring road
+    solid(rect(88, -88, 24, 11, 45), 7, "#5aa37c", wall="#f2ece0")
+
+# the camps: a palisade, rows of tents, the commander's larger tent and standard, cooking fires, on trampled ground
+if SIEGE:
+    for k, ((cx, cy), (gx, gy)) in CAMPS.items():
+        big = k == "commander's camp"; hw, hd = (24, 18) if big else (20, 15)
+        FLAT.append(dict(pts=[(cx - hw - 6, cy - hd - 6), (cx + hw + 6, cy - hd - 6), (cx + hw + 6, cy + hd + 6), (cx - hw - 6, cy + hd + 6)], fill="#d6c79c", stroke=None, z=0))
+        gate = (gx, gy); fence = [(cx - hw, cy - hd), (cx + hw, cy - hd), (cx + hw, cy + hd), (cx - hw, cy + hd), (cx - hw, cy - hd)]
+        wall_run(fence, h=2.4, z=0, gaps=[gate])
+        for v in fence[:4]: solid(rect(*v, 2.4, 2.4), 3.6, "#7a5a3a", wall="#6b4f33")
+        for i in range(-2, 3):
+            for j in range(-1, 2):
+                x, y = cx + i * 7.5, cy + j * 9
+                if abs(i) < 1 and abs(j) < 1: continue
+                solid(rect(x, y, 4.6, 3.4), 2.4, "#f1e8d4", wall="#d7cbb0")
+        solid(rect(cx, cy, 8 if big else 6, 6 if big else 4.6), 3.6 if big else 3, "#b5452f", wall="#e6d8bb")       # the officer's tent
+        solid(rect(cx + 6, cy + 4, .6, .6), 9, "#7a5a3a", wall="#6b4f33"); solid(rect(cx + 7.6, cy + 4, 3, .4), 2, "#c0281c", z=7, wall="#a8231a")   # standard
+        for fx_, fy_ in ((cx - hw + 6, cy + hd - 5), (cx + hw - 6, cy - hd + 5)):
+            FLAT.append(dict(circle=(fx_, fy_, 1.6), fill="#e8792c", stroke="#5a3a1e", z=0))
+    for x in (-30, -2, 22): FLAT.append(dict(pts=rect(x, shore(x) - 10, 3, 22), fill="#a7865b", stroke="#7e6240", z=0))      # the besiegers' boats at the landing
+    for x, y in ((-24, -158), (6, -160), (30, -156), (-50, -146)): FLAT.append(dict(pts=rect(x, y, 3, 9, 20), fill="#7a5a3a", stroke=None, z=0))
 
 # fields, groves, scrub (flat), then trees
 WHEAT = [((104, 32), (146, 120)), ((150, 34), (240, 120)), ((198, -30), (240, 30)), ((104, -120), (150, -34)), ((150, -110), (240, -34))]
@@ -194,14 +240,14 @@ for (x0, y0), (x1, y1) in VINES:
     flat([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], "#c9cf8a", "#9aa35c", rows=("y", 5))
 for _ in range(240):                                                                     # olives on the slopes north of the fields
     x, y = random.uniform(-240, 240), random.uniform(56, 240)
-    if inpoly(x, y, outline(112, 98, 86)) or (x > 96 and y < 124) or (x < -96 and y < 112 and not (x < -118 and y > 54)): continue
+    if (inpoly(x, y, octagon(30)) or any(abs(x - c[0]) < 40 and abs(y - c[1]) < 32 for c, _ in CAMPS.values())) if SIEGE else inpoly(x, y, outline(112, 98, 86)) or (x > 96 and y < 124) or (x < -96 and y < 112 and not (x < -118 and y > 54)): continue
     TREES.append((x, y, "olive"))
-for x, y in ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82),     # outside the walls
+for x, y in ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82)) if SIEGE else ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82),     # outside the walls
              (52, 92), (66, 116), (70, 142), (-60, 86), (-66, 108), (30, 86), (-28, 84), (40, 160), (-40, 162)):  # on the terraces
     TREES.append((x, y, "cypress"))
 for _ in range(60):                                                                      # scrub between the city and the shore
     x, y = random.uniform(40, 240), random.uniform(-200, -100)
-    if y > shore(x) + 6 and math.hypot(x - 88, y + 88) > 18: TREES.append((x, y, "olive"))
+    if y > shore(x) + 6 and math.hypot(x - 88, y + 88) > 18 and not (SIEGE and abs(x - 158) < 40 and abs(y) < 32): TREES.append((x, y, "olive"))
 
 # ------------------------------------------------------------------ distances along the roads
 def segs():
@@ -295,7 +341,7 @@ def draw_roads(V, o, z=0):
         if k in ROAD_COL:
             o.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="%.1f" stroke-linejoin="round" stroke-linecap="round"/>' % (V.poly(pts, z), ROAD_COL[k], w * V.k * (0.87 if V.iso else 1)))
 
-HILL = [mk(p, h, col, z=z0, wall=shade(col, .8)) for p, z0, h, col in TIERS] + [mk(PRECINCT, 5, "#e4ddcc", z=TOP - 5, wall="#d2c8b2")]
+HILL = [mk(p, h, col, z=z0, wall=shade(col, .8)) for p, z0, h, col in TIERS] + ([mk(PRECINCT, 5, "#e4ddcc", z=TOP - 5, wall="#d2c8b2")] if PRECINCT else [])
 TOPS = [s["z"] + s["h"] for s in HILL]
 
 def draw(V, cid):
@@ -382,7 +428,7 @@ def svg():
     out += labels(V2, (fx, fx + FW))
     out.append('</g><rect x="%d" y="%d" width="%d" height="%d" fill="none" stroke="#999"/>' % (fx, fy, FW, FH))
     # distances
-    pairs = [("fishery", "granary"), ("fishery", "winery"), ("granary", "winery"), ("pottery", "fishery"), ("pottery", "winery"), ("pottery", "granary"),
+    pairs = [(a, b) for i, a in enumerate(CAMPS) for b in list(CAMPS)[i + 1:]] if SIEGE else [("fishery", "granary"), ("fishery", "winery"), ("granary", "winery"), ("pottery", "fishery"), ("pottery", "winery"), ("pottery", "granary"),
              ("proposer P", "winery"), ("proposer P", "granary"), ("proposer P", "fishery"), ("proposer Q", "winery"), ("proposer Q", "granary"), ("proposer Q", "fishery"),
              ("library T", "library NW"), ("library T", "library SE"), ("library NW", "library SE")]
     ty = fy + FH + 34
@@ -392,9 +438,11 @@ def svg():
         out.append('<text x="%d" y="%d" class="t">%s – %s: <tspan font-weight="700">%d</tspan></text>' % (fx + (i // 5) * 290, ty + 22 + (i % 5) * 17, na, nb, round(d)))
         print("%-20s %-20s %4d" % (na, nb, round(d)))
     lx, ly = 20, 70 + P + 40
-    for i, (g, c) in enumerate((("merchants", GROUP["merchants"]), ("legislators", GROUP["legislators"]), ("scholars", GROUP["scholars"]))):
+    for i, (g, c) in enumerate((("soldiers", GROUP["soldiers"]),) if SIEGE else (("merchants", GROUP["merchants"]), ("legislators", GROUP["legislators"]), ("scholars", GROUP["scholars"]))):
         out.append('<circle cx="%d" cy="%d" r="5" fill="%s"/><text x="%d" y="%d" class="t">%s</text>' % (lx + i * 130 + 6, ly, c, lx + i * 130 + 16, ly + 4, g))
-    for i, line in enumerate(("Walls %d m across at the south: 4 quarters × 4 blocks × 4 courtyard houses. No agora: the cross meets at a crossroads." % (2 * W),
+    notes = ("The enemy town: walls %d m across, four gates, all shut. The camps lie north (the commander's), east, south and west," % (2 * W),
+             "joined only by the road round the walls, so every message between camps goes the long way round.") if SIEGE else None
+    for i, line in enumerate(notes or ("Walls %d m across at the south: 4 quarters × 4 blocks × 4 courtyard houses. No agora: the cross meets at a crossroads." % (2 * W),
                               "The acropolis rises in five 3 m terraces to a summit 20 m up; the north quarters climb its lower terraces,",
                               "and the city wall leaves the octagon to wrap the hill along its rock edge. A broad stair continues the main street",
                               "up to the temple; a narrow stair runs down the far side to a postern. A road hugs the outside of the whole circuit.")):
@@ -404,10 +452,11 @@ def svg():
 
 # ------------------------------------------------------------------ the page's city stage
 APP_PLACES = {pl.get("name", k): (pl["at"], pl["door"]) for k, pl in PLACES.items()}
-APP_PLACES["crossroads"] = ((0, 6), (0, 0))                                   # where people from outside come from
+if not SIEGE: APP_PLACES["crossroads"] = ((0, 6), (0, 0))                     # where people from outside come from
 
 def zroute(x, y):
     """Height of a walker on the roads: the stairs climb evenly; elsewhere the ground or terrace underfoot."""
+    if SIEGE: return 0
     if abs(x) <= STAIR["w"] / 2 + .01 and STAIR["y0"] <= y <= STAIR["y1"]: return TOP * (y - STAIR["y0"]) / (STAIR["y1"] - STAIR["y0"])
     if abs(y - WEST_STAIR["y"]) < .6 and WEST_STAIR["x1"] <= x <= WEST_STAIR["x0"]:
         return TOP - (TOP - 3) * (WEST_STAIR["x0"] - x) / (WEST_STAIR["x0"] - WEST_STAIR["x1"])
@@ -423,7 +472,9 @@ def app_js():
     names = sorted(APP_PLACES)
     for i, a in enumerate(names):
         for b in names[i + 1:]:
-            path = route(G, key, APP_PLACES[a][1], APP_PLACES[b][1]); pts = []
+            try: path = route(G, key, APP_PLACES[a][1], APP_PLACES[b][1])
+            except KeyError: continue                                              # no road between them (the shut town); nobody walks it
+            pts = []
             for (x1, y1), (x2, y2) in zip(path, path[1:]):
                 n = max(1, int(math.hypot(x2 - x1, y2 - y1) / 3))                # every 3 m, so the stairs climb smoothly
                 for j in range(n):
@@ -445,10 +496,11 @@ def app_js():
     import json
     city = dict(w=AW, h=AH, svg=body, plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
     frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
-    return ("// The city stage, written by world/city_mockup.py --app: the southeast picture, its places and the road routes between them.\n"
-            "const CITY = %s;\n"
-            "STAGES.city = { w: CITY.w, h: CITY.h, places: %s, roads: {}, label: {}, inset: {}, img: null };   // for the Abstraction register's diagram\n"
-            % (json.dumps(city, separators=(",", ":")), json.dumps(frac)))
+    name, view = ("SIEGE", "siege") if SIEGE else ("CITY", "city")
+    head = "// The %s stage, written by world/city_mockup.py%s --app: the southeast picture, its places and the road routes between them.\n" % (view, " --siege" if SIEGE else "")
+    data = "const %s = %s;\n" % (name, json.dumps(city, separators=(",", ":")))
+    diag = "STAGES.%s = { w: %s.w, h: %s.h, places: %s, roads: {}, label: {}, inset: {}, img: null };   // for the Abstraction register\n" % (view, name, name, json.dumps(frac))
+    return head + data + diag
 
 open(sys.argv[1], "w").write(svg())
 if "--app" in sys.argv: open(sys.argv[sys.argv.index("--app") + 1], "w").write(app_js())

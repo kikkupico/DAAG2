@@ -17,70 +17,59 @@ function along(pts, t) {    // the point a fraction t of the way along a line of
   for (let i = 0; i < L.length; i++) { if (d <= L[i] || i === L.length - 1) { const f = L[i] ? Math.min(1, d / L[i]) : 0; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f]; } d -= L[i]; }
   return pts[0];
 }
-// In the Abstraction register the same layout is drawn as a diagram: each node where its place is on the island, straight
-// links between the nodes, and the messages with their own names. No picture and no close-up.
-function diagramHTML(it, S, G) {
-  const { rows } = tellOf(it), n = Math.min(stageStep, rows.length - 1), r = rows[n], W = 1000, H = Math.round(W * G.h / G.w);
-  const px = p => [p[0] * W, p[1] * H], fx = v => v.toFixed(1), me = it.s.who;
-  const nodes = [...new Set([it.s.who, ...(it.s.peers.match(/\b[A-Z]\b/g) || [])])].filter(l => S[l] && G.places[S[l]]), at = l => px(G.places[S[l]]);
-  const decided = r.perm && typeof r.perm.decided === "string" && r.perm.decided !== "none" ? r.perm.decided : "", you = "you" + (decided ? ", decided " + decided : "");
-  const boxes = nodes.map(l => [at(l)[0], at(l)[1], 44]).concat(S[me] && G.places[S[me]] ? [[at(me)[0], at(me)[1] + 35, you.length * 7.6 + 10]] : []);   // the nodes, and the label under your own
-  const clear = (x, y, text) => {        // above the dot if there is room, else beside it, else further up
-    const w = text.length * 8.4 + 10, h = 17, hit = (cx, cy) => boxes.some(b => Math.abs(b[0] - cx) < (b[2] + w) / 2 && Math.abs(b[1] - cy) < h + 8);
-    const keep = cx => Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, cx));      // labels stay inside the frame
-    const tries = [[0, 0], [w / 2 + 12, 17], [-w / 2 - 12, 17], [0, 33], [0, -19], [w / 2 + 12, -2], [-w / 2 - 12, -2], [0, 52], [0, -38], [0, -57]];
-    const [dx, dy] = tries.find(([dx, dy]) => !hit(keep(x + dx), y + dy)) || tries[0];
-    boxes.push([keep(x + dx), y + dy, w]); return [keep(x + dx), y + dy]; };
-  const line = pts => pts.map(p => p.map(fx).join(",")).join(" ");
-  let roads = "";
-  nodes.forEach((a, i) => nodes.slice(i + 1).forEach(b => { roads += `<polyline class="rd" points="${line([at(a), at(b)])}"/>`; }));
-  let g = "";
-  const message = ([peer, text, lost], dir, k) => {
-    const from = peer === "outside" ? (S.client && G.places[S.client] ? null : undefined) : peer; if (from === undefined || !text || (peer !== "outside" && !S[peer])) return;
-    const far = peer === "outside" ? px(G.places[S.client]) : at(peer), pts = dir === "in" ? [far, at(me)] : [at(me), far];
-    const [x, y] = along(pts, lost ? .5 : dir === "in" ? .78 : .22 + .1 * k), label = text + (lost ? " ✕" : "");
-    g += `<g class="cr ${dir}${lost ? " xo lostc" : ""}"><polyline points="${line(pts)}"/><circle cx="${fx(x)}" cy="${fx(y)}" r="6"/>${(([lx, ly]) => `<text x="${fx(lx)}" y="${fx(ly)}" text-anchor="middle">${esc(label)}</text>`)(clear(x, y - 12, label))}</g>`;
-  };
-  r.recv.forEach((m, k) => message(m, "in", k)); r.sent.forEach((m, k) => message(m, "out", k));
-  const client = S.client && G.places[S.client] && [...r.recv, ...r.sent].some(m => m[0] === "outside") ? (([x, y]) => `<g class="nd cl"><rect x="${fx(x - 15)}" y="${fx(y - 15)}" width="30" height="30" rx="4"/><text x="${fx(x)}" y="${fx(y + 32)}" text-anchor="middle" class="nl">client</text></g>`)(px(G.places[S.client])) : "";
-  const dots = nodes.map(l => { const [x, y] = at(l);
-    return `<g class="nd${l === me ? " me" : ""}"><circle cx="${fx(x)}" cy="${fx(y)}" r="19"/><text x="${fx(x)}" y="${fx(y + 6)}" text-anchor="middle" class="ll">${l}</text>${l === me ? `<text x="${fx(x)}" y="${fx(y + 40)}" text-anchor="middle" class="nl">${esc(you)}</text>` : ""}</g>`; }).join("");
-  const [mx] = at(me) || [W / 2];
-  return `<figure class="stage abs" id="stage" data-mx="${(mx / W).toFixed(3)}" style="--ar:${(G.w / G.h).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Nodes ${esc(nodes.join(", "))} and the links between them, with this step's messages.">${roads}${g}${client}${dots}</svg></div></div></div></figure>`;
-}
 // ---------- the city stage: the isometric city from world/city_mockup.py, with messengers walking its roads ----------
 // A step plays as a short animation: timers ring at your place, messengers arriving walk in along the roads, the step happens
 // at your place (a ring), then messengers leaving walk out. Each leaves a trail; a lost one stops partway. Replay runs it again.
+// The geometry a stage plays on: the city from world/city_mockup.py, or, for scenes not yet moved to it (the army's), an older
+// island picture with its places and roads. Each entry point below sets GEO from its scene's stage before drawing.
+const GEOS = {};
+function geoFor(S) {
+  if (S.view === "city") return CITY;
+  if (S.view === "siege") return SIEGE;
+  if (GEOS[S.view]) return GEOS[S.view];
+  const G = STAGES[S.view], W = 1600, H = Math.round(W * G.h / G.w), px = p => [+(p[0] * W).toFixed(1), +(p[1] * H).toFixed(1)];
+  const places = Object.fromEntries(Object.entries(G.places).map(([k, p]) => [k, px(p)]));
+  return GEOS[S.view] = { w: W, h: H, places, doors: places, label: G.label || {}, route: (a, b) => routePts(G, a, b).map(px),
+    svg: `<image href="${PICTURES[G.img]}" width="${W}" height="${H}" preserveAspectRatio="none"/>`,
+    plain: { street: "", road: Object.values(G.roads).map(pts => "M" + pts.map(q => px(q).join(",")).join("L")).join("") },
+    iso: { e: [3.3, 1.65], n: [3.3, -1.65], u: [0, -2.9] } };      // the island renders' camera, near enough for the blocks
+}
+let GEO = typeof CITY !== "undefined" ? CITY : null;
+const useGeo = S => (GEO = geoFor(S));
 const cityRoute = (a, b) => {
-  const r = a === b ? null : CITY.routes[a < b ? a + "|" + b : b + "|" + a];
-  return r ? (a < b ? r : [...r].reverse()) : [CITY.doors[a], CITY.doors[b]];
+  if (GEO.route) return a === b ? [GEO.doors[a], GEO.doors[a]] : GEO.route(a, b);
+  const r = a === b ? null : GEO.routes[a < b ? a + "|" + b : b + "|" + a];
+  return r ? (a < b ? r : [...r].reverse()) : [GEO.doors[a], GEO.doors[b]];
 };
 const polyLen = pts => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
 const clamp01 = v => Math.max(0, Math.min(1, v));
-const edgeAnchor = x => x < CITY.w * .15 ? ["start", "-.8em"] : x > CITY.w * .85 ? ["end", ".8em"] : ["middle", "0"];     // labels near an edge read inward
+const edgeAnchor = x => x < GEO.w * .15 ? ["start", "-.8em"] : x > GEO.w * .85 ? ["end", ".8em"] : ["middle", "0"];     // labels near an edge read inward
 function cityCast(it, S) {
+  useGeo(S);
   const inScene = new Set([it.s.who, ...(it.s.peers.match(/\b[A-Z]\b/g) || [])]);
-  return [...new Set(["A", "B", "C", "D", "P", "Q", "S", "K"].filter(k => inScene.has(k)).map(k => S[k]).filter(k => k && CITY.places[k]))];
+  return [...new Set(["A", "B", "C", "D", "P", "Q", "S", "K"].filter(k => inScene.has(k)).map(k => S[k]).filter(k => k && GEO.places[k]))];
 }
 function cityTrips(it, S) {        // this step's messages as walks along the roads, and timers
+  useGeo(S);
   const { rows } = tellOf(it), r = rows[Math.min(stageStep, rows.length - 1)], I = isleOf(it.p), me = S[it.s.who], trips = [];
   const say = (text, peer, dir) => I ? lexT(I.msg && !PSEUDO.has(peer) ? I.msg(text, peer, dir) : text, I) : text;
   const add = ([peer, text, lost], dir) => {
     if (!text || peer === "nothing") return;
     if (peer === "timer") { trips.push({ kind: "here", icon: "⌛", label: say(text, peer, dir) }); return; }
-    if (peer === "outside" && I && clientOf(I, say(text, peer, dir)) !== I.client) {      // the node's own need, or a due date: nobody walks in, it starts at your place
-      trips.push({ kind: "here", icon: "✦", label: clientOf(I, say(text, peer, dir)) + ": " + say(text, peer, dir) }); return; }
-    const pl = peer === "outside" ? S.client : S[peer]; if (!pl || !CITY.doors[pl]) return;
+    if (peer === "coin") { trips.push({ kind: "here", icon: "◐", label: say(text, peer, dir) }); return; }
+    if (peer === "outside" && ((I && clientOf(I, say(text, peer, dir)) !== I.client) || !S.client || !GEO.doors[S.client])) {    // the node's own need, a due date, or a client with no place in the picture: it starts at your place
+      trips.push({ kind: "here", icon: "✦", label: (I ? clientOf(I, say(text, peer, dir)) : U().client) + ": " + say(text, peer, dir) }); return; }
+    const pl = peer === "outside" ? S.client : S[peer]; if (!pl || !GEO.doors[pl]) return;
     trips.push({ kind: "walk", dir, lost: !!lost, outside: peer === "outside", from: dir === "in" ? pl : me, to: dir === "in" ? me : pl, label: say(text, peer, dir) + (lost ? " ✕" : "") });
   };
   r.recv.forEach(m => add(m, "in")); r.sent.forEach(m => add(m, "out"));
   trips.forEach(x => { if (x.kind === "walk") { x.pts = cityRoute(x.from, x.to); x.len = polyLen(x.pts); } });
   return { r, me, trips };
 }
-const cityBox = () => [0, 0, CITY.w, CITY.h];      // the whole picture, at its own 4:3, for every scene
+const cityBox = () => [0, 0, GEO.w, GEO.h];      // the whole picture, at its own aspect (the city's is 4:3), for every scene
 const decided = r => r.perm && typeof r.perm.decided === "string" && r.perm.decided !== "none" ? r.perm.decided : "";
 function cityBlock(k, x, y, me, letter) {    // a node in the Abstraction register: a solid block standing where its place is
-  const { e, n, u } = CITY.iso, s = 7, h = 9, fx = v => v.toFixed(1);
+  const { e, n, u } = GEO.iso, s = 7, h = 9, fx = v => v.toFixed(1);
   const P = (a, b, c) => fx(x + e[0] * a + n[0] * b + u[0] * c) + "," + fx(y + e[1] * a + n[1] * b + u[1] * c);
   const face = (cls, pts) => `<polygon class="${cls}" points="${pts.map(q => P(...q)).join(" ")}"/>`;
   const [tx, ty] = [x + u[0] * h, y + u[1] * h];
@@ -88,19 +77,21 @@ function cityBlock(k, x, y, me, letter) {    // a node in the Abstraction regist
     + `<text class="bl" x="${fx(tx)}" y="${fx(ty)}" dy=".36em" text-anchor="middle">${letter || "·"}</text></g>`;
 }
 function cityPlaces(it, S) {       // the names of the scene's places, yours marked, and what you have decided
+  useGeo(S);
   const { r, me, trips } = cityTrips(it, S), I = isleOf(it.p), fx = v => v.toFixed(1), plain = reg !== "isle";
   const letterOf = k => Object.keys(S).find(l => /^[A-Z]$/.test(l) && S[l] === k);
-  const title = k => plain ? (k === S.client ? U().client : "") : (S.labels && S.labels[k]) || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
-  const shown = [...new Set([...cityCast(it, S), ...(trips.some(x => x.outside) ? [S.client] : []), ...(plain ? [] : (S.also || []).filter(k => CITY.places[k]))])];
-  if (plain) return shown.map(k => { const [x, y] = CITY.places[k], name = title(k) + (k === me ? "you" : "");
+  const title = k => plain ? (k === S.client ? U().client : "") : (S.labels && S.labels[k]) || (GEO.label && GEO.label[k]) || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
+  const shown = [...new Set([...cityCast(it, S), ...(trips.some(x => x.outside) ? [S.client] : []), ...(plain ? [] : (S.also || []).filter(k => GEO.places[k]))])];
+  if (plain) return shown.map(k => { const [x, y] = GEO.places[k], name = title(k) + (k === me ? "you" : "");
     return `<g class="cpl${k === me ? " me" : ""}">${cityBlock(k, x, y, k === me, letterOf(k))}${name ? `<text x="${fx(x)}" y="${fx(y)}" dy="2.1em" dx="${edgeAnchor(x)[1]}" text-anchor="${edgeAnchor(x)[0]}">${esc(name)}${k === me && decided(r) ? ", decided " + esc(decided(r)) : ""}</text>` : ""}</g>`; }).join("");
   const decidedV = decided(r), dv = decidedV && I ? lexT(decidedV, I) : decidedV;
-  return shown.map(k => { const [x, y] = CITY.places[k], name = title(k) + (k === me ? " (you)" : "");
-    return `<g class="cpl${k === me ? " me" : ""}"><circle class="pin" cx="${fx(x)}" cy="${fx(y)}" r=".4em"/><text x="${fx(x)}" y="${fx(y)}" dy="1.9em" dx="${edgeAnchor(x)[1]}" text-anchor="${edgeAnchor(x)[0]}">${esc(name)}</text>${k === me && dv ? `<circle class="dec d${esc(dv)}" cx="${fx(x)}" cy="${fx(y)}" r=".55em" transform="translate(0 -40)"/><text class="dect" x="${fx(x)}" y="${fx(y - 40)}" dx=".9em" dy=".35em">decided ${esc(dv)}</text>` : ""}</g>`; }).join("");
+  return shown.map(k => { const [x, y] = GEO.places[k], name = title(k) + (k === me ? " (you)" : "");
+    return `<g class="cpl${k === me ? " me" : ""}"><circle class="pin" cx="${fx(x)}" cy="${fx(y)}" r=".4em"/><text x="${fx(x)}" y="${fx(y)}" dy="1.9em" dx="${edgeAnchor(x)[1]}" text-anchor="${edgeAnchor(x)[0]}">${esc(name)}</text>${k === me && dv ? `<circle class="dec d${esc(dv)}" cx="${fx(x)}" cy="${fx(y)}" r=".55em" transform="translate(0 -40)"/><text class="dect" x="${fx(x)}" y="${fx(y - 40)}" dx="${x > GEO.w * .75 ? "-.9em" : ".9em"}" dy=".35em" text-anchor="${x > GEO.w * .75 ? "end" : "start"}">decided ${esc(dv)}</text>` : ""}</g>`; }).join("");
 }
 function cityHTML(it, S) {
-  const [bx, by, bw, bh] = cityBox(it, S), u = bw / 650, me = S[it.s.who], [mx] = CITY.places[me];
-  const plain = reg !== "isle", world = plain ? `<rect class="gnd" width="${CITY.w}" height="${CITY.h}"/><path class="rdn street" d="${CITY.plain.street}"/><path class="rdn road" d="${CITY.plain.road}"/>` : CITY.svg;
+  useGeo(S);
+  const [bx, by, bw, bh] = cityBox(it, S), u = bw / 650, me = S[it.s.who], [mx] = GEO.places[me];
+  const plain = reg !== "isle", world = plain ? `<rect class="gnd" width="${GEO.w}" height="${GEO.h}"/><path class="rdn street" d="${GEO.plain.street}"/><path class="rdn road" d="${GEO.plain.road}"/>` : GEO.svg;
   return `<figure class="stage city${plain ? " abs" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg">`
     + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
     + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
@@ -110,9 +101,10 @@ let cityAnim = 0;
 function playCity() {
   cancelAnimationFrame(cityAnim);
   const fig = $("stage"), it = byKey(sel), S = it && stageOf(it); if (!fig || !fig.classList.contains("city") || !S) return;
-  const svg = fig.querySelector(".stg > svg"), W = svg.clientWidth || 1000, u = Math.max(+fig.dataset.u, 11.5 * CITY.w / (15 * W));    // on a small screen the text grows, so it stays about 11.5 px
+  useGeo(S);
+  const svg = fig.querySelector(".stg > svg"), W = svg.clientWidth || 1000, u = Math.max(+fig.dataset.u, 11.5 * GEO.w / (15 * W));    // on a small screen the text grows, so it stays about 11.5 px
   svg.style.fontSize = (15 * u).toFixed(2) + "px";
-  const { me, trips } = cityTrips(it, S), layer = fig.querySelector(".trips"), [px, py] = CITY.places[me], fx = v => v.toFixed(1);
+  const { me, trips } = cityTrips(it, S), layer = fig.querySelector(".trips"), [px, py] = GEO.places[me], fx = v => v.toFixed(1);
   // the schedule, in seconds: timers, then arrivals, then the step itself at your place, then departures
   const SPEED = 560, walk = (x, k, t0) => { x.stop = x.lost ? .55 : 1; x.start = t0 + .25 * k; x.dur = Math.min(2.8, Math.max(.9, x.len / SPEED)) * x.stop; x.end = x.start + x.dur; };
   const timers = trips.filter(x => x.kind === "here"), ins = trips.filter(x => x.dir === "in"), outs = trips.filter(x => x.dir === "out");
@@ -124,7 +116,7 @@ function playCity() {
   const ends = {}; trips.forEach(x => { if (x.kind === "walk") { const e = x.lost ? "lost" + x.to : x.to; x.stack = ends[e] = (ends[e] || 0) + 1; } });   // tags at one place stack up
   const line = pts => pts.map(p => p.join(",")).join(" ");
   layer.innerHTML = trips.map(x => x.kind === "here"
-    ? `<g class="tmr"><text x="${fx(px)}" y="${fx(py)}" dy="-2.2em" dx="${px < CITY.w * .3 ? "-1em" : px > CITY.w * .7 ? "1em" : "0"}" text-anchor="${px < CITY.w * .3 ? "start" : px > CITY.w * .7 ? "end" : "middle"}">${x.icon} ${esc(x.label)}</text></g>`
+    ? `<g class="tmr"><text x="${fx(px)}" y="${fx(py)}" dy="-2.2em" dx="${px < GEO.w * .3 ? "-1em" : px > GEO.w * .7 ? "1em" : "0"}" text-anchor="${px < GEO.w * .3 ? "start" : px > GEO.w * .7 ? "end" : "middle"}">${x.icon} ${esc(x.label)}</text></g>`
     : `<g class="trip ${x.dir}${x.lost ? " lost" : ""}"><polyline class="way" points="${line(x.pts)}"/><polyline class="trail" points="${line(x.pts)}" stroke-dasharray="${fx(x.len)} ${fx(x.len)}" stroke-dashoffset="${fx(x.len)}"/>`
       + `<g class="mx" opacity="0"><g transform="scale(${(u * .8).toFixed(3)})"><ellipse class="sh" rx="10" ry="3.6" cy="1"/><g class="bob"><circle r="11" cy="-9"/><rect class="scroll" x="-6" y="-13" width="12" height="8" rx="2"/><path class="scroll" d="M-3.5 -10.5h7M-3.5 -7.5h5"/></g></g></g>`
       + `<text class="tag" text-anchor="middle" opacity="0">${esc(x.label)}</text><text class="xx" text-anchor="middle" dy=".35em" opacity="0">✕</text></g>`).join("")
@@ -153,48 +145,8 @@ function playCity() {
 }
 document.addEventListener("click", e => { if (e.target.closest && (e.target.closest("[data-replay]") || e.target.closest(".stage.city svg"))) playCity(); });
 
-function stageHTML(it) {
-  const S = stageOf(it); if (!S) return "";
-  if (S.view === "city") return cityHTML(it, S);      // both registers: only the background differs
-  if (reg !== "isle") return diagramHTML(it, S, STAGES[S.view]);
-  const G = STAGES[S.view], I = isleOf(it.p), { rows } = tellOf(it), n = Math.min(stageStep, rows.length - 1), r = rows[n], W = 1000, H = Math.round(W * G.h / G.w), me = S[it.s.who];
-  const px = p => [p[0] * W, p[1] * H], fx = v => v.toFixed(1), title = k => (S.labels && S.labels[k]) || G.label[k] || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
-  let g = ""; const boxes = [];
-  const clear = (x, y, text) => {        // move a label up until it overlaps no earlier one
-    const w = text.length * 7.8 + 8, h = 17;
-    for (let i = 0; i < 6; i++) { if (!boxes.some(b => Math.abs(b[0] - x) < (b[2] + w) / 2 && Math.abs(b[1] - y) < h)) break; y -= h + 1; }
-    boxes.push([x, y, w]); return y;
-  };
-  const drop = (x, y, text) => {
-    const w = text.length * 7.8 + 8, h = 17;
-    for (let i = 0; i < 4; i++) { if (!boxes.some(b => Math.abs(b[0] - x) < (b[2] + w) / 2 && Math.abs(b[1] - y) < h)) break; y += h + 1; }
-    boxes.push([x, y, w]); return y;
-  };
-  const courier = ([peer, text, lost], dir, k) => {
-    const pl = peer === "outside" ? S.client : S[peer]; if (!pl || !text) return;
-    const pts = (dir === "in" ? routePts(G, pl, me) : routePts(G, me, pl)).map(px), [x, y] = along(pts, lost ? .5 : dir === "in" ? .8 : .2 + .1 * k);
-    const label = lexT(I.msg && !PSEUDO.has(peer) ? I.msg(text, peer, dir) : text, I);
-    g += `<g class="cr ${dir}${lost ? " xo lostc" : ""}"><polyline points="${pts.map(p => p.map(fx).join(",")).join(" ")}"/><circle cx="${fx(x)}" cy="${fx(y)}" r="7"/><text x="${fx(x)}" y="${fx(clear(x, y - 13, label + (lost ? " ✕" : "")))}" text-anchor="middle">${esc(label)}${lost ? " ✕" : ""}</text></g>`;
-  };
-  const inScene = new Set([it.s.who, ...(it.s.peers.match(/\b[A-Z]\b/g) || [])]);
-  const cast = [...new Set(["A", "B", "C", "D", "P", "Q", "S", "K"].filter(k => inScene.has(k)).map(k => S[k]).filter(Boolean))], shown = [...cast, ...(S.also || [])];
-  const decided = r.perm && typeof r.perm.decided === "string" && r.perm.decided !== "none" ? lexT(r.perm.decided, I) : "";
-  const places = shown.map(k => { const [x, y] = px(G.places[k]);
-    const ly = drop(x, y + 30, title(k) + (k === me ? " (you)" : ""));    // a name that would sit on another name moves down below it
-    return `<g class="pl${k === me ? " me" : ""}"><text x="${fx(x)}" y="${fx(ly)}" text-anchor="middle">${esc(title(k))}${k === me ? " (you)" : ""}</text>${k === me && decided ? `<circle class="dec d${esc(decided)}" cx="${fx(x - 52)}" cy="${fx(y + 48)}" r="9"/><text class="dect" x="${fx(x - 38)}" y="${fx(y + 53)}">decided ${esc(decided)}</text>` : ""}</g>`; }).join("");
-  r.recv.forEach((m, k) => courier(m, "in", k)); r.sent.forEach((m, k) => courier(m, "out", k));
-  const [mx, my] = px(G.places[me]);
-  // the close-up goes in a corner with nothing of this scene's in it: no place, no road between its places. Failing that, below the picture.
-  let corner = "below";
-  if (G.inset && G.inset[me]) {
-    const avoid = cast.flatMap(a => cast.filter(b => b > a).flatMap(b => routePts(G, a, b).map(px))).concat(shown.map(k => px(G.places[k])));
-    const iw = 285, ih = 215, rects = { "r t": [W - iw, 0], "l t": [0, 0], "r b": [W - iw, H - ih], "l b": [0, H - ih] };
-    const order = Object.keys(rects).sort((p, q) => Math.hypot(rects[q][0] + iw / 2 - mx, rects[q][1] + ih / 2 - my) - Math.hypot(rects[p][0] + iw / 2 - mx, rects[p][1] + ih / 2 - my));
-    corner = order.find(c => !avoid.some(([x, y]) => x > rects[c][0] - 30 && x < rects[c][0] + iw + 30 && y > rects[c][1] - 40 && y < rects[c][1] + ih + 20)) || "below";
-  }
-  const inset = G.inset && G.inset[me] ? `<div class="inset ${corner}"><img src="${CLOSEUPS[me]}" alt="${esc(title(me))}, up close."><span>Up close: ${esc(title(me))}</span></div>` : "";
-  return `<figure class="stage" id="stage" data-mx="${(mx / W).toFixed(3)}" style="--ar:${(G.w / G.h).toFixed(3)}"><div class="stv">${corner === "below" ? "" : inset}<div class="stw"><div class="stg"><img src="${PICTURES[G.img]}" alt="Paxos from above: ${esc(shown.map(title).join(", "))}, and the roads between them.">
-    <svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${g}${places}</svg></div></div></div>${corner === "below" ? inset : ""}</figure>`;
+function stageHTML(it) {       // both registers, every scene: the same messengers; only the background differs
+  const S = stageOf(it); return S ? cityHTML(it, S) : "";
 }
 function centreStage() { playCity(); const f = $("stage"), s = f && f.querySelector && f.querySelector(".stw"); if (!s) return; if (s.scrollWidth > s.clientWidth) s.scrollLeft = +f.dataset.mx * s.scrollWidth - s.clientWidth / 2; }
 function refreshStepper() { const it = byKey(sel), el = $("sctl"); if (!it || !el) return; el.outerHTML = ctlHTML(it, !!$("pict")); }
