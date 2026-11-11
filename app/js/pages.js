@@ -62,41 +62,45 @@ function tellOf(it) {
   return { rows, phases };
 }
 // The scene at a glance: one dot per step.
-// The stepper box, pinned to the top of the screen while the timeline is read: the controls, then the picture, which folds away.
+// The stepper box, the scene's main view: the controls, then the picture, which folds away, then what happens in the chosen step.
 function stripHTML(it) {
   const pic = stageHTML(it);
-  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${ctlHTML(it, !!pic)}${pic ? `<div class="pict" id="pict"${picOpen ? "" : " hidden"}>${pic}</div>` : ""}</div>`;
+  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${ctlHTML(it, !!pic)}${pic ? `<div class="pict" id="pict"${picOpen ? "" : " hidden"}>${pic}</div>` : ""}${panelHTML(it)}</div>`;
 }
 function ctlHTML(it, hasPic) {     // one circle per step
-  const { rows, phases } = tellOf(it), n = Math.min(stageStep, rows.length - 1);
+  const { rows, phases } = tellOf(it), atEnd = stageStep >= rows.length, n = atEnd ? -1 : stageStep;
   const cls = r => (r.t && JSON.stringify(r.perm) !== JSON.stringify(r.prevPerm) ? "p" : r.t && JSON.stringify(r.temp) !== JSON.stringify(r.prevTemp) ? "t" : "n")
     + (r.recv.some(m => m[0] !== "nothing") ? " r" : "") + (r.sent.length ? " s" : "") + (r.t === n ? " on" : "");
   const say = r => `Step ${r.t}: ${r.sayPlain}`;
   const dot = r => `<button type="button" class="sd ${cls(r)}" data-step="${r.t}" title="${esc(say(r))}" aria-label="${esc(say(r))}"${r.t === n ? ` aria-current="step"` : ""}>${r.t}</button>`;
   const ph = phases.length ? phases : [[0, ""]];
-  const groups = ph.map(([from, name], i) => `<div class="sg">${name ? `<span class="label">${esc(name)}</span>` : ""}<div class="dots">${rows.slice(from, i + 1 < ph.length ? ph[i + 1][0] : rows.length).map(dot).join("")}</div></div>`).join("");
+  const end = `<button type="button" class="sd fin${atEnd ? " on" : ""}" data-step="${rows.length}" title="${U().endStep}" aria-label="${U().endStep}"${atEnd ? ` aria-current="step"` : ""}><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+  const groups = ph.map(([from, name], i) => `<div class="sg">${name ? `<span class="label">${esc(name)}</span>` : ""}<div class="dots">${rows.slice(from, i + 1 < ph.length ? ph[i + 1][0] : rows.length).map(dot).join("")}${i === ph.length - 1 ? end : ""}</div></div>`).join("");
   const k = U().strip;
   const what = reg === "isle" ? "picture" : "diagram";
   const tog = hasPic ? `<button type="button" class="pictog" data-pic="1" aria-controls="pict" aria-expanded="${picOpen}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>${picOpen ? "Hide" : "Show"} ${what}</button>` : "";
   return `<div class="sctl" id="sctl">
-    <button type="button" class="btn sm arrow" data-stage="-1" aria-label="Previous step"${n ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sgs">${groups}</div><button type="button" class="btn sm arrow" data-stage="1" aria-label="Next step"${n < rows.length - 1 ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 2.5L10 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" class="btn sm arrow" data-stage="-1" aria-label="Previous step"${stageStep ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sgs">${groups}</div><button type="button" class="btn sm arrow" data-stage="1" aria-label="Next step"${atEnd ? " disabled" : ""}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 2.5L10 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div>${tog}</div></div>`;
 }
 const whoOf = it => { const I = isleOf(it.p), n = nmOf(I, it.s.who); return n ? "the " + esc(n) : (I ? esc(roleOf(I, it.s.who)) + " " : "") + ND(esc(it.s.who)); };
-function timelineHTML(it, col, dv) {
+function timelineHTML(it, col, dv, only) {      // only: one step's number, or "end"; the panel under the picture shows just that
   const s = it.s, I = isleOf(it.p), { rows, phases } = tellOf(it), seen = new Map(), me = whoOf(it);
   const tw = twinOf(it), same = tw ? sameRows(s, tw.s) : 0, whole = tw && same === Math.max(s.rows.length, tw.s.rows.length);
   const phaseAt = new Map(phases.map(([from, name, why]) => [from, [name, why]]));
-  let tl = `<div class="lane-h l label">${U().arrives}</div><div class="band mid-h"><b>${I ? cap(me) : `Inside node ${esc(s.who)}`}</b><div class="legend"><span>${U().permL}</span><span>${U().tempL}</span></div></div><div class="lane-h r label">${U().leaves}</div>`;
+  const solo = only !== undefined, phaseOf = t => phases.filter(([from]) => from <= t).pop();
+  let tl = solo ? "" : `<div class="lane-h l label">${U().arrives}</div><div class="band mid-h"><b>${I ? cap(me) : `Inside node ${esc(s.who)}`}</b><div class="legend"><span>${U().permL}</span><span>${U().tempL}</span></div></div><div class="lane-h r label">${U().leaves}</div>`;
+  if (solo && only !== "end" && phaseOf(only)) { const [, name, why] = phaseOf(only); tl += `<div class="band ph"><b>${esc(name)}</b>${why ? `<i>${nodeText(why, s)}</i>` : ""}</div>`; }
   rows.forEach(r => {
-    if (phaseAt.has(r.t)) { const [name, why] = phaseAt.get(r.t); tl += `<div class="band ph"><b>${esc(name)}</b>${why ? `<i>${nodeText(why, s)}</i>` : ""}</div>`; }
+    if (solo && r.t !== only) { if (only === "end" || r.t < only) msgs(r.sent, "out", seen, r.t, I); return; }    // earlier steps still count for "same order as step 2"
+    if (!solo && phaseAt.has(r.t)) { const [name, why] = phaseAt.get(r.t); tl += `<div class="band ph"><b>${esc(name)}</b>${why ? `<i>${nodeText(why, s)}</i>` : ""}</div>`; }
     tl += `<div class="in">${msgs(r.recv, "in", seen, r.t, I)}</div>`
-      + `<div class="band core" id="st-${col}-${r.t}"><span class="tm" aria-label="step ${r.t}">${r.t}</span>${dv === r.t ? `<span class="dv">First difference</span>` : ""}<p class="say">${r.say}</p>${stateBox(r, I)}</div>`
+      + `<div class="band core${solo ? " solo" : ""}" id="st-${col}-${r.t}"><span class="tm" aria-label="step ${r.t}">${r.t}</span>${dv === r.t ? `<span class="dv">First difference</span>` : ""}<p class="say">${r.say}</p>${stateBox(r, I)}</div>`
       + `<div class="outb">${msgs(r.sent, "out", seen, r.t, I)}${r.aside ? `<p class="xo aside">${r.aside}</p>` : ""}</div>`;
   });
   const through = whole ? "" : `, through step ${same},`;
   const twinLine = !tw ? "" : `${I ? cap(me) : "Node " + me} takes exactly these steps${through} in “${esc(nameOf(tw))}” too. Only the world differs.`;
-  tl += `<div class="band end"><span class="tm" aria-hidden="true"></span>
+  if (!solo || only === "end") tl += `<div class="band end"><span class="tm" aria-hidden="true"></span>
       <p class="xi">That is everything ${I ? me : "node " + me} can know.${tw ? " At least two different worlds look exactly like this from in here." : ""}</p>
       <div class="xi"><button type="button" class="btn go-out" data-lens="outside">${U().goOut}</button></div>
       <p class="xo verdict">${ocMark(it.oc)}${U().seen}: ${VERDICT[it.oc].toLowerCase()}</p>
@@ -104,6 +108,20 @@ function timelineHTML(it, col, dv) {
       <div class="xo btns">${tw ? `<button type="button" class="btn go-out" data-key="${tw.key}" data-keep="1">Swap worlds</button>` : ""}<button type="button" class="btn" data-lens="inside">${U().goIn}</button></div>
     </div>`;
   return `<div class="tlw"><div class="tl">${tl}</div></div>`;
+}
+// The panel under the picture: the chosen step told in full, then what arrives, what the node keeps, and what leaves, left to right.
+function panelHTML(it) {
+  const s = it.s, I = isleOf(it.p), { rows, phases } = tellOf(it);
+  if (stageStep >= rows.length) return `<div class="panel" id="panel" aria-live="polite">${timelineHTML(it, 0, -1, "end")}</div>`;
+  const r = rows[stageStep], seen = new Map(), ph = phases.filter(([from]) => from <= r.t).pop();
+  rows.filter(x => x.t < r.t).forEach(x => msgs(x.sent, "out", seen, x.t, I));          // so a repeat reads "same order as step 2"
+  const col = (cls, label, body, none) => `<div class="fcol ${cls}"><span class="label">${label}</span>${body || `<p class="none">${none}</p>`}</div>`;
+  return `<div class="panel" id="panel" aria-live="polite"><div class="sp">
+    ${ph ? `<p class="sp-ph"><b>${esc(ph[1])}</b>${ph[2] ? ` <i>${nodeText(ph[2], s)}</i>` : ""}</p>` : ""}
+    <p class="say">${r.say}</p>
+    <div class="flow">${col("fin", U().arrives, msgs(r.recv, "in", seen, r.t, I), U().noneIn)}${col("fst", U().kept, stateBox(r, I))}${col("fout", U().leaves, msgs(r.sent, "out", seen, r.t, I), U().noneOut)}</div>
+    ${r.aside ? `<p class="xo aside">${r.aside}</p>` : ""}
+  </div></div>`;
 }
 const noteOf = it => { const O = ovOf(it); return O ? mk(O.note || "") : it.s.note ? nodeText(it.s.note, it.s) : ""; };
 function briefHTML(it) {
@@ -132,7 +150,7 @@ function sceneHTML(it) {
     const d = firstDiff(s, other.s);
     const column = (x, n) => `<section class="col"><h3>${esc(nameOf(x))}${ocMark(x.oc, "xo")}</h3>${pointHTML(x)}${noteOf(x) ? `<p class="rule">${noteOf(x)}</p>` : ""}${briefHTML(x)}${timelineHTML(x, n, d)}</section>`;
     body = `<p class="cmpnote">${d < 0 ? U().same : d === 0 ? U().differ0 : U().until(d)}</p><div class="cmp">${column(it, 0)}${column(other, 1)}</div>`;
-  } else body = briefHTML(it) + `<div class="scrolly">${stripHTML(it)}${timelineHTML(it, 0, -1)}</div>`;
+  } else body = briefHTML(it) + `<div class="player">${stripHTML(it)}</div>`;
   return `<div class="scene-head"><div>
       <h2>${esc(nameOf(it))}</h2>
       ${both ? "" : pointHTML(it)}

@@ -48,9 +48,98 @@ function diagramHTML(it, S, G) {
   const [mx] = at(me) || [W / 2];
   return `<figure class="stage abs" id="stage" data-mx="${(mx / W).toFixed(3)}" style="--ar:${(G.w / G.h).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Nodes ${esc(nodes.join(", "))} and the links between them, with this step's messages.">${roads}${g}${client}${dots}</svg></div></div></div></figure>`;
 }
+// ---------- the city stage: the isometric city from world/city_mockup.py, with messengers walking its roads ----------
+// A step plays as a short animation: timers ring at your place, messengers arriving walk in along the roads, the step happens
+// at your place (a ring), then messengers leaving walk out. Each leaves a trail; a lost one stops partway. Replay runs it again.
+const cityRoute = (a, b) => {
+  const r = a === b ? null : CITY.routes[a < b ? a + "|" + b : b + "|" + a];
+  return r ? (a < b ? r : [...r].reverse()) : [CITY.doors[a], CITY.doors[b]];
+};
+const polyLen = pts => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
+const clamp01 = v => Math.max(0, Math.min(1, v));
+function cityCast(it, S) {
+  const inScene = new Set([it.s.who, ...(it.s.peers.match(/\b[A-Z]\b/g) || [])]);
+  return [...new Set(["A", "B", "C", "D", "P", "Q", "S", "K"].filter(k => inScene.has(k)).map(k => S[k]).filter(k => k && CITY.places[k]))];
+}
+function cityTrips(it, S) {        // this step's messages as walks along the roads, and timers
+  const { rows } = tellOf(it), r = rows[Math.min(stageStep, rows.length - 1)], I = isleOf(it.p), me = S[it.s.who], trips = [];
+  const say = (text, peer, dir) => I ? lexT(I.msg && !PSEUDO.has(peer) ? I.msg(text, peer, dir) : text, I) : text;
+  const add = ([peer, text, lost], dir) => {
+    if (!text || peer === "nothing") return;
+    if (peer === "timer") { trips.push({ kind: "here", icon: "⌛", label: say(text, peer, dir) }); return; }
+    if (peer === "outside" && I && clientOf(I, say(text, peer, dir)) !== I.client) {      // the node's own need, or a due date: nobody walks in, it starts at your place
+      trips.push({ kind: "here", icon: "✦", label: clientOf(I, say(text, peer, dir)) + ": " + say(text, peer, dir) }); return; }
+    const pl = peer === "outside" ? S.client : S[peer]; if (!pl || !CITY.doors[pl]) return;
+    trips.push({ kind: "walk", dir, lost: !!lost, outside: peer === "outside", from: dir === "in" ? pl : me, to: dir === "in" ? me : pl, label: say(text, peer, dir) + (lost ? " ✕" : "") });
+  };
+  r.recv.forEach(m => add(m, "in")); r.sent.forEach(m => add(m, "out"));
+  trips.forEach(x => { if (x.kind === "walk") { x.pts = cityRoute(x.from, x.to); x.len = polyLen(x.pts); } });
+  return { r, me, trips };
+}
+const cityBox = () => [0, 0, CITY.w, CITY.h];      // the whole picture, at its own 4:3, for every scene
+function cityPlaces(it, S) {       // the names of the scene's places, yours marked, and what you have decided
+  const { r, me, trips } = cityTrips(it, S), I = isleOf(it.p), fx = v => v.toFixed(1);
+  const title = k => (S.labels && S.labels[k]) || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
+  const shown = [...new Set([...cityCast(it, S), ...(trips.some(x => x.outside) ? [S.client] : []), ...(S.also || []).filter(k => CITY.places[k])])];
+  const decided = r.perm && typeof r.perm.decided === "string" && r.perm.decided !== "none" ? (I ? lexT(r.perm.decided, I) : r.perm.decided) : "";
+  return shown.map(k => { const [x, y] = CITY.places[k], name = title(k) + (k === me ? " (you)" : "");
+    return `<g class="cpl${k === me ? " me" : ""}"><circle class="pin" cx="${fx(x)}" cy="${fx(y)}" r=".4em"/><text x="${fx(x)}" y="${fx(y)}" dy="1.9em" text-anchor="middle">${esc(name)}</text>${k === me && decided ? `<circle class="dec d${esc(decided)}" cx="${fx(x)}" cy="${fx(y)}" r=".55em" transform="translate(0 -40)"/><text class="dect" x="${fx(x)}" y="${fx(y - 40)}" dx=".9em" dy=".35em">decided ${esc(decided)}</text>` : ""}</g>`; }).join("");
+}
+function cityHTML(it, S) {
+  const [bx, by, bw, bh] = cityBox(it, S), u = bw / 650, me = S[it.s.who], [mx] = CITY.places[me];
+  return `<figure class="stage city" id="stage" data-scene="${esc(it.key)}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg">`
+    + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="The city from above: ${esc(cityCast(it, S).join(", "))}, and the roads between them. This step's messengers walk the roads.">`
+    + `<g class="world">${CITY.svg}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
+    + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button></div></figure>`;
+}
+let cityAnim = 0;
+function playCity() {
+  cancelAnimationFrame(cityAnim);
+  const fig = $("stage"), it = byKey(sel), S = it && stageOf(it); if (!fig || !fig.classList.contains("city") || !S) return;
+  const { me, trips } = cityTrips(it, S), u = +fig.dataset.u, layer = fig.querySelector(".trips"), [px, py] = CITY.places[me], fx = v => v.toFixed(1);
+  // the schedule, in seconds: timers, then arrivals, then the step itself at your place, then departures
+  const SPEED = 560, walk = (x, k, t0) => { x.stop = x.lost ? .55 : 1; x.start = t0 + .25 * k; x.dur = Math.min(2.8, Math.max(.9, x.len / SPEED)) * x.stop; x.end = x.start + x.dur; };
+  const timers = trips.filter(x => x.kind === "here"), ins = trips.filter(x => x.dir === "in"), outs = trips.filter(x => x.dir === "out");
+  let t = .25; timers.forEach(x => { x.start = t; x.end = t + .5; }); if (timers.length) t += .9;
+  ins.forEach((x, k) => walk(x, k, t));
+  const here = ins.length ? Math.max(...ins.map(x => x.end)) + .1 : t;
+  outs.forEach((x, k) => walk(x, k, here + (ins.length || timers.length ? .5 : 0)));
+  const T = Math.max(here + .9, ...trips.map(x => x.end + .7));
+  const ends = {}; trips.forEach(x => { if (x.kind === "walk") { const e = x.lost ? "lost" + x.to : x.to; x.stack = ends[e] = (ends[e] || 0) + 1; } });   // tags at one place stack up
+  const line = pts => pts.map(p => p.join(",")).join(" ");
+  layer.innerHTML = trips.map(x => x.kind === "here"
+    ? `<g class="tmr"><text x="${fx(px)}" y="${fx(py)}" dy="-2.2em" dx="${px < CITY.w * .3 ? "-1em" : px > CITY.w * .7 ? "1em" : "0"}" text-anchor="${px < CITY.w * .3 ? "start" : px > CITY.w * .7 ? "end" : "middle"}">${x.icon} ${esc(x.label)}</text></g>`
+    : `<g class="trip ${x.dir}${x.lost ? " lost" : ""}"><polyline class="way" points="${line(x.pts)}"/><polyline class="trail" points="${line(x.pts)}" stroke-dasharray="${fx(x.len)} ${fx(x.len)}" stroke-dashoffset="${fx(x.len)}"/>`
+      + `<g class="mx" opacity="0"><g transform="scale(${(u * .8).toFixed(3)})"><ellipse class="sh" rx="10" ry="3.6" cy="1"/><g class="bob"><circle r="11" cy="-9"/><rect class="scroll" x="-6" y="-13" width="12" height="8" rx="2"/><path class="scroll" d="M-3.5 -10.5h7M-3.5 -7.5h5"/></g></g></g>`
+      + `<text class="tag" text-anchor="middle" opacity="0">${esc(x.label)}</text><text class="xx" text-anchor="middle" dy=".35em" opacity="0">✕</text></g>`).join("")
+    + `<circle class="pulse" cx="${fx(px)}" cy="${fx(py)}" r="0" opacity="0"/>`;
+  const gs = [...layer.children], pulse = layer.querySelector(".pulse");
+  const frame = now => {
+    const t = (now - t0) / 1000;
+    trips.forEach((x, i) => {
+      const g = gs[i];
+      if (x.kind === "here") { const a = clamp01((t - x.start) / .4); g.setAttribute("opacity", a); g.setAttribute("transform", `translate(${fx(px * (1 - (.7 + .3 * a)))} ${fx(py * (1 - (.7 + .3 * a)))}) scale(${(.7 + .3 * a).toFixed(3)})`); return; }
+      const f = clamp01((t - x.start) / x.dur), p = f * x.stop, [cx, cy] = along(x.pts, p), done = t >= x.end, after = clamp01((t - x.end) / .45);
+      const [trail, mx, tag, xx] = [g.children[1], g.children[2], g.children[3], g.children[4]];
+      trail.setAttribute("stroke-dashoffset", fx(x.len * (1 - p)));
+      mx.setAttribute("opacity", t < x.start ? 0 : done ? 1 - after : 1);
+      mx.setAttribute("transform", `translate(${fx(cx)} ${fx(cy)})`);
+      mx.children[0].children[1].setAttribute("transform", `translate(0 ${done ? 0 : fx(-Math.abs(Math.sin(t * 11)) * 3)})`);   // a little bounce as it walks
+      tag.setAttribute("opacity", t < x.start ? 0 : 1); tag.setAttribute("x", fx(cx)); tag.setAttribute("y", fx(cy - (28 + (done ? 22 * (x.stack - 1) : 0)) * u));
+      if (x.lost) { xx.setAttribute("x", fx(cx)); xx.setAttribute("y", fx(cy)); xx.setAttribute("opacity", done ? after : 0); }
+    });
+    const a = clamp01((t - here) / .8); pulse.setAttribute("r", fx((8 + 46 * a) * u)); pulse.setAttribute("opacity", t < here ? 0 : (1 - a).toFixed(3));
+    if (t < T) cityAnim = requestAnimationFrame(frame);
+  };
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches, t0 = performance.now() - (still ? T * 1000 : 0);
+  cityAnim = requestAnimationFrame(frame);
+}
+document.addEventListener("click", e => { if (e.target.closest && (e.target.closest("[data-replay]") || e.target.closest(".stage.city svg"))) playCity(); });
+
 function stageHTML(it) {
   const S = stageOf(it); if (!S) return "";
   if (reg !== "isle") return diagramHTML(it, S, STAGES[S.view]);
+  if (S.view === "city") return cityHTML(it, S);
   const G = STAGES[S.view], I = isleOf(it.p), { rows } = tellOf(it), n = Math.min(stageStep, rows.length - 1), r = rows[n], W = 1000, H = Math.round(W * G.h / G.w), me = S[it.s.who];
   const px = p => [p[0] * W, p[1] * H], fx = v => v.toFixed(1), title = k => (S.labels && S.labels[k]) || G.label[k] || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
   let g = ""; const boxes = [];
@@ -90,17 +179,20 @@ function stageHTML(it) {
   return `<figure class="stage" id="stage" data-mx="${(mx / W).toFixed(3)}" style="--ar:${(G.w / G.h).toFixed(3)}"><div class="stv">${corner === "below" ? "" : inset}<div class="stw"><div class="stg"><img src="${PICTURES[G.img]}" alt="Paxos from above: ${esc(shown.map(title).join(", "))}, and the roads between them.">
     <svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${g}${places}</svg></div></div></div>${corner === "below" ? inset : ""}</figure>`;
 }
-function centreStage() { const f = $("stage"), s = f && f.querySelector && f.querySelector(".stw"); if (!s) return; if (s.scrollWidth > s.clientWidth) s.scrollLeft = +f.dataset.mx * s.scrollWidth - s.clientWidth / 2; }
+function centreStage() { playCity(); const f = $("stage"), s = f && f.querySelector && f.querySelector(".stw"); if (!s) return; if (s.scrollWidth > s.clientWidth) s.scrollLeft = +f.dataset.mx * s.scrollWidth - s.clientWidth / 2; }
 function refreshStepper() { const it = byKey(sel), el = $("sctl"); if (!it || !el) return; el.outerHTML = ctlHTML(it, !!$("pict")); }
-function showStep(n, scroll) {
+function showStep(n) {
   const it = byKey(sel); if (!it) return;
-  stageStep = Math.max(0, Math.min(it.s.rows.length, n)); refreshStage(); refreshStepper();
-  const el = $("st-0-" + stageStep); if (!el || !scroll) return;
-  spyPause = Date.now() + 1800;      // until the scroll this starts has finished (see scrollend below)
-  const bar = $("stepbar"), below = (bar ? bar.getBoundingClientRect().height : 0) + 14;     // land the card just under the stepper box
-  window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - below, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-  el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit");
+  stageStep = Math.max(0, Math.min(it.s.rows.length + 1, n)); refreshStage(); refreshStepper();      // one past the last step is the end
+  const p = $("panel"); if (p) p.outerHTML = panelHTML(it);
 }
+// Left and right arrows step through the scene, unless a field or the drawer's buttons have the keys.
+document.addEventListener("keydown", e => {
+  if (e.altKey || e.ctrlKey || e.metaKey || !$("panel") || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+  if (e.target.closest && e.target.closest("input, textarea, select, #drawer")) return;
+  e.preventDefault(); showStep(stageStep + (e.key === "ArrowRight" ? 1 : -1));
+  const b = document.querySelector(".stepbar .sd.on"); if (b && document.activeElement && document.activeElement.closest && document.activeElement.closest(".stepbar")) b.focus();
+});
 // The picture inside the stepper box folds away, and stays folded across steps and scenes.
 let picOpen = true;
 try { if (localStorage.getItem("pic") === "shut") picOpen = false; } catch (e) {}
@@ -109,16 +201,9 @@ function togglePic() {
   const p = $("pict"); if (p) p.hidden = !picOpen; refreshStepper(); if (picOpen) centreStage();
   const t = document.querySelector(".pictog"); if (t) t.focus();
 }
-window.addEventListener("scrollend", () => { if (spyPause > Date.now()) spyPause = Date.now() + 60; });   // a smooth scroll can outlast any fixed allowance
-["wheel", "touchmove"].forEach(ev => window.addEventListener(ev, () => { spyPause = 0; }, { passive: true }));   // scrolling by hand takes over at once
-// Scrolling by hand: the step whose card sits just below the stepper becomes the current one, so stepper and picture follow the reading.
-let spyPause = 0, spyQueued = false;
-function spy() {
-  spyQueued = false; const bar = $("stepbar"), it = byKey(sel); if (!bar || !it || cmp || Date.now() < spyPause || !bar.getBoundingClientRect) return;
-  const top = bar.getBoundingClientRect().bottom, line = top + (window.innerHeight - top) * .35; let cur = 0;   // the card a third of the way down the reading space
-  for (let t = 0; t <= it.s.rows.length; t++) { const c = $("st-0-" + t); if (c && c.getBoundingClientRect && c.getBoundingClientRect().top <= line) cur = t; }
-  if (cur !== stageStep) { stageStep = cur; refreshStage(); refreshStepper(); }
+function refreshStage() {
+  const it = byKey(sel), el = $("stage"); if (!it || !el) return;
+  if (el.classList.contains("city") && el.dataset.scene === it.key && reg === "isle") { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
+  const keep = el.querySelector(".stw").scrollLeft; el.outerHTML = stageHTML(it); const s = $("stage") && $("stage").querySelector(".stw"); if (s) s.scrollLeft = keep; playCity();
 }
-window.addEventListener("scroll", () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(spy); } }, { passive: true });
-function refreshStage() { const it = byKey(sel), el = $("stage"); if (!it || !el) return; const keep = el.querySelector(".stw").scrollLeft; el.outerHTML = stageHTML(it); const s = $("stage") && $("stage").querySelector(".stw"); if (s) s.scrollLeft = keep; }
 

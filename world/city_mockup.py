@@ -1,5 +1,8 @@
 """SVG mockup of the walled city: a top-down plan (north up) and the same plan seen from the southeast, as in the concept.
-Plan coordinates are metres, x east, y north, origin at the crossroads. Run: python3 world/city_mockup.py world/plan/city-plan.svg"""
+Plan coordinates are metres, x east, y north, origin at the crossroads.
+Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app app/js/data/city.js]
+With --app it also writes the page's city stage: the southeast picture alone, where each place is in it, and the road route
+between every pair of places, lifted onto the stairs and terraces, all in the picture's own pixels."""
 import math, sys, heapq, random
 
 R2 = math.sqrt(2)
@@ -225,6 +228,19 @@ def graph():
             ka, kb, d = key(a), key(b), math.hypot(b[0] - a[0], b[1] - a[1])
             G.setdefault(ka, {})[kb] = d; G.setdefault(kb, {})[ka] = d
     return G, key
+def route(G, key, a, b):
+    """The shortest way by road from a to b, as a list of plan points."""
+    nodes = list(G); snap = lambda p: min(nodes, key=lambda n: math.hypot(n[0] - p[0], n[1] - p[1]))
+    s, t = snap(a), snap(b); D, prev, Q = {s: 0}, {}, [(0, s)]
+    while Q:
+        d, n = heapq.heappop(Q)
+        if n == t: break
+        if d > D.get(n, 1e18): continue
+        for m, w in G[n].items():
+            if d + w < D.get(m, 1e18): D[m] = d + w; prev[m] = n; heapq.heappush(Q, (d + w, m))
+    path = [t]
+    while path[-1] != s: path.append(prev[path[-1]])
+    return path[::-1]
 def dist(G, key, a, b):
     nodes = list(G); snap = lambda p: min(nodes, key=lambda n: math.hypot(n[0] - p[0], n[1] - p[1]))
     s, t = snap(a), snap(b); D = {s: 0}; Q = [(0, s)]
@@ -386,4 +402,42 @@ def svg():
     out.append('</svg>')
     return "\n".join(out)
 
+# ------------------------------------------------------------------ the page's city stage
+APP_PLACES = {pl.get("name", k): (pl["at"], pl["door"]) for k, pl in PLACES.items()}
+APP_PLACES["crossroads"] = ((0, 6), (0, 0))                                   # where people from outside come from
+
+def zroute(x, y):
+    """Height of a walker on the roads: the stairs climb evenly; elsewhere the ground or terrace underfoot."""
+    if abs(x) <= STAIR["w"] / 2 + .01 and STAIR["y0"] <= y <= STAIR["y1"]: return TOP * (y - STAIR["y0"]) / (STAIR["y1"] - STAIR["y0"])
+    if abs(y - WEST_STAIR["y"]) < .6 and WEST_STAIR["x1"] <= x <= WEST_STAIR["x0"]:
+        return TOP - (TOP - 3) * (WEST_STAIR["x0"] - x) / (WEST_STAIR["x0"] - WEST_STAIR["x1"])
+    return zat(x, y)
+
+def app_js():
+    AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
+    body = '<rect width="%d" height="%d" fill="#cfd8a4"/>' % (AW, AH) + "".join(draw(V, "city"))
+    G, key = graph(); r1 = lambda p: [round(p[0], 1), round(p[1], 1)]
+    places = {n: r1(V.p(*at, zat(*at))) for n, (at, door) in APP_PLACES.items()}
+    doors = {n: r1(V.p(*door, zroute(*door))) for n, (at, door) in APP_PLACES.items()}
+    routes = {}
+    names = sorted(APP_PLACES)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            path = route(G, key, APP_PLACES[a][1], APP_PLACES[b][1]); pts = []
+            for (x1, y1), (x2, y2) in zip(path, path[1:]):
+                n = max(1, int(math.hypot(x2 - x1, y2 - y1) / 3))                # every 3 m, so the stairs climb smoothly
+                for j in range(n):
+                    x, y = x1 + (x2 - x1) * j / n, y1 + (y2 - y1) * j / n
+                    pts.append(r1(V.p(x, y, zroute(x, y))))
+            pts.append(r1(V.p(*path[-1], zroute(*path[-1]))))
+            routes[a + "|" + b] = [p for k, p in enumerate(pts) if k == 0 or p != pts[k - 1]]
+    import json
+    city = dict(w=AW, h=AH, svg=body, places=places, doors=doors, routes=routes)
+    frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
+    return ("// The city stage, written by world/city_mockup.py --app: the southeast picture, its places and the road routes between them.\n"
+            "const CITY = %s;\n"
+            "STAGES.city = { w: CITY.w, h: CITY.h, places: %s, roads: {}, label: {}, inset: {}, img: null };   // for the Abstraction register's diagram\n"
+            % (json.dumps(city, separators=(",", ":")), json.dumps(frac)))
+
 open(sys.argv[1], "w").write(svg())
+if "--app" in sys.argv: open(sys.argv[sys.argv.index("--app") + 1], "w").write(app_js())

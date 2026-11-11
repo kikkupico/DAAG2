@@ -48,7 +48,7 @@
 .lsw .kn { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--room); box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
 .lsw[aria-checked="true"] .tr { background: var(--out); } .lsw[aria-checked="true"] .kn { transform: translateX(18px); }
 .lsw:focus-visible { outline: 2px solid var(--out); outline-offset: 3px; border-radius: 6px; }
-.scrolly .band.core { scroll-margin-top: 200px; }
+
 .stage { margin-bottom: 12px; }
 /* the Abstraction register's diagram: the island's layout without the island */
 .stage.abs .stg { min-width: 520px; }
@@ -64,3 +64,62 @@
 .stage.abs .nd .ll { font: 700 17px/1 var(--mono); stroke: none; }
 .stage.abs .nd.me circle { fill: var(--node); stroke: var(--node); } .stage.abs .nd.me .ll { fill: var(--on-node); }
 .stage.abs .nd .nl { font: 600 13px/1 var(--sans); fill: var(--soft); }
+
+/* the city stage: the picture is the svg itself, cropped by its viewBox; sizes are in em of the svg's font-size, which scales with the crop */
+.stage.city .stg { min-width: 560px; }
+.stage.city svg { position: static; display: block; width: 100%; height: auto; cursor: pointer; }
+.stage.city text { font: 600 1em/1 var(--sans); stroke-width: .28em; }
+.stage.city .cpl .pin { fill: #fff; stroke: #06131a; stroke-width: .14em; }
+.stage.city .cpl.me .pin { fill: #ffd34d; } .stage.city .cpl.me text { fill: #ffe9a8; }
+.stage.city .way { fill: none; stroke: #fff; stroke-width: .16em; stroke-dasharray: .05em .55em; stroke-linecap: round; opacity: .8; }
+.stage.city .trail { fill: none; stroke-width: .42em; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
+.stage.city .in .trail { stroke: #1f77b4; } .stage.city .out .trail { stroke: #e39a12; } .stage.city .lost .trail { stroke: #d6336c; }
+.stage.city .mx circle { stroke: #fff; stroke-width: 2.2; } .stage.city .in .mx circle { fill: #1f77b4; } .stage.city .out .mx circle { fill: #e39a12; } .stage.city .lost .mx circle { fill: #d6336c; }
+.stage.city .mx .sh { fill: rgba(0,0,0,.28); }
+.stage.city .mx rect.scroll { fill: #f6ecd2; stroke: #5a4630; stroke-width: 1; } .stage.city .mx path.scroll { fill: none; stroke: #5a4630; stroke-width: 1.1; }
+.stage.city .tag { font-size: .9em; }
+.stage.city .xx { font-size: 1.6em; fill: #ff7aa8; }
+.stage.city .pulse { fill: none; stroke: #ffd34d; stroke-width: .3em; }
+.stage.city .tmr text { fill: #ffe9a8; }
+.stage .replay { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--room); color: var(--ink); font: 600 12px/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.stage .replay:hover { background: var(--line); }
+.stepbar .stage.city .stv { max-width: calc(52vh * var(--ar, 2)); }      /* the city's crops are near 4:3, so they get more height than the wide island pictures */
+
+/* the player: the stepper and picture are the scene's main view, and the panel under them shows the chosen step */
+.player { display: grid; gap: 14px; margin-bottom: 24px; }
+.player .stepbar { position: static; margin: 0; }
+.player .stepbar .stv { max-width: calc(55vh * var(--ar, 2)); }
+.player .stepbar .stage.city .stv { max-width: calc(60vh * var(--ar, 2)); }
+.player .panel .band.core.solo { border-radius: 0 0 10px 10px; }
+.player .panel .band.core, .player .panel .band.end { animation: panel-in .25s ease-out; }
+@keyframes panel-in { from { opacity: 0; transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .player .panel .band.core, .player .panel .band.end { animation: none; } }
+.sd.fin { border-color: var(--node); color: var(--node); }
+.sd.fin svg { display: block; }
+.stepbar .panel { flex: 1 1 100%; min-width: 0; }
+/* in the panel the step's own text takes the width; what arrives and what leaves take only what they need */
+@container (min-width: 721px) { .panel .tl { grid-template-columns: fit-content(32%) minmax(0, 1fr) fit-content(32%); } }
+.stepbar .panel { padding-inline: 4px; }
+.panel .band { background: none; border-top: 0; border-radius: 0; }
+.panel .band.ph { background: var(--node-wash); border-radius: 6px; }
+.panel .in { padding-right: 4px; } .panel .outb { padding-left: 4px; }
+/* the panel: the step in words across the width, then a strip that reads arrives, then what is kept, then leaves */
+.panel .sp { display: grid; gap: 12px; padding: 6px 6px 4px; animation: panel-in .25s ease-out; }
+@media (prefers-reduced-motion: reduce) { .panel .sp { animation: none; } }
+.panel .sp-ph { font: 600 13px/1.4 var(--sans); }
+.panel .sp-ph i { font: italic 14.5px/1.4 var(--serif); font-weight: 400; color: var(--soft); margin-left: 6px; }
+.panel .fst .state { margin-top: 0; }
+.panel .aside { margin: 0; }
+.panel .end { padding: 8px 6px 4px; } .panel .end::before, .panel .end .tm { display: none; }
+.stepbar .panel { container-type: inline-size; }
+/* always three columns, so what arrives and what leaves are always in the same place; stacked on a narrow screen */
+.panel .flow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); border-radius: 8px; background: var(--ground); }
+.panel .fcol { display: grid; gap: 9px; align-content: start; min-width: 0; padding: 12px 16px 14px; }
+.panel .fcol + .fcol { border-left: 1px solid var(--line); }
+.panel .fcol .none { font: italic 14.5px/1.4 var(--serif); color: var(--soft); }
+.panel .fin .m { justify-content: space-between; }
+@container (max-width: 600px) {
+  .panel .flow { grid-template-columns: minmax(0, 1fr); }
+  .panel .fcol + .fcol { border-left: 0; border-top: 1px solid var(--line); }
+  .panel .flow .wire { display: none; }      /* stacked, the arrows would point at nothing */
+}

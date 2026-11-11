@@ -56,8 +56,8 @@ function act(b) {
   else if (d.cmp) { cmp = !cmp; render(); }
   else if (d.haz) { haz.has(d.haz) ? haz.delete(d.haz) : haz.add(d.haz); renderDrawer(); }
   else if (d.hazclear) { haz.clear(); renderDrawer(); }
-  else if (d.stage) showStep(stageStep + +d.stage, true);
-  else if (d.step) showStep(+d.step, true);
+  else if (d.stage) showStep(stageStep + +d.stage);
+  else if (d.step) showStep(+d.step);
   else if (d.pic) togglePic();
 }
 const HOT = "[data-key],[data-drawer],[data-tog],[data-lens],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-pic]";

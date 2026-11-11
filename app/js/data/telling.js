@@ -1,6 +1,6 @@
 const TELL = {
 clocks: { hat: "merchant",
-  stage: { view: "clocks", A: "fishery", B: "granary", C: "winery" }, role: "merchant", client: "customer",
+  stage: { view: "city", A: "fishery", B: "granary", C: "winery", client: "crossroads", labels: { crossroads: "a customer" } }, role: "merchant", client: "customer",
   names: { A: "fishery", B: "granary", C: "winery" },
   clientFor: [[/^(order|book)\b/, "own need"]],
   msg: (t, peer, dir) => t.replace(/^(hi|news)\b/, dir === "in" ? "fish order" : peer === "B" ? "grain order" : "wine order").replace(/^ask\b/, "cart booking"),
