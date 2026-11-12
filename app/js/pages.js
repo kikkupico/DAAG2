@@ -65,9 +65,9 @@ function tellOf(it) {
 // The stepper box, the scene's main view: the controls, then the picture, which folds away, then what happens in the chosen step.
 function stripHTML(it) {
   const pic = stageHTML(it);
-  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${ctlHTML(it, !!pic)}${pic ? `<div class="pict" id="pict"${picOpen ? "" : " hidden"}>${pic}</div>` : ""}${panelHTML(it)}</div>`;
+  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${pic ? `<div class="pict" id="pict">${pic}</div>` : ""}${ctlHTML(it)}${panelHTML(it)}</div>`;
 }
-function ctlHTML(it, hasPic) {     // one circle per step
+function ctlHTML(it) {     // one circle per step
   const { rows, phases } = tellOf(it), atEnd = stageStep >= rows.length, n = atEnd ? -1 : stageStep;
   const cls = r => (r.t && JSON.stringify(r.perm) !== JSON.stringify(r.prevPerm) ? "p" : r.t && JSON.stringify(r.temp) !== JSON.stringify(r.prevTemp) ? "t" : "n")
     + (r.recv.some(m => m[0] !== "nothing") ? " r" : "") + (r.sent.length ? " s" : "") + (r.t === n ? " on" : "");
@@ -77,11 +77,9 @@ function ctlHTML(it, hasPic) {     // one circle per step
   const end = `<button type="button" class="sd fin${atEnd ? " on" : ""}" data-step="${rows.length}" title="${U().endStep}" aria-label="${U().endStep}"${atEnd ? ` aria-current="step"` : ""}><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
   const groups = ph.map(([from, name], i) => `<div class="sg">${name ? `<span class="label">${esc(name)}</span>` : ""}<div class="dots">${rows.slice(from, i + 1 < ph.length ? ph[i + 1][0] : rows.length).map(dot).join("")}${i === ph.length - 1 ? end : ""}</div></div>`).join("");
   const k = U().strip;
-  const what = reg === "isle" ? "picture" : "diagram";
-  const tog = hasPic ? `<button type="button" class="pictog" data-pic="1" aria-controls="pict" aria-expanded="${picOpen}"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>${picOpen ? "Hide" : "Show"} ${what}</button>` : "";
   return `<div class="sctl" id="sctl">
     <button type="button" class="btn sm arrow" data-stage="-1" aria-label="Previous step"${stageStep ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sgs">${groups}</div><button type="button" class="btn sm arrow" data-stage="1" aria-label="Next step"${atEnd ? " disabled" : ""}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 2.5L10 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div>${tog}</div></div>`;
+    <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div></div></div>`;
 }
 const whoOf = it => { const I = isleOf(it.p), n = nmOf(I, it.s.who); return n ? "the " + esc(n) : (I ? esc(roleOf(I, it.s.who)) + " " : "") + ND(esc(it.s.who)); };
 function timelineHTML(it, col, dv, only) {      // only: one step's number, or "end"; the panel under the picture shows just that

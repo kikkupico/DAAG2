@@ -31,17 +31,11 @@
 .stepbar .sctl { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
 .stepbar .sfoot { flex: 1 1 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding-left: 48px; }
 .stepbar .skey { flex: 1 1 auto; }
-/* the picture rides inside the stepper box, and folds away */
+/* the picture rides at the top of the stepper box; the stepper sits below it, in reach of a thumb, on one scrolling line */
 .stepbar .pict { flex: 1 1 100%; min-width: 0; }
-.stepbar .pict[hidden] { display: none; }
 .stepbar .stage { margin: 0; }
 .stepbar .stv { max-width: calc(40vh * var(--ar, 2)); margin-inline: auto; }      /* capped by width, so the box never outgrows the screen */
 @media (max-width: 640px) { .stepbar .stage .inset { display: none; } }      /* on a phone the close-up would drop below the picture and make the pinned box too tall */
-.pictog { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; font: 600 12px/1 var(--sans); color: var(--soft); background: none; border: 0; cursor: pointer; }
-.pictog:hover { color: var(--ink); }
-.pictog svg { transition: transform .2s; } .pictog[aria-expanded="false"] svg { transform: rotate(-90deg); }
-.pictog:focus-visible { outline: 2px solid var(--out); outline-offset: 2px; border-radius: 4px; }
-@media (prefers-reduced-motion: reduce) { .pictog svg { transition: none; } }
 /* the world view switch */
 .lsw { display: inline-flex; align-items: center; gap: 10px; flex: none; padding: 6px 4px; font: 600 13px/1 var(--sans); color: var(--ink); background: none; border: 0; cursor: pointer; }
 .lsw .tr { position: relative; width: 42px; height: 24px; border-radius: 99px; background: var(--line); transition: background .2s; }
@@ -81,7 +75,8 @@
 .stage.city .xx { font-size: 1.6em; fill: #ff7aa8; }
 .stage.city .pulse { fill: none; stroke: #ffd34d; stroke-width: .3em; }
 .stage.city .tmr text { fill: #ffe9a8; }
-.stage .replay { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--room); color: var(--ink); font: 600 12px/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.stage .replay { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--room); color: var(--ink); font: 600 12px/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.stage .replay svg, .stage.city .replay svg { position: static; display: block; width: 15px; height: 15px; cursor: inherit; }
 .stage .replay:hover { background: var(--line); }
 
 /* the player: the stepper and picture are the scene's main view, and the panel under them shows the chosen step */
@@ -157,3 +152,9 @@
 .stage.city.night .in .trail { stroke: #59b4ff; } .stage.city.night .out .trail { stroke: #ffb340; } .stage.city.night .lost .trail { stroke: #ff6f9f; }
 .stage.city.night .in .mx circle { fill: #59b4ff; } .stage.city.night .out .mx circle { fill: #ffb340; } .stage.city.night .lost .mx circle { fill: #ff6f9f; }
 .stage.city.night .trail { opacity: .95; } .stage.city.night .way { opacity: .9; }
+
+.stepbar .sgs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-block: 4px; position: relative; }
+.stepbar .sgs::-webkit-scrollbar { display: none; }
+.stepbar .sg, .stepbar .dots { flex: none; flex-wrap: nowrap; }
+.stepbar .sfoot { display: none; }
+@media (min-width: 641px) { .stepbar .sfoot { display: flex; } }

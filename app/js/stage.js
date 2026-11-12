@@ -95,7 +95,7 @@ function cityHTML(it, S) {
   return `<figure class="stage city${plain ? " abs" : GEO.night ? " night" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg">`
     + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
     + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
-    + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Replay</button></div></figure>`;
+    + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></figure>`;
 }
 let cityAnim = 0;
 function playCity() {
@@ -149,7 +149,7 @@ function stageHTML(it) {       // both registers, every scene: the same messenge
   const S = stageOf(it); return S ? cityHTML(it, S) : "";
 }
 function centreStage() { playCity(); const f = $("stage"), s = f && f.querySelector && f.querySelector(".stw"); if (!s) return; if (s.scrollWidth > s.clientWidth) s.scrollLeft = +f.dataset.mx * s.scrollWidth - s.clientWidth / 2; }
-function refreshStepper() { const it = byKey(sel), el = $("sctl"); if (!it || !el) return; el.outerHTML = ctlHTML(it, !!$("pict")); }
+function refreshStepper() { const it = byKey(sel), el = $("sctl"); if (!it || !el) return; el.outerHTML = ctlHTML(it); const on = document.querySelector(".stepbar .sgs .sd.on"), g = document.querySelector(".stepbar .sgs"); if (on && g) g.scrollLeft = on.offsetLeft - (g.clientWidth - on.offsetWidth) / 2; }
 function showStep(n) {
   const it = byKey(sel); if (!it) return;
   stageStep = Math.max(0, Math.min(it.s.rows.length + 1, n)); refreshStage(); refreshStepper();      // one past the last step is the end
@@ -162,14 +162,6 @@ document.addEventListener("keydown", e => {
   e.preventDefault(); showStep(stageStep + (e.key === "ArrowRight" ? 1 : -1));
   const b = document.querySelector(".stepbar .sd.on"); if (b && document.activeElement && document.activeElement.closest && document.activeElement.closest(".stepbar")) b.focus();
 });
-// The picture inside the stepper box folds away, and stays folded across steps and scenes.
-let picOpen = true;
-try { if (localStorage.getItem("pic") === "shut") picOpen = false; } catch (e) {}
-function togglePic() {
-  picOpen = !picOpen; try { localStorage.setItem("pic", picOpen ? "open" : "shut"); } catch (e) {}
-  const p = $("pict"); if (p) p.hidden = !picOpen; refreshStepper(); if (picOpen) centreStage();
-  const t = document.querySelector(".pictog"); if (t) t.focus();
-}
 function refreshStage() {
   const it = byKey(sel), el = $("stage"); if (!it || !el) return;
   if (el.classList.contains("city") && el.dataset.scene === it.key && el.dataset.reg === reg) { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step

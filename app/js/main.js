@@ -58,9 +58,8 @@ function act(b) {
   else if (d.hazclear) { haz.clear(); renderDrawer(); }
   else if (d.stage) showStep(stageStep + +d.stage);
   else if (d.step) showStep(+d.step);
-  else if (d.pic) togglePic();
 }
-const HOT = "[data-key],[data-drawer],[data-tog],[data-lens],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-pic]";
+const HOT = "[data-key],[data-drawer],[data-tog],[data-lens],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && !WIDE.matches && $("app").dataset.drawer === "open") { setDrawer(false, true); $("dtog").focus(); return; }
