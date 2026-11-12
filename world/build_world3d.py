@@ -1586,16 +1586,19 @@ if SIEGE:
         for t_ in (.35, .7):
             for s_ in (-1, 1): fire(gate[0] + (cx - gate[0]) * t_ - dy * s_ * 6.5, gate[1] + (cy - gate[1]) * t_ + dx * s_ * 6.5)
         fire(cx - dx * R * .55 + dy * 6, cy - dy * R * .55 - dx * 6)
-        # tents pitched as men would pitch them: in knots round the fires and along the lane, each turned its own way
-        for _ in range(420):
-            a_, d_ = g.uniform(0, 2 * math.pi), R * math.sqrt(g.uniform(.1, .86)); x, y = cx + d_ * math.cos(a_), cy + d_ * math.sin(a_)
-            if math.hypot(x - cx, y - cy) < 8.5 or seg_dist(x, y, *lane[0], *lane[1]) < 3.6: continue
-            r_ = g.random()
-            if r_ < .05:
-                for _ in range(4): put(g.choice((CRATE, SACK, AMPH, PITHOS)), x + g.uniform(-1.6, 1.6), y + g.uniform(-1.4, 1.4), 0, g.uniform(0, 6), 1, r=.3)
-            elif r_ < .07: put(SPEARS, x, y, 0, g.uniform(0, 6.3), 1, r=1.5)
-            elif r_ < .08: put(WOODPILE, x, y, 0, g.uniform(0, 6.3), 1, r=1.4)
-            else: put(g.choice(TENTS), x, y, 0, math.atan2(y - cy, x - cx) + math.pi / 2 + g.uniform(-.2, .2), 1, r=2.1)
+        # tents pitched as men would pitch them: two loose rings round the pavilion, each tent with room round it, its door to the middle;
+        # stores, racks and woodpiles in the gaps
+        placed = 0; limit = 24 if big else 16
+        for ring_r, count in ((R * .5, 9 if big else 7), (R * .8, 15 if big else 11)):
+            for k in range(count):
+                a_ = heading + (k + .5) / count * 2 * math.pi + g.uniform(-.12, .12); d_ = ring_r + g.uniform(-1.2, 1.2)
+                x, y = cx + d_ * math.cos(a_), cy + d_ * math.sin(a_)
+                if seg_dist(x, y, *lane[0], *lane[1]) < 4.5 or placed >= limit: continue
+                r_ = g.random()
+                if r_ < .12:
+                    for _ in range(4): put(g.choice((CRATE, SACK, AMPH, PITHOS)), x + g.uniform(-1.4, 1.4), y + g.uniform(-1.2, 1.2), 0, g.uniform(0, 6), 1, r=.3)
+                elif r_ < .2: put(g.choice((SPEARS, WOODPILE)), x, y, 0, a_ + math.pi / 2, 1, r=1.5)
+                elif put(g.choice(TENTS), x, y, 0, a_ + math.pi + g.uniform(-.15, .15), g.uniform(1.15, 1.3), r=3.2): placed += 1
         put(CART, cx - dx * (R - 5) + dy * 5, cy - dy * (R - 5) - dx * 5, 0, g.uniform(0, 6), 1, r=2)
         put(SPEARS, gate[0] - dx * 5 + dy * 3, gate[1] - dy * 5 - dx * 3, 0, heading, 1, r=1.2)
         take_poly([(cx + (R + 4) * math.cos(a_), cy + (R + 4) * math.sin(a_)) for a_ in (k / 16 * 2 * math.pi for k in range(16))], 0)
