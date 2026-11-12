@@ -51,6 +51,8 @@ Thumbs.db
 *.exr
 *.hdr
 *.svg
+# the city and siege stages, baked by world/city_mockup.py: the page needs them
+!app/img/*.webp
 
 # Design and layered project files
 *.psd

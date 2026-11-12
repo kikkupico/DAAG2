@@ -62,6 +62,8 @@
 /* the city stage: the picture is the svg itself, cropped by its viewBox; sizes are in em of the svg's font-size, which scales with the crop */
 .stage.city .stg { min-width: 0; }      /* the whole picture, sized to the room left on screen; its labels scale up when it is small */
 .stage.city svg { position: static; display: block; width: 100%; height: auto; cursor: pointer; }
+.stage.city .baked > svg { position: absolute; inset: 0; width: 100%; height: 100%; will-change: transform; }      /* the messengers on a layer of their own, so moving them never repaints the picture beneath */
+.stage.city .baked { cursor: pointer; }
 .stage.city text { font: 600 1em/1 var(--sans); stroke-width: .28em; }
 .stage.city .cpl .pin { fill: #fff; stroke: #06131a; stroke-width: .14em; }
 .stage.city .cpl.me .pin { fill: #ffd34d; } .stage.city .cpl.me text { fill: #ffe9a8; }

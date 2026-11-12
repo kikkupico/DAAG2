@@ -91,8 +91,10 @@ function cityPlaces(it, S) {       // the names of the scene's places, yours mar
 function cityHTML(it, S) {
   useGeo(S);
   const [bx, by, bw, bh] = cityBox(it, S), u = bw / 650, me = S[it.s.who], [mx] = GEO.places[me];
-  const plain = reg !== "isle", world = plain ? `<rect class="gnd" width="${GEO.w}" height="${GEO.h}"/><path class="rdn street" d="${GEO.plain.street}"/><path class="rdn road" d="${GEO.plain.road}"/>` : GEO.svg;
-  return `<figure class="stage city${plain ? " abs" : GEO.night ? " night" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg">`
+  const plain = reg !== "isle", baked = !plain && GEO.img;     // the drawn city and siege: baked to WebP by world/city_mockup.py, under the messengers
+  const world = plain ? `<rect class="gnd" width="${GEO.w}" height="${GEO.h}"/><path class="rdn street" d="${GEO.plain.street}"/><path class="rdn road" d="${GEO.plain.road}"/>` : baked ? "" : GEO.svg;
+  return `<figure class="stage city${plain ? " abs" : GEO.night ? " night" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg${baked ? " baked" : ""}">`
+    + (baked ? `<img class="wld" src="${Object.values(GEO.img)[0]}" srcset="${Object.entries(GEO.img).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="${GEO.w}" height="${GEO.h}" alt="" decoding="async">` : "")
     + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
     + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
     + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></figure>`;
@@ -133,7 +135,7 @@ function playCity() {
       mx.setAttribute("opacity", t < x.start ? 0 : done ? 1 - after : 1);
       mx.setAttribute("transform", `translate(${fx(cx)} ${fx(cy)})`);
       mx.children[0].children[1].setAttribute("transform", `translate(0 ${done ? 0 : fx(-Math.abs(Math.sin(t * 11)) * 3)})`);   // a little bounce as it walks
-      const [an, dx] = edgeAnchor(cx); tag.setAttribute("text-anchor", an); tag.setAttribute("dx", dx);
+      const [an, dx] = edgeAnchor(cx); if (x.an !== an) { x.an = an; tag.setAttribute("text-anchor", an); tag.setAttribute("dx", dx); }    // text layout is dear: only when it changes
       tag.setAttribute("opacity", t < x.start ? 0 : 1); tag.setAttribute("x", fx(cx)); tag.setAttribute("y", fx(cy - (28 + (done ? 22 * (x.stack - 1) : 0)) * u));
       if (x.lost) { xx.setAttribute("x", fx(cx)); xx.setAttribute("y", fx(cy)); xx.setAttribute("opacity", done ? after : 0); }
     });
@@ -143,7 +145,7 @@ function playCity() {
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches, t0 = performance.now() - (still ? T * 1000 : 0);
   cityAnim = requestAnimationFrame(frame);
 }
-document.addEventListener("click", e => { if (e.target.closest && (e.target.closest("[data-replay]") || e.target.closest(".stage.city svg"))) playCity(); });
+document.addEventListener("click", e => { if (e.target.closest && (e.target.closest("[data-replay]") || e.target.closest(".stage.city .stg"))) playCity(); });
 
 function stageHTML(it) {       // both registers, every scene: the same messengers; only the background differs
   const S = stageOf(it); return S ? cityHTML(it, S) : "";

@@ -4,8 +4,9 @@ Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app app/js/data/ci
      python3 world/city_mockup.py --siege world/plan/siege-plan.svg [--app app/js/data/siege.js]
 --siege draws the soldiers' world instead: the same land, a flat walled town with its gates shut, and four camps round it
 (the commander's to the north, A, B and C to the east, south and west), linked only by the road round the walls.
-With --app it also writes the page's city stage: the southeast picture alone, where each place is in it, and the road route
-between every pair of places, lifted onto the stairs and terraces, all in the picture's own pixels."""
+With --app it also writes the page's city stage: the southeast picture alone (baked to app/img/<view>-<width>.webp, which needs
+Google Chrome and cwebp), where each place is in it, and the road route between every pair of places, lifted onto the stairs and
+terraces, all in the picture's own pixels. The page's city is made with --detail; the siege with --siege --night --detail."""
 import math, sys, heapq, random
 
 R2 = math.sqrt(2)
@@ -728,13 +729,34 @@ def app_js():
     o = V.p(0, 0, 0); vec = lambda q: [round(q[0] - o[0], 4), round(q[1] - o[1], 4)]
     iso = dict(e=vec(V.p(1, 0, 0)), n=vec(V.p(0, 1, 0)), u=vec(V.p(0, 0, 1)))       # pixels per metre east, north and up
     import json
-    city = dict(w=AW, h=AH, night=NIGHT, svg=body, plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
-    frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
     name, view = ("SIEGE", "siege") if SIEGE else ("CITY", "city")
+    img = bake(body, AW, AH, view)                                                 # the picture itself goes to the page as an image, not as markup
+    city = dict(w=AW, h=AH, night=NIGHT, img=img, plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
+    frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
     head = "// The %s stage, written by world/city_mockup.py%s --app: the southeast picture, its places and the road routes between them.\n" % (view, " --siege" if SIEGE else "")
     data = "const %s = %s;\n" % (name, json.dumps(city, separators=(",", ":")))
     diag = "STAGES.%s = { w: %s.w, h: %s.h, places: %s, roads: {}, label: {}, inset: {}, img: null };   // for the Abstraction register\n" % (view, name, name, json.dumps(frac))
     return head + data + diag
+
+BAKE_WIDTHS = (800, 1200, 1800)           # the stage is about 360 css px on a phone (720 px at 2x, 1080 at 3x) and at most about 900 on a desktop (1800 at 2x)
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+def bake(body, AW, AH, view):
+    """Render the stage picture to WebP beside the page (app/img), once per width, with headless Chrome (the only renderer
+    that draws the night's screen-blended lights as the browser does) and cwebp. Returns {width: path from the page}."""
+    import os, subprocess, tempfile
+    app_dir = os.path.normpath(os.path.join(os.path.dirname(sys.argv[sys.argv.index("--app") + 1]), "..", ".."))
+    os.makedirs(os.path.join(app_dir, "img"), exist_ok=True)
+    out = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, view + ".svg")
+        open(src, "w").write('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d">%s</svg>' % (AW, AH, AW, AH, body))
+        for w in BAKE_WIDTHS:
+            png, rel = os.path.join(tmp, "%s-%d.png" % (view, w)), "img/%s-%d.webp" % (view, w)
+            subprocess.run([CHROME, "--headless", "--disable-gpu", "--hide-scrollbars", "--window-size=%d,%d" % (AW, AH),
+                            "--force-device-scale-factor=%g" % (w / AW), "--screenshot=" + png, "file://" + src], check=True, capture_output=True)
+            subprocess.run(["cwebp", "-quiet", "-q", "82", "-m", "6", png, "-o", os.path.join(app_dir, rel)], check=True)
+            out[w] = rel
+    return out
 
 def crop_svg(x0, x1, y0, y1):
     AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
