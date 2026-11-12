@@ -1055,9 +1055,10 @@ def wall_line(poly, h=7.5, thick=3.2, towers=3, closed=False, wallc="#d3c6a8", t
             if towers and k % towers == 0 and not (skip_first and k == 1) and all(math.hypot(b[0] - hx, b[1] - hy) > half + 4 for hx, hy, half in HOLES):
                 masonry(rect(b[0], b[1], 7.5, 7.5, ang), tower_h, wallc, [(b[0] + dx, b[1] + dy, ang) for dx in (-3, 0, 3) for dy in (-3, 0, 3) if dx or dy], abs_top=None if abs_top is None else abs_top + 3.5)
 
+LAMPS = []                                                                               # extra lights: (x, y, z, watts, kind)
 # ================================================================ the walls of the city (or the enemy town), from the drawing's courses
 # The drawing's courses run straight through its gates (only towers and a lintel mark them); here each opening is cut out.
-HOLES = [] if SIEGE else [(gx, gy, 4.6) for gx, gy in S["gates"]] + ([(*S["postern"], 3.0)] if S.get("postern") else []) + [(0, 101.5, 8.2), (-46, 114.5, 2.6)]
+HOLES = [(gx, gy, 4.6) for gx, gy in S["gates"]] if SIEGE else [(gx, gy, 4.6) for gx, gy in S["gates"]] + ([(*S["postern"], 3.0)] if S.get("postern") else []) + [(0, 101.5, 8.2), (-46, 114.5, 2.6)]
 def cut_wall(pts):
     """A stretch of wall as rectangles, with any opening that lies on it left out."""
     p = ((pts[0][0] + pts[3][0]) / 2, (pts[0][1] + pts[3][1]) / 2); q = ((pts[1][0] + pts[2][0]) / 2, (pts[1][1] + pts[2][1]) / 2)
@@ -1109,13 +1110,22 @@ def arch_gate(cx, cy, ux, uy, span, ow, spring, height, thick, shut=False, insid
         for k in range(n):
             a = -span / 2 + (k + .5) * span / n; x, y, _ = P(a, side * (thick / 2 - .45), 0)
             boxr(sk, ck, x, y, 1.2 if abs(ux) > .5 else .9, .9 if abs(ux) > .5 else 1.2, ztop, ztop + .95)
-    dk = "wood:#5a3c24"
-    if shut:                                                                           # the leaves closed, studded planks filling the arch, on both faces
+    dk = "wood:#7a5634"
+    if shut:                                                                           # the leaves closed and barred: studded, iron-banded planks filling the arch
         for side in (-1, 1):
-            b = side * .2
+            b = side * (thick / 2 - .3)
             oriented(dk, [P(-r, b, zg), P(r, b, zg), P(r, b, zs), P(-r, b, zs)], (vx * side, vy * side, 0))
             for (a0, z0), (a1, z1) in zip(arch, arch[1:]): oriented(dk, [P(a0, b, zs), P(a1, b, zs), P(a1, b, z1), P(a0, b, z0)], (vx * side, vy * side, 0))
-            oriented("flat:#2a1d12", [P(-.05, b + side * .02, zg), P(.05, b + side * .02, zg), P(.05, b + side * .02, zs + r), P(-.05, b + side * .02, zs + r)], (vx * side, vy * side, 0))
+            bf = b + side * .03
+            oriented("flat:#1c140c", [P(-.06, bf, zg), P(.06, bf, zg), P(.06, bf, zs + r), P(-.06, bf, zs + r)], (vx * side, vy * side, 0))
+            for zb_ in (.7, 1.9, 3.1, zs - zg + r * .55):                              # iron bands, studs along them
+                oriented("flat:#2e2b28", [P(-r + .1, bf, zg + zb_), P(r - .1, bf, zg + zb_), P(r - .1, bf, zg + zb_ + .16), P(-r + .1, bf, zg + zb_ + .16)], (vx * side, vy * side, 0))
+                for k in range(9):
+                    a_ = -r + .35 + k * (2 * r - .7) / 8; boxr("flat:#3a3632", "flat:#3a3632", *P(a_, bf + side * .04, 0)[:2], .09, .09, zg + zb_ + .03, zg + zb_ + .13)
+        for zb_ in (1.3, 2.9):                                                         # the bars: heavy beams across the leaves, in iron brackets
+            for side in (-1, 1):
+                b = side * (thick / 2 - .3) - side * .25
+                beam("wood:#3e2a18", P(-r - .4, b, zg + zb_), P(r + .4, b, zg + zb_), r=.16, n=6)
     else:                                                                              # open: each leaf against its jamb, on the town side
         for a in (-r + .1, r - .1):
             b0, b1 = inside * .2, inside * min(thick / 2, r - .1) + inside * .2
@@ -1124,9 +1134,22 @@ def arch_gate(cx, cy, ux, uy, span, ow, spring, height, thick, shut=False, insid
 for gx, gy in S["gates"]:                                                              # the town's gates, between the drawing's gate towers
     ux, uy = (0, 1) if gy == 0 else (1, 0); ins = -1 if (gx > 0 or gy > 0) else 1
     if not SIEGE: arch_gate(gx, gy, ux, uy, 9.2, 5.6, 4.6, 9.0, 3.4, inside=ins if gy == 0 else (1 if gy < 0 else -1))
-    else:                                                                              # shut: the wall runs on across; the closed gate is set in its outer face
-        nx_, ny_ = (1 if gx > 0 else -1 if gx < 0 else 0), (1 if gy > 0 else -1 if gy < 0 else 0)
-        arch_gate(gx + nx_ * 1.75, gy + ny_ * 1.75, ux, uy, 9.2, 5.0, 4.0, 8.4, .3, shut=True)
+    else:                                                                              # shut and barred, a tower either side, the town side shored up
+        arch_gate(gx, gy, ux, uy, 9.4, 4.8, 4.0, 9.4, 3.4, shut=True, wallc="#d3c6a8")
+        for s_ in (-1, 1):
+            tx, ty = gx + ux * s_ * 8, gy + uy * s_ * 8
+            masonry(rect(tx, ty, 7, 7), 11.5, "#d3c6a8", [(tx + a, ty + b, 0) for a in (-2.8, 0, 2.8) for b in (-2.8, 0, 2.8) if a or b])
+        inx, iny = (-1 if gx > 0 else 1 if gx < 0 else 0), (-1 if gy > 0 else 1 if gy < 0 else 0)  # into the town
+        for s_ in (-1, 1):                                                             # torches in brackets either side of the arch, watching the approach
+            tx, ty = gx - inx * 2.1 + ux * s_ * 3.6, gy - iny * 2.1 + uy * s_ * 3.6
+            beam("flat:#2a2622", (tx + inx * .4, ty + iny * .4, 4.6), (tx, ty, 5.0), r=.05, n=4); cyl("emit:#ffcf6e", tx, ty, .16, 5.0, 5.55, n=6, r1=.03)
+            LAMPS.append((tx - inx * .4, ty - iny * .4, 5.3, 700, "torch"))
+        mx_, my_ = gx + inx * 4.2, gy + iny * 4.2
+        for k in range(5):                                                             # timber shores against the leaves, stones heaped at their feet
+            a_ = (k - 2) * 1.0; px_, py_ = mx_ + ux * a_, my_ + uy * a_
+            beam("wood:#4f3a26", (px_ + inx * 3.2, py_ + iny * 3.2, 0), (px_ - inx * .6, py_ - iny * .6, 3.2), r=.15)
+        g_ = random.Random(int(gx * 3 + gy))
+        for _ in range(16): place("boulder_01", mx_ + ux * g_.uniform(-2.6, 2.6) + inx * g_.uniform(0, 3), my_ + uy * g_.uniform(-2.6, 2.6) + iny * g_.uniform(0, 3), -.2, h=g_.uniform(.5, 1.1), g=g_)
 if not SIEGE:
     # The town's walls climb the hill's flanks from the octagon's north corners to the citadel; the west one carries the postern.
     PX, PY = S["postern"]
@@ -1218,7 +1241,6 @@ if not SIEGE:
         prism("stone:#d6caae", "marble:#e9e2d2", box_pts(x2, 112.4, x, 115.6), min(zt(x2, 112.4), zt(x2, 115.6), zm) - .6, zm + .08); x = x2
     take_poly(box_pts(min(xs_) - 3, 112, max(xs_), 116), 0)
 
-LAMPS = []                                                                               # extra lights: (x, y, z, watts, kind)
 # ================================================================ the town: each block divided into lots of different sizes, each lot built on
 def split(r, g, mn=8.5, mx=15):
     x0, y0, x1, y1 = r; w, d = x1 - x0, y1 - y0
