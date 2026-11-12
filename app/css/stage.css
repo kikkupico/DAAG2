@@ -158,3 +158,9 @@
 .stepbar .sg, .stepbar .dots { flex: none; flex-wrap: nowrap; }
 .stepbar .sfoot { display: none; }
 @media (min-width: 641px) { .stepbar .sfoot { display: flex; } }
+/* the step groups and the key sit in the middle, the arrows stay at the ends; auto margins centre the row
+   but fall back to nothing when the steps overflow, so a long scene still scrolls from its first step */
+.stepbar .sgs > .sg:first-child { margin-left: auto; }
+.stepbar .sgs > .sg:last-child { margin-right: auto; }
+.stepbar .sfoot { justify-content: center; padding-inline: 48px; }
+.stepbar .skey { flex: 0 1 auto; justify-content: center; }

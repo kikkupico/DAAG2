@@ -6,7 +6,8 @@ try { if (localStorage.getItem("lens") === "outside") lens = "outside"; if (loca
 const UI = {
   plain: {
     thesis: "Sixteen results from distributed computing, each told from inside a single node. A node knows what it holds and what arrives. Everything else is a guess.",
-    map: "Map of the sixteen", arrives: "Arrives", leaves: "Leaves", perm: "permanent", temp: "temporary",
+    title: "Distributed Algorithms, One Node at a Time",
+    map: "Overview", arrives: "Arrives", leaves: "Leaves", perm: "permanent", temp: "temporary",
     permL: "permanent: handed to a replacement", tempL: "temporary: ends with the node",
     outBtn: "Global view", goOut: "Turn on global view", goIn: "Turn it off", seen: "Global view", point: "The point",
     endStep: "The end: what the node could know, and what happened",
@@ -18,7 +19,8 @@ const UI = {
   },
   isle: {
     thesis: "Paxos has no assembly hall. Its merchants, part-time legislators, soldiers and scholars each work from their own place, and all they know of one another comes by courier.",
-    map: "Map of the sixteen", arrives: "Arrives", leaves: "Leaves", perm: "in the ledger", temp: "on the slate",
+    title: "Distributed Algorithms of Ancient Greece",
+    map: "Bird's Eye View", arrives: "Arrives", leaves: "Leaves", perm: "in the ledger", temp: "on the slate",
     permL: "ledger: passes to a successor", tempL: "slate: wiped when its owner goes",
     outBtn: "World view", goOut: "Turn on world view", goIn: "Turn it off", seen: "World view", point: "The point",
     endStep: "The end: what could be known, and what happened",

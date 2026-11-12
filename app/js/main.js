@@ -19,6 +19,7 @@ function renderDrawer() {
 function render() {
   const it = resolve(sel), land = isPaper(sel);
   document.documentElement.dataset.reg = reg;
+  $("brand").textContent = document.title = U().title;
   document.querySelectorAll(".reg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.reg === reg)));
   renderDrawer();
   $("where").textContent = it ? paperName(it.p) + (land ? "" : " · " + nameOf(it)) : U().map;
@@ -34,7 +35,8 @@ function setDrawer(open, keep) {
   $("dtog").setAttribute("aria-expanded", String(open));
   if (!keep) try { localStorage.setItem("drawer", open ? "open" : "closed"); } catch (e) {}
 }
-function go(key, keep) {
+// to: where the page lands. "top" (from the side menu) shows the top of the page; "scene" (from the pager) puts the scene's title under the bar.
+function go(key, keep, to) {
   const was = resolve(sel), it = resolve(key);
   if (!it && key !== "map") return;
   if (key !== sel) stageStep = 0;
@@ -43,12 +45,14 @@ function go(key, keep) {
   render();
   if (!WIDE.matches) setDrawer(false, true);
   if (keep) return;
-  if (!it || !was || was.p !== it.p || isPaper(key)) $("main").scrollIntoView({ block: "start" });
+  if (to === "top" || (to === "scene" && key === "map")) window.scrollTo(0, 0);
+  else if (to === "scene") $("scene").scrollIntoView({ block: "start" });
+  else if (!it || !was || was.p !== it.p || isPaper(key)) $("main").scrollIntoView({ block: "start" });
   else if ($("scene").getBoundingClientRect().top < 0) $("scene").scrollIntoView({ block: "start" });
 }
 function act(b) {
   const d = b.dataset;
-  if (d.key) go(d.key, !!d.keep);
+  if (d.key) go(d.key, !!d.keep, b.closest("#drawer") ? "top" : b.closest(".pager") ? "scene" : "");
   else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("app").dataset.drawer !== "open" : d.drawer === "open");
   else if (d.tog) { expanded.has(d.tog) ? expanded.delete(d.tog) : expanded.add(d.tog); renderDrawer(); }
   else if (d.lens) setLens(d.lens === "toggle" ? (lens === "outside" ? "inside" : "outside") : d.lens);

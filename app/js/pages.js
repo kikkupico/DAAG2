@@ -128,7 +128,7 @@ function briefHTML(it) {
   const O = ovOf(it), text = O ? mk(O.outside || "") : it.s.outside ? nodeText(it.s.outside, it.s) : "";
   return text ? `<div class="xo brief"><span class="label">${O ? "What the world view shows, and " + (nmOf(isleOf(it.p), it.s.who) ? "the " + esc(nmOf(isleOf(it.p), it.s.who)) : esc(it.s.who)) + " could not see" : `What ${esc(it.s.who)} cannot see`}</span><p>${text}</p></div>` : "";
 }
-const pointHTML = it => `<p class="point"><span class="label">${U().point}</span>${esc(TAKE[it.key])}</p>`;
+const pointHTML = it => `<p class="point"><span class="label">${U().point}: </span>${esc(TAKE[it.key])}</p>`;
 function castHTML(it) {
   const s = it.s, I = isleOf(it.p), O = ovOf(it);
   if (!I) return `You are inside node <span class="nd">${esc(s.who)}</span>${s.role ? `, ${/^(coordinator|primary)$/.test(s.role) ? "the" : "a"} ${esc(s.role)}` : ""}. Out there: ${nodeText(s.peers, s)}.`;
@@ -151,12 +151,12 @@ function sceneHTML(it) {
     const column = (x, n) => `<section class="col"><h3>${esc(nameOf(x))}${ocMark(x.oc, "xo")}</h3>${pointHTML(x)}${noteOf(x) ? `<p class="rule">${noteOf(x)}</p>` : ""}${briefHTML(x)}${timelineHTML(x, n, d)}</section>`;
     body = `<p class="cmpnote">${d < 0 ? U().same : d === 0 ? U().differ0 : U().until(d)}</p><div class="cmp">${column(it, 0)}${column(other, 1)}</div>`;
   } else body = briefHTML(it) + `<div class="player">${stripHTML(it)}</div>`;
-  return `<div class="scene-head"><div>
-      <h2>${esc(nameOf(it))}</h2>
+  return `<div class="scene-head">
+      <div class="stitle"><h2>${esc(nameOf(it))}</h2><div class="ctl">${cmpBtn}${lensBtns}</div></div>
       ${both ? "" : pointHTML(it)}
       <p class="cast">${castHTML(it)}</p>
       ${noteOf(it) && !both ? `<p class="rule">${noteOf(it)}</p>` : ""}
-    </div><div class="ctl">${cmpBtn}${lensBtns}</div></div>
+    </div>
     ${body}
     <nav class="pager" aria-label="Reading order">${prev ? pg(prev, "Before") : `<button type="button" data-key="map"><span class="label">Before</span><span>${U().map}</span></button>`}${pg(next, "Next")}</nav>`;
 }
@@ -191,7 +191,7 @@ function mapHTML() {
     ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody on the island has it."]];
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
   if (isle) return `<div class="map">
-    <h1>Distributed Algorithms of Ancient Greece</h1>
+    <h1>${U().title}</h1>
     <p class="idea">Paxos has no assembly hall. Its people work from their own places, legislating part-time between other duties, and everything one of them knows about another arrived by courier. Sixteen results from distributed computing are told here as scenes from that island, each from inside one person's view.</p>
     <p class="label">Four kinds of work, four kinds of problem</p>
     ${items(Object.values(HAT))}
@@ -202,7 +202,7 @@ function mapHTML() {
     ${start}
   </div>`;
   return `<div class="map">
-    <h1>Sixteen results, one point of view</h1>
+    <h1>${U().title}</h1>
     <p class="idea">Each result is told as a few short scenes from inside one node. You see what it holds, what arrives and what it sends. Then you step outside and see what it could not.</p>
     <p class="idea">An arrow leads from a result to one that answers a problem it raises, or builds on it.</p>
     ${svg}${start}
