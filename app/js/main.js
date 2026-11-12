@@ -57,13 +57,14 @@ function act(b) {
   else if (d.tog) { expanded.has(d.tog) ? expanded.delete(d.tog) : expanded.add(d.tog); renderDrawer(); }
   else if (d.lens) setLens(d.lens === "toggle" ? (lens === "outside" ? "inside" : "outside") : d.lens);
   else if (d.reg) { reg = d.reg; try { localStorage.setItem("reg", reg); } catch (e) {} render(); }
+  else if (d.bg) { bg = bg === "rendered" ? "drawn" : "rendered"; try { localStorage.setItem("bg", bg); } catch (e) {} refreshStage(); }
   else if (d.cmp) { cmp = !cmp; render(); }
   else if (d.haz) { haz.has(d.haz) ? haz.delete(d.haz) : haz.add(d.haz); renderDrawer(); }
   else if (d.hazclear) { haz.clear(); renderDrawer(); }
   else if (d.stage) showStep(stageStep + +d.stage);
   else if (d.step) showStep(+d.step);
 }
-const HOT = "[data-key],[data-drawer],[data-tog],[data-lens],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage]";
+const HOT = "[data-key],[data-drawer],[data-tog],[data-lens],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-bg]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && !WIDE.matches && $("app").dataset.drawer === "open") { setDrawer(false, true); $("dtog").focus(); return; }

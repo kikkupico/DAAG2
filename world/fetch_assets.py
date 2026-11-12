@@ -19,6 +19,8 @@ MODELS = ["tree_small_02", "island_tree_02", "searsia_burchellii", "searsia_luci
           "wild_rooibos_bush", "namaqualand_stones_01", "boulder_01", "wicker_basket_01", "wooden_crate_02", "ceramic_vase_01",
           "ceramic_vase_03", "jug_01"]
 MODEL_RES = "1k"
+# Skies with no sun in them (the sun is a lamp, set to the drawing's shadows), for world/build_world3d.py.
+HDRIS = ["kloofendal_48d_partly_cloudy_puresky", "qwantani_puresky"]
 
 
 def get_json(url):
@@ -54,6 +56,9 @@ def main():
         for rel, inc in entry.get("include", {}).items():
             total += download(inc["url"], os.path.join(ASSETS, name, rel))
         print("model", name); sys.stdout.flush()
+    for name in HDRIS:
+        total += download(get_json("https://api.polyhaven.com/files/" + name)["hdri"]["2k"]["hdr"]["url"], os.path.join(ASSETS, name, name + "_2k.hdr"))
+        print("hdri", name); sys.stdout.flush()
     print("downloaded %.0f MB" % (total / 1e6))
 
 

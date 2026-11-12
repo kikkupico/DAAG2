@@ -6,7 +6,9 @@ Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app app/js/data/ci
 (the commander's to the north, A, B and C to the east, south and west), linked only by the road round the walls.
 With --app it also writes the page's city stage: the southeast picture alone (baked to app/img/<view>-<width>.webp, which needs
 Google Chrome and cwebp), where each place is in it, and the road route between every pair of places, lifted onto the stairs and
-terraces, all in the picture's own pixels. The page's city is made with --detail; the siege with --siege --night --detail."""
+terraces, all in the picture's own pixels. The page's city is made with --detail; the siege with --siege --night --detail.
+--dump scene.json writes the same world as data for world/build_world3d.py, which builds a richer world on it in Blender, in exactly this frame;
+--bg3d render.png then bakes that render beside the drawing (app/img/<view>-3d-<width>.webp), and the page can show either."""
 import math, sys, heapq, random
 
 R2 = math.sqrt(2)
@@ -731,7 +733,8 @@ def app_js():
     import json
     name, view = ("SIEGE", "siege") if SIEGE else ("CITY", "city")
     img = bake(body, AW, AH, view)                                                 # the picture itself goes to the page as an image, not as markup
-    city = dict(w=AW, h=AH, night=NIGHT, img=img, plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
+    img3d = bake_png(BG3D, view + "-3d") if BG3D else None                         # the same frame rendered in Blender (world/build_city3d.py), if given
+    city = dict(w=AW, h=AH, night=NIGHT, img=img, **({"img3d": img3d} if img3d else {}), plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
     frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
     head = "// The %s stage, written by world/city_mockup.py%s --app: the southeast picture, its places and the road routes between them.\n" % (view, " --siege" if SIEGE else "")
     data = "const %s = %s;\n" % (name, json.dumps(city, separators=(",", ":")))
@@ -758,6 +761,21 @@ def bake(body, AW, AH, view):
             out[w] = rel
     return out
 
+def bake_png(src, view):
+    """Shrink a rendered picture of the same frame to the page's widths, as WebP beside the drawn ones. Returns {width: path from the page}."""
+    import os, subprocess, tempfile
+    from PIL import Image
+    app_dir = os.path.normpath(os.path.join(os.path.dirname(sys.argv[sys.argv.index("--app") + 1]), "..", ".."))
+    im = Image.open(src).convert("RGB"); assert abs(im.width / im.height - 4 / 3) < .002, "the render must be 4:3, as the drawn frame"
+    out = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        for w in BAKE_WIDTHS:
+            png, rel = os.path.join(tmp, "%s-%d.png" % (view, w)), "img/%s-%d.webp" % (view, w)
+            im.resize((w, round(w * 3 / 4)), Image.LANCZOS).save(png)
+            subprocess.run(["cwebp", "-quiet", "-q", "80", "-m", "6", png, "-o", os.path.join(app_dir, rel)], check=True)
+            out[w] = rel
+    return out
+
 def crop_svg(x0, x1, y0, y1):
     AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
     pts = [V.p(x, y, z) for x in (x0, x1) for y in (y0, y1) for z in (0, 34)]
@@ -765,6 +783,46 @@ def crop_svg(x0, x1, y0, y1):
     body = '<rect x="-2000" y="-2000" width="6000" height="6000" fill="%s"/>' % GROUND + "".join(draw(V, "crop"))
     return '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="%.1f %.1f %.1f %.1f">%s</svg>' % ((bx1 - bx0) * 1.6, (by1 - by0) * 1.6, bx0, by0, bx1 - bx0, by1 - by0, body)
 
+def dump():
+    """Everything the Blender build (world/build_city3d.py) needs to model this same world in the same frame, as JSON."""
+    import json
+    AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
+    probes = [(x, y, z) for x, y, z in ((0, 0, 0), (150, 0, 0), (-148, 0, 0), (0, -114, 0), (0, 114, TOP), (0, 72, TOP * 32 / 64), (-200, 150, 0), (200, -150, 0))]
+    return json.dumps(dict(
+        siege=SIEGE, night=NIGHT, detail=DETAIL, ground=GROUND, sun=SUN, top=TOP, w=W, frame=dict(aw=AW, ah=AH, k=V.k, elev=ELEV, width_m=R2 * L),
+        probes=[dict(xyz=p, px=V.p(*p)) for p in probes],
+        solids=SOLIDS, trees=TREES, flat=FLAT, roads=ROADS, road_col=ROAD_COL, glows=GLOWS,
+        hill=[dict(pts=h["pts"], z=h["z"], h=h["h"], roof=h["roof"], wall=h["wall"]) for h in HILL],
+        shore=[(x, shore(x)) for x in range(-400, 401, 4)] if not SIEGE else [],
+        stair=STAIR, west_stair=WEST_STAIR, gates=GATES, camps=CAMPS, octagon=octagon(0),
+        places={n: dict(at=at, door=door, z=zat(*at), zdoor=zroute(*door)) for n, (at, door) in APP_PLACES.items()},
+        routes=route_samples(), precinct=PRECINCT, wall_n=WALL_N if not SIEGE else [], postern=POSTERN if not SIEGE else None), separators=(",", ":"))
+
+def route_samples():
+    """Every road route the page draws, in plan metres with the walker's height: the same samples app_js() projects."""
+    G, key = graph(); names = sorted(APP_PLACES); out = []
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            try: path = route(G, key, APP_PLACES[a][1], APP_PLACES[b][1])
+            except KeyError: continue
+            pts = []
+            for (x1, y1), (x2, y2) in zip(path, path[1:]):
+                n = max(1, int(math.hypot(x2 - x1, y2 - y1) / 3))
+                for j in range(n):
+                    x, y = x1 + (x2 - x1) * j / n, y1 + (y2 - y1) * j / n; pts.append((round(x, 2), round(y, 2), round(zroute(x, y), 3)))
+            pts.append((round(path[-1][0], 2), round(path[-1][1], 2), round(zroute(*path[-1]), 3)))
+            out.append(pts)
+    return out
+
+BG3D = None
+if "--bg3d" in sys.argv:                                                          # a Blender render of this frame, baked beside the drawing
+    i = sys.argv.index("--bg3d"); BG3D = sys.argv.pop(i + 1); sys.argv.pop(i)
+elif "--app" in sys.argv:                                                          # otherwise the last render, if there is one, so a rebuild keeps it
+    import os
+    _r = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build3d", ("siege" if SIEGE else "city") + ".png")
+    if os.path.exists(_r): BG3D = _r
+if "--dump" in sys.argv:
+    i = sys.argv.index("--dump"); open(sys.argv.pop(i + 1), "w").write(dump()); sys.argv.pop(i)
 if "--crop" in sys.argv: open(sys.argv[sys.argv.index("--crop") + 1], "w").write(crop_svg(-70, 120, 25, 205))
 open(sys.argv[1], "w").write(svg())
 if "--app" in sys.argv: open(sys.argv[sys.argv.index("--app") + 1], "w").write(app_js())

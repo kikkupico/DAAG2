@@ -129,3 +129,6 @@ __pycache__/
 env/
 
 
+
+# the Blender build of the city and siege: dumped scenes, renders, logs (world/build_city3d.py)
+world/build3d/
