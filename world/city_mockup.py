@@ -2,8 +2,10 @@
 Plan coordinates are metres, x east, y north, origin at the crossroads.
 Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app app/js/data/city.js]
      python3 world/city_mockup.py --siege world/plan/siege-plan.svg [--app app/js/data/siege.js]
---siege draws the soldiers' world instead: the same land, a flat walled town with its gates shut, and four camps round it
-(the commander's to the north, A, B and C to the east, south and west), linked only by the road round the walls.
+--siege draws the soldiers' world instead: the same land, a flat walled town with its gates shut, shut in by the besiegers' double wall
+(as at Plataea, 429 BC: two walls of mud brick with a walk between them), with a siege mound against the town's south-east face, and four
+camps outside the lines (the commander's to the north, A, B and C to the east, south and west). The only way between camps is the walk
+inside the double wall, so every message goes the long way round, out of bowshot of the town.
 With --app it also writes the page's city stage: the southeast picture alone (baked to app/img/<view>-<width>.webp, which needs
 Google Chrome and cwebp), where each place is in it, and the road route between every pair of places, lifted onto the stairs and
 terraces, all in the picture's own pixels. The page's city is made with --detail; the siege with --siege --night --detail.
@@ -80,7 +82,11 @@ STAIR = dict(w=7, y0=40, y1=104)                                          # the 
 POSTERN = min(WALL_N, key=lambda p: math.hypot(p[0] + 90, p[1] - 114))    # a small gate in the west wall
 WEST_STAIR = dict(y=114, x0=-46, x1=POSTERN[0])                          # a narrow stair down the far side to it
 if SIEGE: TIERS, PRECINCT = [], []                                        # the besieged town is flat
-CAMPS = {"commander's camp": ((0, 158), (0, 144)), "camp A": ((158, 0), (144, 0)), "camp B": ((0, -116), (0, -104)), "camp C": ((-158, 0), (-144, 0))}   # centre, gate
+CAMPS = {"commander's camp": ((0, 165), (0, 144)), "camp A": ((162, 0), (144, 0)), "camp B": ((0, -162), (0, -144)), "camp C": ((-162, 0), (-144, 0))}   # centre, door
+CAMP_R = {"commander's camp": 23, "camp A": 19, "camp B": 19, "camp C": 19}                # the camps' stockades are round, Greek fashion
+LINES = (32, 48)                       # the besiegers' double wall: inner and outer, this far outside the town wall; the walk runs between
+WALK = sum(LINES) / 2
+MOUND = dict(face=((78, -52.0), (52.0, -78)), out=30, w0=26, w1=14, h=7.5)               # the siege mound, heaped against the south-east face
 
 def zat(x, y):
     """Ground height: only the acropolis stands up."""
@@ -115,10 +121,10 @@ if SIEGE:      # streets inside the walls go nowhere outside them: the gates are
     road(8, "street", (0, -W), (0, W)); road(8, "street", (-W, 0), (W, 0))
     for s_ in (-38, 38): road(5, "street", (s_, -W + 4), (s_, W - 4)); road(5, "street", (-W + 4, s_), (W - 4, s_))
     oc5 = octagon(-5); road(3.5, "street", *oc5, oc5[0])
-    ring = octagon(12)
-    road(6, "road", (90, 0), ring[1], ring[2], (0, 90), ring[3], ring[4], (-90, 0), ring[5], ring[6], (0, -90), ring[7], ring[0], (90, 0))
-    road(6, "road", (0, 90), CAMPS["commander's camp"][1]); road(6, "road", (90, 0), CAMPS["camp A"][1])
-    road(6, "road", (0, -90), CAMPS["camp B"][1]); road(6, "road", (-90, 0), CAMPS["camp C"][1])
+    ring = octagon(WALK); a_ = A + WALK                                                     # the walk between the two siege walls
+    road(5, "road", (a_, 0), ring[1], ring[2], (0, a_), ring[3], ring[4], (-a_, 0), ring[5], ring[6], (0, -a_), ring[7], ring[0], (a_, 0))
+    road(5, "road", (0, a_), CAMPS["commander's camp"][1]); road(5, "road", (a_, 0), CAMPS["camp A"][1])        # out through gates in the outer wall to each camp
+    road(5, "road", (0, -a_), CAMPS["camp B"][1]); road(5, "road", (-a_, 0), CAMPS["camp C"][1])
 else:
     road(8, "street", (0, -W), (0, STAIR["y0"])); road(8, "street", (-W, 0), (W, 0))          # the main cross; north of the cross street it becomes the stair
     for s in (-38, 38):
@@ -191,6 +197,41 @@ if SIEGE:                                                                # four 
         if DETAIL: ts.update(shadow=True, merl=[(v[0] + a, v[1] + b, 0) for a in (-3.3, 0, 3.3) for b in (-3.3, 0, 3.3) if a or b])
         GLOWS.append((v[0], v[1], 12, 4.5, "torch"))                         # a torch on every tower
     for gx, gy in GATES: GLOWS.append((gx * .9, gy * .9, 3, 7, "fire"))       # watch fires inside the shut gates
+    # the besiegers' double wall: mud brick on a stone footing, battlements facing out on both sides, towers on the outer wall,
+    # ditches outside each wall (where the clay for the bricks was dug); gates in the outer wall to the camps; a gap in the inner
+    # wall where the mound is heaped
+    mc = ((MOUND["face"][0][0] + MOUND["face"][1][0]) / 2, (MOUND["face"][0][1] + MOUND["face"][1][1]) / 2)
+    inner, outer = octagon(LINES[0]), octagon(LINES[1])
+    mgap = (mc[0] + LINES[0] / R2, mc[1] - LINES[0] / R2)
+    n0 = len(SOLIDS); wall_run(inner + [inner[0]], h=5, inner=(0, 0), gaps=[mgap])
+    ogaps = [(A + LINES[1], 0), (-A - LINES[1], 0), (0, A + LINES[1]), (0, -A - LINES[1])]
+    wall_run(outer + [outer[0]], h=5, inner=(0, 0), gaps=ogaps)
+    for ws in SOLIDS[n0:]: ws.update(wall="#a98f6c", roof="#b59a76")                      # mud brick, not the town's dressed stone
+    for (x1, y1), (x2, y2) in zip(outer, outer[1:] + outer[:1]):
+        ln = math.hypot(x2 - x1, y2 - y1); n = max(1, round(ln / 30))
+        for i in range(n + 1):
+            t = i / n; x, y = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
+            if any(math.hypot(x - gx, y - gy) < 9 for gx, gy in ogaps) or (i == n): continue
+            ts = solid(rect(x, y, 6, 6), 9, "#b59a76", wall="#a98f6c")
+            if DETAIL: ts.update(shadow=True, merl=[(x + a, y + b, 0) for a in (-2.4, 0, 2.4) for b in (-2.4, 0, 2.4) if a or b])
+            GLOWS.append((x, y, 9.5, 4, "torch"))
+    for gx, gy in ogaps:
+        for s_ in (-1, 1):
+            tx, ty = gx + (s_ * 6 if gx == 0 else 0), gy + (s_ * 6 if gy == 0 else 0)
+            ts = solid(rect(tx, ty, 6, 6), 9, "#b59a76", wall="#a98f6c"); GLOWS.append((tx, ty, 9.5, 4, "torch"))
+            if DETAIL: ts.update(shadow=True, merl=[(tx + a, ty + b, 0) for a in (-2.4, 0, 2.4) for b in (-2.4, 0, 2.4) if a or b])
+    for d in (LINES[0] - 6, LINES[1] + 6):                                    # the ditches
+        oc = octagon(d); FLAT.append(dict(ditch=[(x, y) for x, y in oc], w=4, fill="#6d5c45", stroke=None, z=0))
+    # the mound: earth and rubble held in a timber frame, rising from the inner wall's gap to just under the town's battlements
+    (ax_, ay_), (bx_, by_) = MOUND["face"]; ux, uy = (bx_ - ax_) / math.hypot(bx_ - ax_, by_ - ay_), (by_ - ay_) / math.hypot(bx_ - ax_, by_ - ay_); nx_, ny_ = -uy, ux
+    if nx_ * mc[0] + ny_ * mc[1] < 0: nx_, ny_ = -nx_, -ny_
+    MOUND["poly"] = [(mc[0] + nx_ * 1.8 - ux * MOUND["w0"] / 2, mc[1] + ny_ * 1.8 - uy * MOUND["w0"] / 2), (mc[0] + nx_ * 1.8 + ux * MOUND["w0"] / 2, mc[1] + ny_ * 1.8 + uy * MOUND["w0"] / 2),
+                     (mc[0] + nx_ * MOUND["out"] + ux * MOUND["w1"] / 2, mc[1] + ny_ * MOUND["out"] + uy * MOUND["w1"] / 2), (mc[0] + nx_ * MOUND["out"] - ux * MOUND["w1"] / 2, mc[1] + ny_ * MOUND["out"] - uy * MOUND["w1"] / 2)]
+    MOUND["dir"] = (nx_, ny_); MOUND["mc"] = mc
+    for i in range(8):                                                       # drawn as steps of earth, highest at the wall
+        t0, t1 = i / 8, (i + 1) / 8
+        P = MOUND["poly"]; lerp = lambda p, q, t: (p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)
+        solid([lerp(P[0], P[3], t0), lerp(P[1], P[2], t0), lerp(P[1], P[2], t1), lerp(P[0], P[3], t1)], MOUND["h"] * (1 - t0) + .2, "#9a8264", z=0, wall="#7e6a50")
 else:
     GATES = [(W, 0), (0, -W), (-W, 0)]
     CIRCUIT = [oct_[4], oct_[5], oct_[6], oct_[7], oct_[0], oct_[1]] + WALL_N + [oct_[4]]
@@ -258,25 +299,30 @@ if not SIEGE:
         solid(rect(-106, 64, 11, 24), 7, "#5aa37c", wall="#f2ece0")                           # northwest library, by the west wall's ring road
         solid(rect(88, -88, 24, 11, 45), 7, "#5aa37c", wall="#f2ece0")
 
-# the camps: a palisade, rows of tents, the commander's larger tent and standard, cooking fires, on trampled ground
+# the camps: a round stockade, tents pitched where they would go, the commander's larger tent and standard, cooking fires
 if SIEGE:
+    cg = random.Random(8)
     for k, ((cx, cy), (gx, gy)) in CAMPS.items():
-        big = k == "commander's camp"; hw, hd = (24, 18) if big else (20, 15)
-        FLAT.append(dict(pts=[(cx - hw - 6, cy - hd - 6), (cx + hw + 6, cy - hd - 6), (cx + hw + 6, cy + hd + 6), (cx - hw - 6, cy + hd + 6)], fill="#d6c79c", stroke=None, z=0))
-        gate = (gx, gy); fence = [(cx - hw, cy - hd), (cx + hw, cy - hd), (cx + hw, cy + hd), (cx - hw, cy + hd), (cx - hw, cy - hd)]
+        big = k == "commander's camp"; R = CAMP_R[k]
+        FLAT.append(dict(pts=[(cx + (R + 6) * math.cos(a), cy + (R + 6) * math.sin(a)) for a in (i / 24 * 2 * math.pi for i in range(24))], fill="#d6c79c", stroke=None, z=0))
+        dl = math.hypot(gx - cx, gy - cy); gate = (cx + (gx - cx) / dl * R, cy + (gy - cy) / dl * R)
+        fence = [(cx + R * math.cos(a), cy + R * math.sin(a)) for a in (i / 20 * 2 * math.pi for i in range(21))]
         wall_run(fence, h=2.6, z=0, gaps=[gate], inner=(cx, cy), timber=True)
-        GLOWS.append((gx, gy, 3, 3.5, "torch"))                             # a torch at the camp gate
-        for v in fence[:4]: solid(rect(*v, 2.4, 2.4), 3.6, "#7a5a3a", wall="#6b4f33")
-        for i in range(-2, 3):
-            for j in range(-1, 2):
-                x, y = cx + i * 7.5, cy + j * 9
-                if abs(i) < 1 and abs(j) < 1: continue
+        GLOWS.append((gate[0], gate[1], 3, 3.5, "torch"))                   # a torch at the camp gate
+        spots = []
+        for _ in range(400):
+            a, d = cg.uniform(0, 2 * math.pi), R * math.sqrt(cg.uniform(.12, .78))
+            x, y = cx + d * math.cos(a), cy + d * math.sin(a)
+            if math.hypot(x - cx, y - cy) < 8 or abs((x - cx) * (gy - cy) - (y - cy) * (gx - cx)) / dl < 3.5 and (x - cx) * (gx - cx) + (y - cy) * (gy - cy) > 0: continue
+            if all(math.hypot(x - p, y - q) > 5.6 for p, q in spots): spots.append((x, y))
+        for x, y in spots:
+            if True:
                 if DETAIL: SOLIDS.append(hall(x, y, 4.6, 3.4, 0, .9, "#efe4cc", ridge="x", cols="", core=(0, 0, 4.6, 3.4), steps=False, roof_h=1.7, wall="#e2d6bb"))
                 else: solid(rect(x, y, 4.6, 3.4), 2.4, "#f1e8d4", wall="#d7cbb0")
         if DETAIL: SOLIDS.append(hall(cx, cy, 8 if big else 6, 6 if big else 4.6, 0, 1.4, "#b5452f", ridge="x", cols="", core=(0, 0, 8 if big else 6, 6 if big else 4.6), steps=False, roof_h=2.4, wall="#e6d8bb"))
         else: solid(rect(cx, cy, 8 if big else 6, 6 if big else 4.6), 3.6 if big else 3, "#b5452f", wall="#e6d8bb")       # the officer's tent
         solid(rect(cx + 6, cy + 4, .6, .6), 9, "#7a5a3a", wall="#6b4f33"); solid(rect(cx + 7.6, cy + 4, 3, .4), 2, "#c0281c", z=7, wall="#a8231a")   # standard
-        for fx_, fy_ in ((cx - hw + 6, cy + hd - 5), (cx + hw - 6, cy - hd + 5)):
+        for fx_, fy_ in ((cx + R * .55, cy + R * .3), (cx - R * .5, cy - R * .35)):
             FLAT.append(dict(circle=(fx_, fy_, 1.6), fill="#ffb347" if NIGHT else "#e8792c", stroke="#5a3a1e", z=0))
             if NIGHT: FLAT.append(dict(circle=(fx_, fy_, .7), fill="#fff1c4", stroke="#ffb347", z=0)); GLOWS.append((fx_, fy_, 1, 8, "fire"))
 
@@ -290,7 +336,7 @@ if not SIEGE:
         flat([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], "#c9cf8a", "#9aa35c", rows=("y", 5))
     for _ in range(240):                                                                     # olives on the slopes north of the fields
         x, y = random.uniform(-240, 240), random.uniform(56, 240)
-        if (inpoly(x, y, octagon(30)) or any(abs(x - c[0]) < 40 and abs(y - c[1]) < 32 for c, _ in CAMPS.values())) if SIEGE else inpoly(x, y, outline(112, 98, 86)) or (x > 96 and y < 124) or (x < -96 and y < 112 and not (x < -118 and y > 54)): continue
+        if (inpoly(x, y, octagon(LINES[1] + 10)) or any(math.hypot(x - c[0], y - c[1]) < 34 for c, _ in CAMPS.values())) if SIEGE else inpoly(x, y, outline(112, 98, 86)) or (x > 96 and y < 124) or (x < -96 and y < 112 and not (x < -118 and y > 54)): continue
         TREES.append((x, y, "olive"))
     for x, y in ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82)) if SIEGE else ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82),     # outside the walls
                  (52, 92), (66, 116), (70, 142), (-60, 86), (-66, 108), (30, 86), (-28, 84), (40, 160), (-40, 162)):  # on the terraces
@@ -301,9 +347,9 @@ if not SIEGE:
 else:      # the siege: wilderness all round, scrub and dry grass, woods of round trees and dark pines, boulders; nothing tilled, no sea
     g = random.Random(21)
     def clear(x, y, pad=0):
-        if inpoly(x, y, octagon(26 + pad)): return False                                       # the walls and the road round them
-        if any(abs(x - c[0]) < 40 + pad and abs(y - c[1]) < 32 + pad for c, _ in CAMPS.values()): return False
-        if (abs(x) < 8 + pad and 88 < abs(y) < 150) or (abs(y) < 8 + pad and 88 < abs(x) < 150): return False   # the roads out to the camps
+        if inpoly(x, y, octagon(LINES[1] + 8 + pad)): return False                            # the town, the siege lines and their ditches
+        if any(math.hypot(x - c[0], y - c[1]) < CAMP_R[k] + 14 + pad for k, (c, _) in CAMPS.items()): return False
+        if (abs(x) < 8 + pad and 118 < abs(y) < 150) or (abs(y) < 8 + pad and 118 < abs(x) < 150): return False   # the roads out to the camps
         return abs(x) + abs(y) < 232                                                            # what the overview frame shows, and a little more
     def anywhere():                                                                             # a point in the frame's diamond
         while True:
@@ -562,6 +608,8 @@ def draw(V, cid):
         for off, dash, gap in ((18, 7, 9), (30, 5, 13), (44, 9, 17)):
             o.append('<polyline points="%s" fill="none" stroke="#7fb6c8" stroke-width="%.1f" stroke-dasharray="%.1f %.1f" stroke-linecap="round" opacity=".8"/>' % (V.poly([(x + off * .7, shore(x) - off) for x in xs]), .5 * V.k, dash * V.k, gap * V.k))
     for f in FLAT:
+        if "ditch" in f:
+            o.append('<polygon points="%s" fill="none" stroke="%s" stroke-width="%.1f" stroke-linejoin="round"/>' % (V.poly(f["ditch"]), f["fill"], f["w"] * V.k * (.87 if V.iso else 1))); continue
         if "circle" in f:
             cx, cy, r = f["circle"]; rg = [(cx + r * math.cos(a / 12 * math.pi), cy + r * math.sin(a / 12 * math.pi)) for a in range(24)]
             o.append('<polygon points="%s" fill="%s" stroke="%s" stroke-width="1"/>' % (V.poly(rg), f["fill"], f["stroke"])); continue
@@ -656,8 +704,9 @@ def svg():
     lx, ly = 20, 70 + P + 40
     for i, (g, c) in enumerate((("soldiers", GROUP["soldiers"]),) if SIEGE else (("merchants", GROUP["merchants"]), ("legislators", GROUP["legislators"]), ("scholars", GROUP["scholars"]))):
         out.append('<circle cx="%d" cy="%d" r="5" fill="%s"/><text x="%d" y="%d" class="t">%s</text>' % (lx + i * 130 + 6, ly, c, lx + i * 130 + 16, ly + 4, g))
-    notes = ("The enemy town: walls %d m across, four gates, all shut. The camps lie north (the commander's), east, south and west," % (2 * W),
-             "joined only by the road round the walls, so every message between camps goes the long way round.") if SIEGE else None
+    notes = ("The enemy town: walls %d m across, four gates, all shut; a siege mound against its south-east face. Round it the besiegers'" % (2 * W),
+             "double wall (as at Plataea); the camps lie outside it, north (the commander's), east, south and west, joined only by the walk",
+             "between its two walls, so every message between camps goes the long way round.") if SIEGE else None
     for i, line in enumerate(notes or ("Walls %d m across at the south: 4 quarters × 4 blocks × 4 courtyard houses. No agora: the cross meets at a crossroads." % (2 * W),
                               "The acropolis rises in five 3 m terraces to a summit 20 m up; the north quarters climb its lower terraces,",
                               "and the city wall leaves the octagon to wrap the hill along its rock edge. A broad stair continues the main street",
@@ -795,6 +844,7 @@ def dump():
         hill=[dict(pts=h["pts"], z=h["z"], h=h["h"], roof=h["roof"], wall=h["wall"]) for h in HILL],
         shore=[(x, shore(x)) for x in range(-400, 401, 4)] if not SIEGE else [],
         stair=STAIR, west_stair=WEST_STAIR, gates=GATES, camps=CAMPS, octagon=octagon(0),
+        camp_r=CAMP_R if SIEGE else {}, mound=MOUND if SIEGE else None, lines=LINES if SIEGE else None,
         places={n: dict(at=at, door=door, z=zat(*at), zdoor=zroute(*door)) for n, (at, door) in APP_PLACES.items()},
         routes=route_samples(), precinct=PRECINCT, wall_n=WALL_N if not SIEGE else [], postern=POSTERN if not SIEGE else None), separators=(",", ":"))
 

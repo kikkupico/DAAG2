@@ -479,6 +479,12 @@ if not SIEGE:
     SAND = np.clip((9 - sd) / 3, 0, 1)
 else:
     Z = und; SAND = np.zeros(X.shape)
+    for f in S["flat"]:                                                                  # the siege lines' ditches, dug into the ground
+        if "ditch" not in f: continue
+        P = f["ditch"]; dd = np.full(X.shape, 1e9)
+        for a, b in zip(P, P[1:] + P[:1]): dd = np.minimum(dd, np_seg_dist(a[0], a[1], b[0], b[1]))
+        prof = np.clip(1 - (dd / (f["w"] / 2 + .6)) ** 2, 0, 1) * 1.8 * np.clip((road_d - 1.5) / 2.5, 0, 1)
+        Z = Z - prof
 ROCKM = np.zeros(X.shape)
 gy_, gx_ = np.gradient(Z, STEP); slope = np.hypot(gx_, gy_)
 ROCKM = np.clip((slope - .38) / .35, 0, 1)
@@ -1071,8 +1077,8 @@ for s in S["solids"]:
         cx, cy = centre(s["pts"])
         if not SIEGE and cy > 53: continue                                               # the drawing's hill walls: replaced by the new citadel's, below
         if abs(s["z"] - 6.2) < .01: continue                                             # the drawing's lintel: the gatehouses below replace it
-        parts = cut_wall(s["pts"])
-        for part in parts: masonry(part, s["h"], "#d3c6a8", s["merl"] if len(parts) == 1 else [m for m in s["merl"] if inpoly(m[0], m[1], [(x + (x - centre(part)[0]) * .3, y + (y - centre(part)[1]) * .3) for x, y in part])])
+        parts = cut_wall(s["pts"]); brick = s["wall"] == "#a98f6c"
+        for part in parts: masonry(part, s["h"], "#b59a76" if brick else "#d3c6a8", s["merl"] if len(parts) == 1 else [m for m in s["merl"] if inpoly(m[0], m[1], [(x + (x - centre(part)[0]) * .3, y + (y - centre(part)[1]) * .3) for x, y in part])])
     elif not s.get("kind") and s["roof"] == "#d9cdb2" and s["wall"] in ("#cbbd9e", "#c4b594") and abs(area(s["pts"])) > 30:
         masonry(s["pts"], s["h"], "#d3c6a8", None)                                         # plain stretches and towers away from the detail pass
 
@@ -1546,80 +1552,77 @@ if SIEGE:
         if put(CAULDRON, x, y, 0, g.uniform(0, 6), 1, r=2.4): LAMPS.append((x, y, zt(x, y) + 1.1, 3200, "fire")); take_poly(rect(x, y, 6, 6), 0)
 
     for name, ((cx, cy), (gx_, gy_)) in S["camps"].items():
-        big = name == "commander's camp"; hw, hd = (26, 20) if big else (22, 17)
-        if abs(gx_ - cx) > abs(gy_ - cy): hw, hd = hd, hw                                # the camp's long side faces the town
-        dx, dy = (gx_ - cx), (gy_ - cy); dl = math.hypot(dx, dy); dx, dy = dx / dl, dy / dl
-        gate = (cx + dx * (hd if abs(dy) > .5 else hw), cy + dy * (hd if abs(dy) > .5 else hw))
-        fence = box_pts(cx - hw, cy - hd, cx + hw, cy + hd)
-        # trampled ground, ragged at its edge, worn bare along the camp's lanes
-        V, Fc = [], []; R = 1.0; x0, y0 = cx - hw - 14, cy - hd - 14; nx_, ny_ = int(2 * (hw + 14)) + 1, int(2 * (hd + 14)) + 1
-        for j in range(ny_):
-            for i in range(nx_): V.append((x0 + i, y0 + j, zt(x0 + i, y0 + j) + .015))
-        for j in range(ny_ - 1):
-            for i in range(nx_ - 1):
-                x, y = x0 + i + .5, y0 + j + .5; e = min(hw + 9 - abs(x - cx), hd + 9 - abs(y - cy)) + 5 * N.noise(Vector((x * .07, y * .07, cx * .01)))
-                if e > 0 and road_d[int(y + HALF), int(x + HALF)] > -.5: a_ = j * nx_ + i; Fc.append([a_, a_ + 1, a_ + nx_ + 1, a_ + nx_])
+        big = name == "commander's camp"; R = S["camp_r"][name]
+        dx, dy = (gx_ - cx), (gy_ - cy); dl = math.hypot(dx, dy); dx, dy = dx / dl, dy / dl; heading = math.atan2(dy, dx)
+        gate = (cx + dx * R, cy + dy * R)
+        # trampled ground, ragged at its edge
+        V, Fc = [], []; x0, y0 = cx - R - 14, cy - R - 14; n_ = int(2 * (R + 14)) + 1
+        for j in range(n_):
+            for i in range(n_): V.append((x0 + i, y0 + j, zt(x0 + i, y0 + j) + .015))
+        for j in range(n_ - 1):
+            for i in range(n_ - 1):
+                x, y = x0 + i + .5, y0 + j + .5; e = R + 9 - math.hypot(x - cx, y - cy) + 5 * N.noise(Vector((x * .07, y * .07, cx * .01)))
+                if e > 0 and road_d[int(y + HALF), int(x + HALF)] > -.5: a_ = j * n_ + i; Fc.append([a_, a_ + 1, a_ + n_ + 1, a_ + n_])
         me = bpy.data.meshes.new("camp"); me.from_pydata(V, [], Fc); me.materials.append(mat("dirt:#bfa983")); ROOT.objects.link(bpy.data.objects.new("camp", me))
-        # the ditch and bank, and on the bank a palisade of sharpened stakes, with a gap at the gate
-        for p, q in zip(fence, fence[1:] + fence[:1]):
-            ln = math.hypot(q[0] - p[0], q[1] - p[1]); ux, uy = (q[0] - p[0]) / ln, (q[1] - p[1]) / ln; ox, oy = uy, -ux   # outward
-            if (ox * (cx - p[0]) + oy * (cy - p[1])) > 0: ox, oy = -ox, -oy
-            n = int(ln / .42)
-            for i in range(n + 1):
-                x, y = p[0] + (q[0] - p[0]) * i / n, p[1] + (q[1] - p[1]) * i / n
-                if math.hypot(x - gate[0], y - gate[1]) < 3.4: continue
-                h = 2.9 * g.uniform(.88, 1.06); lean = g.uniform(-.05, .05)
-                beam("wood:#6f5236", (x, y, -.1), (x + ox * .15 + lean, y + oy * .15 + lean, h), r=.16, n=6); cyl("wood:#8a6a48", x + ox * .15 + lean, y + oy * .15 + lean, .16, h, h + .45, n=6, r1=0)
-            for i in range(int(ln / 1.0)):
-                a_, b_ = (p[0] + ux * i, p[1] + uy * i), (p[0] + ux * (i + 1), p[1] + uy * (i + 1))
-                if min(math.hypot(a_[0] - gate[0], a_[1] - gate[1]), math.hypot(b_[0] - gate[0], b_[1] - gate[1])) < 3.4: continue
-                bank = [(a_[0] - ox * .9, a_[1] - oy * .9), (b_[0] - ox * .9, b_[1] - oy * .9), (b_[0] + ox * 1.2, b_[1] + oy * 1.2), (a_[0] + ox * 1.2, a_[1] + oy * 1.2)]
-                hb = .55 + .15 * N.noise(Vector((a_[0] * .2, a_[1] * .2, 4)))
-                face("dirt:#a89474", [(x, y, zt(x, y) + (hb if k_ in (0, 1) else .05)) for k_, (x, y) in enumerate(bank)][::-1]); cap("dirt:#a89474", bank[:2] + [(b_[0] - ox * .2, b_[1] - oy * .2), (a_[0] - ox * .2, a_[1] - oy * .2)], zt(*a_) + hb)
-                ditch = [(a_[0] + ox * 1.4, a_[1] + oy * 1.4), (b_[0] + ox * 1.4, b_[1] + oy * 1.4), (b_[0] + ox * 3.4, b_[1] + oy * 3.4), (a_[0] + ox * 3.4, a_[1] + oy * 3.4)]
-                if road_d[int(ditch[0][1] + HALF), int(ditch[0][0] + HALF)] > .5: face("dirt:#5f5040", [(x, y, zt(x, y) + .02) for x, y in ditch][::-1])
-        for x, y in fence: put(WATCH, x, y, 0, g.uniform(0, .2), 1, r=0); LAMPS.append((x, y, zt(x, y) + 7.6, 900, "torch"))
-        for s_ in (-1, 1):                                                               # the gate: a watchtower each side, torches
-            tx, ty = gate[0] + dy * s_ * 4.6, gate[1] - dx * s_ * 4.6
-            inst(WATCH, tx, ty, zt(tx, ty)); LAMPS.append((tx, ty, zt(tx, ty) + 7.6, 1100, "torch")); take_poly(rect(tx, ty, 4, 4), 0)
-        take_poly(rect(cx, cy, 11, 9), 0)
-        inst(COMMAND, cx, cy, zt(cx, cy), math.atan2(dy, dx))
-        for k, a_ in enumerate((.6, -.6, 2.2)): px_, py_ = cx + 7 * math.cos(math.atan2(dy, dx) + a_), cy + 7 * math.sin(math.atan2(dy, dx) + a_); put(STANDARD, px_, py_, 0, a_, 1, r=.3)
+        # a round stockade of sharpened stakes on a low bank, a shallow ditch outside, a gap toward the siege lines
+        n = int(2 * math.pi * R / .42)
+        for i in range(n):
+            a_ = i / n * 2 * math.pi; x, y = cx + R * math.cos(a_), cy + R * math.sin(a_)
+            if math.hypot(x - gate[0], y - gate[1]) < 3.4: continue
+            ox, oy = math.cos(a_), math.sin(a_); h = 2.7 * g.uniform(.88, 1.06); lean = g.uniform(-.06, .06)
+            beam("wood:#6f5236", (x, y, zt(x, y) + .3), (x + ox * .18 + lean, y + oy * .18 + lean, zt(x, y) + .3 + h), r=.16, n=6)
+            cyl("wood:#8a6a48", x + ox * .18 + lean, y + oy * .18 + lean, .16, zt(x, y) + .3 + h, zt(x, y) + .75 + h, n=6, r1=0)
+            if i % 2 == 0:
+                for r0, r1, z0_, z1_, key in ((R - .9, R + 1.2, .45, .45, "dirt:#a89474"), (R + 1.6, R + 3.4, .03, .03, "dirt:#5f5040")):
+                    a2 = (i + 2) / n * 2 * math.pi
+                    q = [(cx + r0 * math.cos(a_), cy + r0 * math.sin(a_)), (cx + r0 * math.cos(a2), cy + r0 * math.sin(a2)), (cx + r1 * math.cos(a2), cy + r1 * math.sin(a2)), (cx + r1 * math.cos(a_), cy + r1 * math.sin(a_))]
+                    if road_d[int(q[0][1] + HALF), int(q[0][0] + HALF)] > .8: face(key, [(x_, y_, zt(x_, y_) + z0_) for x_, y_ in q][::-1])
+        for s_ in (-1, 1):                                                               # watchtowers either side of the gate and two more round the ring
+            tx, ty = gate[0] - dy * s_ * 4.8, gate[1] + dx * s_ * 4.8; inst(WATCH, tx, ty, zt(tx, ty)); LAMPS.append((tx, ty, zt(tx, ty) + 7.6, 1100, "torch")); take_poly(rect(tx, ty, 4, 4), 0)
+            a_ = heading + math.pi + s_ * 1.2; tx, ty = cx + R * math.cos(a_), cy + R * math.sin(a_); inst(WATCH, tx, ty, zt(tx, ty)); LAMPS.append((tx, ty, zt(tx, ty) + 7.6, 900, "torch")); take_poly(rect(tx, ty, 4, 4), 0)
+        take_poly(rect(cx, cy, 11, 9), 0); inst(COMMAND, cx, cy, zt(cx, cy), heading)
+        for a_ in (.6, -.6, 2.4): put(STANDARD, cx + 7 * math.cos(heading + a_), cy + 7 * math.sin(heading + a_), 0, a_, 1, r=.3)
         lane = (gate, (cx, cy))
-        for t_ in (.3, .65):                                                             # cooking fires beside the main lane and out in the tent lines
-            for s_ in (-1, 1):
-                fire(gate[0] + (cx - gate[0]) * t_ + dy * s_ * 6.5, gate[1] + (cy - gate[1]) * t_ - dx * s_ * 6.5)
-        for s_ in (-1, 1): fire(cx + dy * s_ * (hw if abs(dy) > .5 else hd) * .62 - dx * 6, cy - dx * s_ * (hw if abs(dy) > .5 else hd) * .62 - dy * 6)
-        # tents in loose lanes, turned to them, now and then a gap where a fire burns or stores are kept
-        across = (abs(dy) > .5)
-        for i in range(-12, 13):
-            for j in range(-6, 7):
-                u, v = i * 5.2 + g.uniform(-.5, .5), j * 5.6 + g.uniform(-.6, .6)
-                x, y = (cx + u, cy + v) if across else (cx + v, cy + u)
-                if abs(x - cx) > hw - 3.2 or abs(y - cy) > hd - 3.2: continue
-                if math.hypot(x - cx, y - cy) < 10 or seg_dist(x, y, *lane[0], *lane[1]) < 4: continue
-                r_ = g.random()
-                if r_ < .02: fire(x, y); continue
-                if r_ < .1:
-                    for _ in range(4): put(g.choice((CRATE, SACK, AMPH, PITHOS)), x + g.uniform(-1.6, 1.6), y + g.uniform(-1.4, 1.4), 0, g.uniform(0, 6), 1, r=.3)
-                    continue
-                if r_ < .12: put(SPEARS, x, y, 0, (0 if across else math.pi / 2) + g.uniform(-.2, .2), 1, r=1.5); continue
-                put(g.choice(TENTS), x, y, 0, (0 if across else math.pi / 2) + g.choice((0, math.pi)) + g.uniform(-.12, .12), 1, r=1.4)
-        for k in range(3): fire(cx + g.uniform(-hw + 6, hw - 6), cy + g.uniform(-hd + 6, hd - 6))
-        put(CART, cx + (hw - 5) * (1 if g.random() < .5 else -1), cy + g.uniform(-hd + 5, hd - 5), 0, g.uniform(0, 6), 1, r=2)
-        put(SPEARS, gate[0] - dx * 5 + dy * 3, gate[1] - dy * 5 - dx * 3, 0, math.atan2(dy, dx), 1, r=1.2)
-        take_poly(box_pts(cx - hw - 4, cy - hd - 4, cx + hw + 4, cy + hd + 4), 0)
-        # the siege works out in front, toward the walls but clear of the road round them and of the camp's own road
-        side = (-dy, dx); base = (cx + dx * (hd + 13 if abs(dy) > .5 else hw + 13), cy + dy * (hd + 13 if abs(dy) > .5 else hw + 13))
-        if name == "camp B": base = (cx + dx * (hd + 3), cy + dy * (hd + 3))
-        heading = math.atan2(dy, dx)
-        for k, (off, kind) in enumerate(((-16, SIEGETOWER if big else RAM), (16, BALLISTA), (-26, MANTLET), (-21, MANTLET), (22, BALLISTA), (27, MANTLET))):
-            x, y = base[0] + side[0] * off, base[1] + side[1] * off
-            if free(x, y, 3) and road_d[int(y + HALF), int(x + HALF)] > 4: inst(kind, x, y, zt(x, y), heading); take_poly(rect(x, y, 8, 8), 0)
-        # where the woods were cut for all this timber: stumps and log piles
-        for _ in range(26):
-            a_ = g.uniform(0, 6.3); d_ = g.uniform(32, 48); x, y = cx + d_ * math.cos(a_), cy + d_ * math.sin(a_)
+        for t_ in (.35, .7):
+            for s_ in (-1, 1): fire(gate[0] + (cx - gate[0]) * t_ - dy * s_ * 6.5, gate[1] + (cy - gate[1]) * t_ + dx * s_ * 6.5)
+        fire(cx - dx * R * .55 + dy * 6, cy - dy * R * .55 - dx * 6)
+        # tents pitched as men would pitch them: in knots round the fires and along the lane, each turned its own way
+        for _ in range(420):
+            a_, d_ = g.uniform(0, 2 * math.pi), R * math.sqrt(g.uniform(.1, .86)); x, y = cx + d_ * math.cos(a_), cy + d_ * math.sin(a_)
+            if math.hypot(x - cx, y - cy) < 8.5 or seg_dist(x, y, *lane[0], *lane[1]) < 3.6: continue
+            r_ = g.random()
+            if r_ < .05:
+                for _ in range(4): put(g.choice((CRATE, SACK, AMPH, PITHOS)), x + g.uniform(-1.6, 1.6), y + g.uniform(-1.4, 1.4), 0, g.uniform(0, 6), 1, r=.3)
+            elif r_ < .07: put(SPEARS, x, y, 0, g.uniform(0, 6.3), 1, r=1.5)
+            elif r_ < .08: put(WOODPILE, x, y, 0, g.uniform(0, 6.3), 1, r=1.4)
+            else: put(g.choice(TENTS), x, y, 0, math.atan2(y - cy, x - cx) + math.pi / 2 + g.uniform(-.2, .2), 1, r=2.1)
+        put(CART, cx - dx * (R - 5) + dy * 5, cy - dy * (R - 5) - dx * 5, 0, g.uniform(0, 6), 1, r=2)
+        put(SPEARS, gate[0] - dx * 5 + dy * 3, gate[1] - dy * 5 - dx * 3, 0, heading, 1, r=1.2)
+        take_poly([(cx + (R + 4) * math.cos(a_), cy + (R + 4) * math.sin(a_)) for a_ in (k / 16 * 2 * math.pi for k in range(16))], 0)
+        for _ in range(26):                                                              # where the woods were cut for all this timber: stumps and log piles
+            a_ = g.uniform(0, 6.3); d_ = g.uniform(R + 12, R + 28); x, y = cx + d_ * math.cos(a_), cy + d_ * math.sin(a_)
             if free(x, y, 2) and road_d[int(y + HALF), int(x + HALF)] > 2: put(g.choice((STUMP, STUMP, STUMP, LOGS)), x, y, 0, g.uniform(0, 6), g.uniform(.8, 1.2), r=1.5)
+    # the siege mound: earth and rubble held in a timber frame, heaped from the inner wall's gap up against the town wall's south-east
+    # face; at its head a ram under its shed; sheds and baskets of earth along it; timber at its foot
+    M = S["mound"]; P = M["poly"]; nx_, ny_ = M["dir"]; H = M["h"]
+    lerp = lambda p, q, t: (p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t)
+    K = 16
+    for i in range(K):
+        t0, t1 = i / K, (i + 1) / K; z0_, z1_ = H * (1 - t0), H * (1 - t1)
+        a0, b0, a1, b1 = lerp(P[0], P[3], t0), lerp(P[1], P[2], t0), lerp(P[0], P[3], t1), lerp(P[1], P[2], t1)
+        face("dirt:#8f7a5c", [(*a0, z0_), (*b0, z0_), (*b1, z1_), (*a1, z1_)][::-1])
+        for (p0, p1, z_a, z_b) in ((a0, a1, z0_, z1_), (b0, b1, z0_, z1_)):              # the timber cribbing that holds its sides
+            face("wood:#5e4429", [(*p0, -.3), (*p1, -.3), (*p1, z_b), (*p0, z_a)])
+            for k in range(int(z_a / .7) + 1): beam("wood:#4f3a26", (*p0, k * .7), (*p1, max(0, min(z_b, k * .7))), r=.14, n=6)
+    take_poly(P, 2)
+    mx_, my_ = lerp(lerp(P[0], P[1], .5), lerp(P[3], P[2], .5), .08); inst(RAM, mx_, my_, H * .92, math.atan2(-ny_, -nx_))
+    for t_, s_ in ((.35, 1), (.55, -1), (.75, 1)):
+        x, y = lerp(lerp(P[0], P[3], t_), lerp(P[1], P[2], t_), .5 + s_ * .25); inst(MANTLET, x, y, H * (1 - t_), math.atan2(-ny_, -nx_))
+    for _ in range(30):
+        t_ = g.uniform(.15, .95); x, y = lerp(lerp(P[0], P[3], t_), lerp(P[1], P[2], t_), g.uniform(.15, .85)); inst(g.choice((SACK, SACK, CRATE)), x, y, H * (1 - t_) - .05, g.uniform(0, 6), .8)
+    fx, fy = lerp(P[3], P[2], .5)
+    for k in range(4): put(LOGS, fx + nx_ * 6 - ny_ * (k - 1.5) * 4.5, fy + ny_ * 6 + nx_ * (k - 1.5) * 4.5, 0, math.atan2(ny_, nx_) + math.pi / 2, 1, r=1)
+    for s_ in (-1, 1): torch(fx + nx_ * 2 - ny_ * s_ * 8, fy + ny_ * 2 + nx_ * s_ * 8)
     # the town keeps watch too: braziers on the walls' walk, fires behind the shut gates
     oc = S["octagon"]
     for p, q in zip(oc, oc[1:] + oc[:1]):
