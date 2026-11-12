@@ -16,6 +16,17 @@ L = 215                           # the four axis ends (N, E, S, W) sit at the o
 random.seed(3)
 SIEGE = "--siege" in sys.argv
 if SIEGE: sys.argv.remove("--siege")
+DETAIL = "--detail" in sys.argv                                           # the detail pass, so far only in the acropolis corner
+if DETAIL: sys.argv.remove("--detail")
+def detailed(x, y): return DETAIL
+NIGHT = "--night" in sys.argv                                             # a moonlit night: every colour is cooled and darkened, then lights are added
+if NIGHT: sys.argv.remove("--night")
+LIGHTS = {"#fff1c4", "#ffb347", "#ffcf6e", "#cfe3ff", "#ff8c2a"}           # colours that are light sources: the night leaves them alone
+GLOWS = []
+GROUND = "#b4bf88" if SIEGE else "#cfd8a4"                                # rough meadow round the siege; greener fields round the city                                                                # (x, y, z, radius in metres, kind): warm light spilling on whatever is near
+SUN = (0.958, 0.287)                                                      # the way shadows fall: the sun is low in the west-southwest
+SHADOWS = "--no-shadows" not in sys.argv                                  # cast shadows, on by default: side by side they look better than without
+if not SHADOWS: sys.argv.remove("--no-shadows")
 
 def shade(hex_, f):
     r, g, b = (int(hex_[i:i + 2], 16) for i in (1, 3, 5))
@@ -121,13 +132,17 @@ else:
 
 # ------------------------------------------------------------------ solids: footprint, base z, height, colours
 SOLIDS, TREES, FLAT = [], [], []
+def hall(cx, cy, w, d, z, col_h, roof, ridge="x", cols="all", core=None, steps=True, roof_h=2.6, wall="#f2ece0"):
+    """A colonnaded building: steps, a core room, columns on the given sides, a band above them, and a gabled roof."""
+    return dict(kind="hall", pts=rect(cx, cy, w, d), z=z, h=(1.5 if steps else 0) + col_h + 1.2 + roof_h, cx=cx, cy=cy, w=w, d=d, col_h=col_h, roof=roof,
+                ridge=ridge, cols=cols, core=core, steps=steps, roof_h=roof_h, wall=wall, court=None, shadow=True)
 def rect(cx, cy, w, d, rot=0):
     c, s = math.cos(math.radians(rot)), math.sin(math.radians(rot))
     return [(cx + c * x - s * y, cy + s * x + c * y) for x, y in ((-w / 2, -d / 2), (w / 2, -d / 2), (w / 2, d / 2), (-w / 2, d / 2))]
 def mk(pts, h, roof, z=0, wall="#e9dcc4", court=None): return dict(pts=pts, h=h, z=z, roof=roof, wall=wall, court=court)
 def solid(pts, h, roof, z=None, court=None, wall="#e9dcc4"):
     if z is None: z = zat(sum(x for x, _ in pts) / len(pts), sum(y for _, y in pts) / len(pts))
-    SOLIDS.append(mk(pts, h, roof, z, wall, court))
+    SOLIDS.append(mk(pts, h, roof, z, wall, court)); return SOLIDS[-1]
 def flat(pts, fill, stroke=None, z=0, rows=None): FLAT.append(dict(pts=pts, fill=fill, stroke=stroke, z=z, rows=rows))
 
 TILE, TILE2 = "#c8673e", "#b5582f"
@@ -144,11 +159,12 @@ for qx in (-1, 1):
                         if not SIEGE and abs(x) < 12 and y > 40:                                                  # the stair runs up an open court
                             TREES += [(x * 1.05, y - 4, "cypress"), (x * 1.05, y + 4, "cypress")]; continue
                         p = not SIEGE and (x, y) in ((-47.5, 28.5), (47.5, -28.5))      # the proposers' houses
-                        solid(rect(x, y, 14, 14), random.choice((6, 6, 7, 8)), "#7f9fdc" if p else random.choice((TILE, TILE2)), court=5)
+                        hs = solid(rect(x, y, 14, 14), random.choice((6, 6, 7, 8)), "#7f9fdc" if p else random.choice((TILE, TILE2)), court=5)
+                        if detailed(x, y): hs.update(hip=True, shadow=True, jar=random.random() < .6, lit=NIGHT and random.random() < .45)
 
 # the wall: the southern five sides of the octagon, then round the hill on the lowest terrace; towers and gates
 oct_ = octagon(0)
-def wall_run(pts, h=7, z=None, gaps=()):
+def wall_run(pts, h=7, z=None, gaps=(), inner=(0, 40), timber=False):
     for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
         n = max(1, int(math.hypot(x2 - x1, y2 - y1) / 12))
         for i in range(n):
@@ -157,32 +173,52 @@ def wall_run(pts, h=7, z=None, gaps=()):
             mid = ((p[0] + q[0]) / 2, (p[1] + q[1]) / 2)
             if any(math.hypot(mid[0] - g[0], mid[1] - g[1]) < 6 for g in gaps): continue
             dx, dy = q[0] - p[0], q[1] - p[1]; ln = math.hypot(dx, dy); nx, ny = -dy / ln * 1.6, dx / ln * 1.6
-            solid([(p[0] + nx, p[1] + ny), (q[0] + nx, q[1] + ny), (q[0] - nx, q[1] - ny), (p[0] - nx, p[1] - ny)], h, "#d9cdb2", z=zat(*mid) if z is None else z, wall="#cbbd9e")
+            if timber:                                                      # a palisade: thinner, dark wood, no battlements
+                k_ = .45 / 1.6; solid([(p[0] + nx * k_, p[1] + ny * k_), (q[0] + nx * k_, q[1] + ny * k_), (q[0] - nx * k_, q[1] - ny * k_), (p[0] - nx * k_, p[1] - ny * k_)], h, "#8a6a48", z=zat(*mid) if z is None else z, wall="#6f5236").update(shadow=DETAIL); continue
+            ws = solid([(p[0] + nx, p[1] + ny), (q[0] + nx, q[1] + ny), (q[0] - nx, q[1] - ny), (p[0] - nx, p[1] - ny)], h, "#d9cdb2", z=zat(*mid) if z is None else z, wall="#cbbd9e")
+            if detailed(*mid):
+                out = 1 if math.hypot(mid[0] + nx - inner[0], mid[1] + ny - inner[1]) > math.hypot(mid[0] - nx - inner[0], mid[1] - ny - inner[1]) else -1
+                k = max(1, int(ln / 2.2)); ang = math.degrees(math.atan2(dy, dx))
+                ws.update(shadow=True, merl=[(p[0] + dx * (j + .5) / k + nx * out * .7, p[1] + dy * (j + .5) / k + ny * out * .7, ang) for j in range(k)])
 if SIEGE:                                                                # four gates, all shut: the wall runs straight across them
     GATES = [(W, 0), (0, -W), (-W, 0), (0, W)]
-    wall_run(oct_ + [oct_[0]], h=8)
-    for v in oct_: solid(rect(*v, 8, 8, 0), 11, "#d9cdb2", wall="#c4b594")
+    wall_run(oct_ + [oct_[0]], h=8, inner=(0, 0))
+    for v in oct_:
+        ts = solid(rect(*v, 8, 8, 0), 11, "#d9cdb2", wall="#c4b594")
+        if DETAIL: ts.update(shadow=True, merl=[(v[0] + a, v[1] + b, 0) for a in (-3.3, 0, 3.3) for b in (-3.3, 0, 3.3) if a or b])
+        GLOWS.append((v[0], v[1], 12, 4.5, "torch"))                         # a torch on every tower
+    for gx, gy in GATES: GLOWS.append((gx * .9, gy * .9, 3, 7, "fire"))       # watch fires inside the shut gates
 else:
     GATES = [(W, 0), (0, -W), (-W, 0)]
     CIRCUIT = [oct_[4], oct_[5], oct_[6], oct_[7], oct_[0], oct_[1]] + WALL_N + [oct_[4]]
     wall_run(CIRCUIT, gaps=GATES + [POSTERN])
-    for v in [oct_[i] for i in (0, 1, 4, 5, 6, 7)] + WALL_N[::8]: solid(rect(*v, 8, 8, 0), 10, "#d9cdb2", wall="#c4b594")
+    for v in [oct_[i] for i in (0, 1, 4, 5, 6, 7)] + WALL_N[::8]:
+        ts = solid(rect(*v, 8, 8, 0), 10, "#d9cdb2", wall="#c4b594")
+        if detailed(*v): ts.update(shadow=True, merl=[(v[0] + a, v[1] + b, 0) for a in (-3.3, 0, 3.3) for b in (-3.3, 0, 3.3) if a or b])
 for gx, gy in GATES:
-    for s in (-1, 1): solid(rect(gx + (s * 8 if gx == 0 else 0), gy + (s * 8 if gy == 0 else 0), 7, 7), 10, "#d9cdb2", wall="#c4b594")
+    for s in (-1, 1):
+        gt = solid(rect(gx + (s * 8 if gx == 0 else 0), gy + (s * 8 if gy == 0 else 0), 7, 7), 10, "#d9cdb2", wall="#c4b594")
+        if detailed(gx, gy): gt.update(shadow=True, merl=[(gt["pts"][0][0] + 3.5 + a, gt["pts"][0][1] + 3.5 + b, 0) for a in (-2.8, 0, 2.8) for b in (-2.8, 0, 2.8) if a or b])
+    if detailed(gx, gy) and not SIEGE:                                   # the arch: a lintel across the opening, high enough to walk under
+        ar = solid(rect(gx, gy, 9 if gx == 0 else 3.4, 3.4 if gx == 0 else 9), 2.6, "#d9cdb2", z=6.2, wall="#c9bb9c")
+        ar.update(merl=[(gx + (a if gx == 0 else 0), gy + (0 if gx == 0 else a), 0) for a in (-3.2, -1, 1, 3.2)])
 
 # on the summit: its wall, the temple, the altar, the temple library, the gatehouse at the head of the stair; then the stairs and estates
 if not SIEGE:
-    wall_run(PRECINCT + [PRECINCT[0]], h=4, z=TOP, gaps=[(0, 104), (WEST_STAIR["x0"], 116)])
-    solid(rect(8, 132, 30, 16), 10, "#d0603a", z=TOP, wall="#f2ece0")
+    wall_run(PRECINCT + [PRECINCT[0]], h=4, z=TOP, gaps=[(0, 104), (WEST_STAIR["x0"], 116)], inner=(0, 128))
+    if DETAIL: SOLIDS.append(hall(8, 132, 30, 16, TOP, 7, "#c8673e", ridge="x", cols="all", core=(0, 0, 21, 8)))       # the temple: peristyle round a cella
+    else: solid(rect(8, 132, 30, 16), 10, "#d0603a", z=TOP, wall="#f2ece0")
     solid(rect(8, 117, 6, 3), 1.5, "#e8e2d4", z=TOP)
-    solid(rect(-32, 132, 10, 26), 7, "#5aa37c", z=TOP, wall="#f2ece0")
-    solid(rect(0, 107, 14, 6), 6, "#e8e2d4", z=TOP, wall="#f2ece0")
+    if DETAIL: SOLIDS.append(hall(-32, 132, 10, 26, TOP, 5, "#5aa37c", ridge="y", cols="e", core=(-2.2, 0, 4.4, 25), steps=False))   # the library: a stoa open to the east
+    else: solid(rect(-32, 132, 10, 26), 7, "#5aa37c", z=TOP, wall="#f2ece0")
+    if DETAIL: SOLIDS.append(hall(0, 107, 14, 6, TOP, 4.5, "#c8673e", ridge="x", cols="ns", core=None, steps=False, roof_h=1.6))   # gatehouse at the head of the stair
+    else: solid(rect(0, 107, 14, 6), 6, "#e8e2d4", z=TOP, wall="#f2ece0")
     # the broad stair, one prism per step from the street, with parapets; it stands in front of the terraces it cuts through
     N_STEPS = 20
     for i in range(N_STEPS):
         y0 = STAIR["y0"] + (STAIR["y1"] - STAIR["y0"]) * i / N_STEPS; y1 = STAIR["y0"] + (STAIR["y1"] - STAIR["y0"]) * (i + 1) / N_STEPS
         zt = TOP * (i + 1) / N_STEPS; hw = STAIR["w"] / 2
-        SOLIDS.append(mk([(-hw, y0), (hw, y0), (hw, y1), (-hw, y1)], zt, "#ece6d8", wall="#cfc5ae"))
+        SOLIDS.append(mk([(-hw, y0), (hw, y0), (hw, y1), (-hw, y1)], zt, "#ece6d8", wall="#e2d9c4" if DETAIL else "#cfc5ae"))
         for sx in (-1, 1):
             x = sx * (hw + .5)
             SOLIDS.append(mk([(x - .5, y0), (x + .5, y0), (x + .5, y1), (x - .5, y1)], zt + 1.2, "#d9cdb2", wall="#c4b594"))
@@ -193,23 +229,31 @@ if not SIEGE:
         SOLIDS.append(mk([(x1, WEST_STAIR["y"] - 2), (x0, WEST_STAIR["y"] - 2), (x0, WEST_STAIR["y"] + 2), (x1, WEST_STAIR["y"] + 2)], max(.4, zt - zb), "#ece6d8", z=zb, wall="#cfc5ae"))
 
     # estates: granary (east), winery (west), fishery (south), pottery (southwest), the two outer libraries
-    solid(rect(168, 0, 16, 14), 9, TILE, wall="#e6d6b8")
-    for x, y in ((158, 20), (178, 20), (186, -16), (158, -18)): solid(rect(x, y, 9, 8), 5, TILE2)
+    if DETAIL: SOLIDS.append(hall(168, 0, 16, 14, 0, 7, TILE, ridge="x", cols="", core=(0, 0, 16, 14), steps=False, roof_h=3.2, wall="#e6d6b8"))   # the granary
+    else: solid(rect(168, 0, 16, 14), 9, TILE, wall="#e6d6b8")
+    for x, y in ((158, 20), (178, 20), (186, -16), (158, -18)): solid(rect(x, y, 9, 8), 5, TILE2).update(hipr=DETAIL, shadow=DETAIL)
     flat([(150, -30), (195, -30), (195, 30), (150, 30)], "none", "#a08a68")
     FLAT.append(dict(circle=(175, -40, 7), fill="#e3cf8e", stroke="#b49a5a", z=0))          # threshing floor
-    solid(rect(-160, -8, 20, 11), 5, TILE, wall="#e6d6b8")
-    for x, y in ((-150, 16), (-172, 16), (-178, -14)): solid(rect(x, y, 9, 8), 5, TILE2)
+    if DETAIL: SOLIDS.append(hall(-160, -8, 20, 11, 0, 4, TILE, ridge="x", cols="", core=(0, 0, 20, 11), steps=False, roof_h=2.4, wall="#e6d6b8"))   # the winery's press house
+    else: solid(rect(-160, -8, 20, 11), 5, TILE, wall="#e6d6b8")
+    for x, y in ((-150, 16), (-172, 16), (-178, -14)): solid(rect(x, y, 9, 8), 5, TILE2).update(hipr=DETAIL, shadow=DETAIL)
     flat([(-188, -26), (-140, -26), (-140, 28), (-188, 28)], "none", "#a08a68")
-    solid(rect(-16, -108, 18, 8), 4.5, TILE, wall="#e6d6b8")                                 # fishery shed
+    if DETAIL: SOLIDS.append(hall(-16, -108, 18, 8, 0, 3.4, TILE, ridge="x", cols="", core=(0, 0, 18, 8), steps=False, roof_h=1.8, wall="#e6d6b8"))   # fishery shed
+    else: solid(rect(-16, -108, 18, 8), 4.5, TILE, wall="#e6d6b8")
     for i in range(4): FLAT.append(dict(pts=rect(20 + (i % 2) * 9, -104 - (i // 2) * 7, 7, 5), fill="#9fd0d6", stroke="#7f9a94", z=0))   # salting tanks
     for x in (-30, -2, 22): FLAT.append(dict(pts=rect(x, shore(x) - 10, 3, 22), fill="#a7865b", stroke="#7e6240", z=0))                   # jetties
     for x, y in ((-24, -158), (6, -160), (30, -156), (-50, -146)): FLAT.append(dict(pts=rect(x, y, 3, 9, 20), fill="#7a5a3a", stroke=None, z=0))
     for i in range(3): solid(rect(-34 + i * 5, -112, 0.8, 7), 2.4, "#8a6a48", wall="#8a6a48")   # fish racks
-    for x, y in ((-88, -77), (-77, -88)): solid(rect(x, y, 7, 7, 45), 5, "#b98a62", wall="#a9774e")                                  # kilns
-    solid(rect(-91, -91, 12, 6, -45), 3.5, "#a7865b", wall="#d8c8a8")                         # drying shed
+    for x, y in ((-88, -77), (-77, -88)): solid(rect(x, y, 6, 6) if DETAIL else rect(x, y, 7, 7, 45), 3.2 if DETAIL else 5, "#b98a62", wall="#a9774e").update(hipr=DETAIL, shadow=DETAIL)   # kilns, domed                                  # kilns
+    if DETAIL: SOLIDS.append(hall(-96, -88, 11, 6, 0, 2.6, "#a7865b", ridge="x", cols="all", core=None, steps=False, roof_h=1.4))   # drying shed, open on all sides
+    else: solid(rect(-91, -91, 12, 6, -45), 3.5, "#a7865b", wall="#d8c8a8")
     FLAT.append(dict(pts=[(-112, -86), (-102, -92), (-100, -100), (-112, -98)], fill="#b79d78", stroke="#8c7352", z=0))               # clay pit
-    solid(rect(-106, 64, 11, 24), 7, "#5aa37c", wall="#f2ece0")                               # northwest library, by the west wall's ring road
-    solid(rect(88, -88, 24, 11, 45), 7, "#5aa37c", wall="#f2ece0")
+    if DETAIL:                                                             # the outer libraries: stoas, open towards the road
+        SOLIDS.append(hall(-106, 64, 11, 24, 0, 5, "#5aa37c", ridge="y", cols="e", core=(-2.4, 0, 4.6, 23)))
+        SOLIDS.append(hall(92, -92, 24, 11, 0, 5, "#5aa37c", ridge="x", cols="n", core=(0, -2.4, 23, 4.6)))
+    else:
+        solid(rect(-106, 64, 11, 24), 7, "#5aa37c", wall="#f2ece0")                           # northwest library, by the west wall's ring road
+        solid(rect(88, -88, 24, 11, 45), 7, "#5aa37c", wall="#f2ece0")
 
 # the camps: a palisade, rows of tents, the commander's larger tent and standard, cooking fires, on trampled ground
 if SIEGE:
@@ -217,37 +261,73 @@ if SIEGE:
         big = k == "commander's camp"; hw, hd = (24, 18) if big else (20, 15)
         FLAT.append(dict(pts=[(cx - hw - 6, cy - hd - 6), (cx + hw + 6, cy - hd - 6), (cx + hw + 6, cy + hd + 6), (cx - hw - 6, cy + hd + 6)], fill="#d6c79c", stroke=None, z=0))
         gate = (gx, gy); fence = [(cx - hw, cy - hd), (cx + hw, cy - hd), (cx + hw, cy + hd), (cx - hw, cy + hd), (cx - hw, cy - hd)]
-        wall_run(fence, h=2.4, z=0, gaps=[gate])
+        wall_run(fence, h=2.6, z=0, gaps=[gate], inner=(cx, cy), timber=True)
+        GLOWS.append((gx, gy, 3, 3.5, "torch"))                             # a torch at the camp gate
         for v in fence[:4]: solid(rect(*v, 2.4, 2.4), 3.6, "#7a5a3a", wall="#6b4f33")
         for i in range(-2, 3):
             for j in range(-1, 2):
                 x, y = cx + i * 7.5, cy + j * 9
                 if abs(i) < 1 and abs(j) < 1: continue
-                solid(rect(x, y, 4.6, 3.4), 2.4, "#f1e8d4", wall="#d7cbb0")
-        solid(rect(cx, cy, 8 if big else 6, 6 if big else 4.6), 3.6 if big else 3, "#b5452f", wall="#e6d8bb")       # the officer's tent
+                if DETAIL: SOLIDS.append(hall(x, y, 4.6, 3.4, 0, .9, "#efe4cc", ridge="x", cols="", core=(0, 0, 4.6, 3.4), steps=False, roof_h=1.7, wall="#e2d6bb"))
+                else: solid(rect(x, y, 4.6, 3.4), 2.4, "#f1e8d4", wall="#d7cbb0")
+        if DETAIL: SOLIDS.append(hall(cx, cy, 8 if big else 6, 6 if big else 4.6, 0, 1.4, "#b5452f", ridge="x", cols="", core=(0, 0, 8 if big else 6, 6 if big else 4.6), steps=False, roof_h=2.4, wall="#e6d8bb"))
+        else: solid(rect(cx, cy, 8 if big else 6, 6 if big else 4.6), 3.6 if big else 3, "#b5452f", wall="#e6d8bb")       # the officer's tent
         solid(rect(cx + 6, cy + 4, .6, .6), 9, "#7a5a3a", wall="#6b4f33"); solid(rect(cx + 7.6, cy + 4, 3, .4), 2, "#c0281c", z=7, wall="#a8231a")   # standard
         for fx_, fy_ in ((cx - hw + 6, cy + hd - 5), (cx + hw - 6, cy - hd + 5)):
-            FLAT.append(dict(circle=(fx_, fy_, 1.6), fill="#e8792c", stroke="#5a3a1e", z=0))
-    for x in (-30, -2, 22): FLAT.append(dict(pts=rect(x, shore(x) - 10, 3, 22), fill="#a7865b", stroke="#7e6240", z=0))      # the besiegers' boats at the landing
-    for x, y in ((-24, -158), (6, -160), (30, -156), (-50, -146)): FLAT.append(dict(pts=rect(x, y, 3, 9, 20), fill="#7a5a3a", stroke=None, z=0))
+            FLAT.append(dict(circle=(fx_, fy_, 1.6), fill="#ffb347" if NIGHT else "#e8792c", stroke="#5a3a1e", z=0))
+            if NIGHT: FLAT.append(dict(circle=(fx_, fy_, .7), fill="#fff1c4", stroke="#ffb347", z=0)); GLOWS.append((fx_, fy_, 1, 8, "fire"))
 
 # fields, groves, scrub (flat), then trees
-WHEAT = [((104, 32), (146, 120)), ((150, 34), (240, 120)), ((198, -30), (240, 30)), ((104, -120), (150, -34)), ((150, -110), (240, -34))]
-for i, ((x0, y0), (x1, y1)) in enumerate(WHEAT):
-    flat([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], ("#e6cf7a", "#d9bf62", "#ead98f")[i % 3], "#bfa457")
-VINES = [((-240, -60), (-196, 40)), ((-196, 32), (-120, 50)), ((-140, -66), (-118, 26)), ((-196, -66), (-144, -32)), ((-240, 46), (-200, 110))]
-for (x0, y0), (x1, y1) in VINES:
-    flat([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], "#c9cf8a", "#9aa35c", rows=("y", 5))
-for _ in range(240):                                                                     # olives on the slopes north of the fields
-    x, y = random.uniform(-240, 240), random.uniform(56, 240)
-    if (inpoly(x, y, octagon(30)) or any(abs(x - c[0]) < 40 and abs(y - c[1]) < 32 for c, _ in CAMPS.values())) if SIEGE else inpoly(x, y, outline(112, 98, 86)) or (x > 96 and y < 124) or (x < -96 and y < 112 and not (x < -118 and y > 54)): continue
-    TREES.append((x, y, "olive"))
-for x, y in ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82)) if SIEGE else ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82),     # outside the walls
-             (52, 92), (66, 116), (70, 142), (-60, 86), (-66, 108), (30, 86), (-28, 84), (40, 160), (-40, 162)):  # on the terraces
-    TREES.append((x, y, "cypress"))
-for _ in range(60):                                                                      # scrub between the city and the shore
-    x, y = random.uniform(40, 240), random.uniform(-200, -100)
-    if y > shore(x) + 6 and math.hypot(x - 88, y + 88) > 18 and not (SIEGE and abs(x - 158) < 40 and abs(y) < 32): TREES.append((x, y, "olive"))
+if not SIEGE:
+    WHEAT = [((104, 32), (146, 120)), ((150, 34), (240, 120)), ((198, -30), (240, 30)), ((104, -120), (150, -34)), ((150, -110), (240, -34))]
+    for i, ((x0, y0), (x1, y1)) in enumerate(WHEAT):
+        flat([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], ("#e6cf7a", "#d9bf62", "#ead98f")[i % 3], "#bfa457", rows=("x" if i % 2 else "y", 3.2) if DETAIL else None)
+    VINES = [((-240, -60), (-196, 40)), ((-196, 32), (-120, 50)), ((-140, -66), (-118, 26)), ((-196, -66), (-144, -32)), ((-240, 46), (-200, 110))]
+    for (x0, y0), (x1, y1) in VINES:
+        flat([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], "#c9cf8a", "#9aa35c", rows=("y", 5))
+    for _ in range(240):                                                                     # olives on the slopes north of the fields
+        x, y = random.uniform(-240, 240), random.uniform(56, 240)
+        if (inpoly(x, y, octagon(30)) or any(abs(x - c[0]) < 40 and abs(y - c[1]) < 32 for c, _ in CAMPS.values())) if SIEGE else inpoly(x, y, outline(112, 98, 86)) or (x > 96 and y < 124) or (x < -96 and y < 112 and not (x < -118 and y > 54)): continue
+        TREES.append((x, y, "olive"))
+    for x, y in ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82)) if SIEGE else ((104, -76), (76, -104), (-84, -64), (64, -88), (30, -96), (-30, -94), (-114, 46), (-114, 82),     # outside the walls
+                 (52, 92), (66, 116), (70, 142), (-60, 86), (-66, 108), (30, 86), (-28, 84), (40, 160), (-40, 162)):  # on the terraces
+        TREES.append((x, y, "cypress"))
+    for _ in range(60):                                                                      # scrub between the city and the shore
+        x, y = random.uniform(40, 240), random.uniform(-200, -100)
+        if y > shore(x) + 6 and math.hypot(x - 88, y + 88) > 18 and not (SIEGE and abs(x - 158) < 40 and abs(y) < 32): TREES.append((x, y, "olive"))
+else:      # the siege: wilderness all round, scrub and dry grass, woods of round trees and dark pines, boulders; nothing tilled, no sea
+    g = random.Random(21)
+    def clear(x, y, pad=0):
+        if inpoly(x, y, octagon(26 + pad)): return False                                       # the walls and the road round them
+        if any(abs(x - c[0]) < 40 + pad and abs(y - c[1]) < 32 + pad for c, _ in CAMPS.values()): return False
+        if (abs(x) < 8 + pad and 88 < abs(y) < 150) or (abs(y) < 8 + pad and 88 < abs(x) < 150): return False   # the roads out to the camps
+        return abs(x) + abs(y) < 232                                                            # what the overview frame shows, and a little more
+    def anywhere():                                                                             # a point in the frame's diamond
+        while True:
+            x, y = g.uniform(-235, 235), g.uniform(-235, 235)
+            if abs(x) + abs(y) < 232: return x, y
+    def blob(cx, cy, r, n=14):
+        ph = [g.uniform(0, 6.3) for _ in range(3)]
+        return [(cx + r * (1 + .22 * math.sin(3 * a + ph[0]) + .12 * math.sin(5 * a + ph[1])) * math.cos(a), cy + r * .8 * (1 + .2 * math.sin(4 * a + ph[2])) * math.sin(a))
+                for a in (k / n * 2 * math.pi for k in range(n))]
+    for _ in range(110):                                                                        # patches of scrub and dry grass
+        x, y = anywhere()
+        if clear(x, y, 6): flat(blob(x, y, g.uniform(10, 30)), g.choice(("#8a9d63", "#7f935b", "#cbb97c", "#a9a56c", "#96a468")))
+    for _ in range(30):                                                                         # woods in the wild quarters between the camps
+        while True:
+            wx, wy = anywhere()
+            if clear(wx, wy, 14): break
+        for _ in range(g.randint(18, 40)):
+            x, y = wx + g.gauss(0, 15), wy + g.gauss(0, 12)
+            if clear(x, y): TREES.append((x, y, "pine" if g.random() < .65 else "olive"))
+    for _ in range(140):                                                                        # lone trees
+        x, y = anywhere()
+        if clear(x, y): TREES.append((x, y, g.choice(("pine", "olive", "cypress"))))
+    for _ in range(80):                                                                         # boulders
+        x, y = anywhere()
+        if clear(x, y, 2):
+            r = g.uniform(1.2, 3.2); solid([(x + r * math.cos(a) * g.uniform(.7, 1.1), y + r * math.sin(a) * g.uniform(.7, 1.1)) for a in (k / 6 * 2 * math.pi for k in range(6))],
+                                          r * g.uniform(.5, .9), "#b2ada0", wall="#9a9486").update(shadow=DETAIL)
 
 # ------------------------------------------------------------------ distances along the roads
 def segs():
@@ -320,12 +400,131 @@ def draw_solid(V, s, o):
         top = z0 + h
     else: top = 0
     o.append('<polygon points="%s" fill="%s" stroke="%s" stroke-width=".6"/>' % (V.poly(pts, top), s["roof"], shade(s["roof"], .7)))
+    for mxx, myy, ang in (sorted(s.get("merl", []), key=lambda q: -depth(q[0], q[1])) if V.iso else s.get("merl", [])):
+        draw_solid(V, mk(rect(mxx, myy, 1.2, .9, ang), .9, s["roof"], z=top if V.iso else 0, wall=s["wall"]), o)
     if s["court"]:
         cx, cy = centre(pts)
         o.append('<polygon points="%s" fill="%s"/>' % (V.poly(rect(cx, cy, s["court"], s["court"]), top), "#e9dcc4"))
 
+def hull(pts):
+    pts = sorted(set((round(x, 3), round(y, 3)) for x, y in pts))
+    cross = lambda o, a, b: (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lo, hi = [], []
+    for p in pts:
+        while len(lo) > 1 and cross(lo[-2], lo[-1], p) <= 0: lo.pop()
+        lo.append(p)
+    for p in reversed(pts):
+        while len(hi) > 1 and cross(hi[-2], hi[-1], p) <= 0: hi.pop()
+        hi.append(p)
+    return lo[:-1] + hi[:-1]
+def draw_shadow(V, s, o):
+    """The shadow a block casts on the ground it stands on: its outline, and its top swept away from the sun."""
+    d = s["h"] * 1.05
+    if s.get("tier"):                                                       # a terrace's own outline, shifted: it falls only on the terrace below
+        o.append('<polygon points="%s" fill="#3a2a14" opacity=".13"/>' % V.poly([(x + SUN[0] * d, y + SUN[1] * d) for x, y in s["pts"]], s["z"] if V.iso else 0)); return
+    sh = hull(s["pts"] + [(x + SUN[0] * d, y + SUN[1] * d) for x, y in s["pts"]])
+    o.append('<polygon points="%s" fill="#3a2a14" opacity=".2"/>' % " ".join("%.1f,%.1f" % V.p(x, y, min(s["z"], zat(x, y)) if V.iso else 0) for x, y in sh))
+def poly3(V, pts, fill, stroke=None, sw=.5):
+    return '<polygon points="%s" fill="%s"%s/>' % (" ".join("%.1f,%.1f" % V.p(x, y, z if V.iso else 0) for x, y, z in pts), fill, ' stroke="%s" stroke-width="%s" stroke-linejoin="round"' % (stroke, sw) if stroke else "")
+def lit(nx, ny, base=.84, k=.2): return base + k * (-nx * SUN[0] - ny * SUN[1])            # a face turned to the sun is lighter
+def draw_any(V, s, o):
+    if s.get("shadow") and SHADOWS: draw_shadow(V, s, o)
+    if s.get("kind") == "hall": draw_hall(V, s, o)
+    elif s.get("hip"): draw_house(V, s, o)
+    elif s.get("hipr"): draw_hipped(V, s, o)
+    else: draw_solid(V, s, o)
+def draw_house(V, s, o):
+    """A courtyard house: walls, then the open court with its far inner walls, then a tiled roof sloping out and in from a ridge ring."""
+    z0, h = s["z"], s["h"]; top = z0 + h; cx, cy = centre(s["pts"]); a, c = 7.5, 2.5; m, r = 4.9, 1.7
+    draw_solid(V, dict(s, roof="#000000", court=None), o) if V.iso else None
+    if V.iso: o[-1] = ""                                                    # walls only: the flat top is replaced by the roof
+    sq = lambda e, zz: [(cx - e, cy - e, zz), (cx + e, cy - e, zz), (cx + e, cy + e, zz), (cx - e, cy + e, zz)]
+    o.append(poly3(V, sq(c, z0), "#f0e7d2"))
+    if s.get("jar"): o.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#a85a32"/>' % (*V.p(cx - c + 1, cy + c - 1, z0 + .4 if V.iso else 0), .7 * V.k))
+    if V.iso:
+        C = sq(c, z0)
+        for i in range(4):                                                  # the court's far walls, seen through the opening
+            (x1, y1, _), (x2, y2, _) = C[i], C[(i + 1) % 4]; nx, ny = (y2 - y1), -(x2 - x1)
+            if nx * CAM[0] + ny * CAM[1] < 0: o.append(poly3(V, [(x1, y1, z0), (x2, y2, z0), (x2, y2, top), (x1, y1, top)], shade(s["wall"], .9), shade(s["wall"], .66)))
+    if V.iso and s.get("lit"):
+        rnd = random.Random(int(cx * 7 + cy * 13))
+        for (wx, wy), (ux, uy) in (((cx + 7, cy), (0, 1)), ((cx, cy - 7), (1, 0))):    # the east and south walls
+            for off in rnd.sample((-3.5, 0, 3.5), rnd.choice((1, 1, 2))):
+                px_, py_ = wx + ux * off, wy + uy * off; zw = z0 + h * .45
+                o.append(poly3(V, [(px_ - ux * .6, py_ - uy * .6, zw), (px_ + ux * .6, py_ + uy * .6, zw), (px_ + ux * .6, py_ + uy * .6, zw + 1.5), (px_ - ux * .6, py_ - uy * .6, zw + 1.5)], "#ffcf6e"))
+    O, R, I = sq(a, top), sq(m, top + r), sq(c, top); N = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+    panels = []
+    for i in range(4):
+        j = (i + 1) % 4; nx, ny = N[i]
+        panels.append(([O[i], O[j], R[j], R[i]], lit(nx, ny), True)); panels.append(([R[i], R[j], I[j], I[i]], lit(-nx, -ny), False))
+    if V.iso: panels.sort(key=lambda q: -sum(depth(x, y) for x, y, _ in q[0]))
+    for pts, f, outer in panels:
+        o.append(poly3(V, pts, shade(s["roof"], f), shade(s["roof"], .62), .45))
+        if outer:                                                           # rows of tiles, parallel to the eave
+            for t in (.36, .7):
+                e1 = [pts[0][k] + (pts[3][k] - pts[0][k]) * t for k in range(3)]; e2 = [pts[1][k] + (pts[2][k] - pts[1][k]) * t for k in range(3)]
+                o.append('<polyline points="%s" fill="none" stroke="%s" stroke-width=".7" opacity=".55"/>' % (" ".join("%.1f,%.1f" % V.p(q[0], q[1], q[2] if V.iso else 0) for q in (e1, e2)), shade(s["roof"], .6)))
+def draw_hipped(V, s, o):
+    """A small house: walls, then a hipped roof whose ridge runs along its longer side."""
+    if V.iso: draw_solid(V, dict(s, roof="#000000"), o); o[-1] = ""
+    xs, ys = [x for x, _ in s["pts"]], [y for _, y in s["pts"]]; ov = .5
+    x0, x1, y0, y1 = min(xs) - ov, max(xs) + ov, min(ys) - ov, max(ys) + ov; zt = s["z"] + s["h"]; zr = zt + 1.8
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    if x1 - x0 >= y1 - y0:
+        hd = (y1 - y0) / 2; ra, rb = (x0 + hd, cy, zr), (x1 - hd, cy, zr)
+        faces = [([(x0, y1, zt), (x1, y1, zt), rb, ra], lit(0, 1)), ([(x0, y0, zt), ra, (x0, y1, zt)], lit(-1, 0)), ([(x0, y0, zt), (x1, y0, zt), rb, ra], lit(0, -1)), ([(x1, y0, zt), (x1, y1, zt), rb], lit(1, 0))]
+    else:
+        hw = (x1 - x0) / 2; ra, rb = (cx, y0 + hw, zr), (cx, y1 - hw, zr)
+        faces = [([(x0, y0, zt), ra, rb, (x0, y1, zt)], lit(-1, 0)), ([(x0, y1, zt), (x1, y1, zt), rb], lit(0, 1)), ([(x1, y0, zt), ra, rb, (x1, y1, zt)], lit(1, 0)), ([(x0, y0, zt), (x1, y0, zt), ra], lit(0, -1))]
+    if V.iso: faces.sort(key=lambda q: -sum(depth(x, y) for x, y, _ in q[0]) / len(q[0]))
+    for pts, f in faces: o.append(poly3(V, pts, shade(s["roof"], f), shade(s["roof"], .62), .45))
+def draw_hall(V, s, o):
+    cx, cy, w, d, z = s["cx"], s["cy"], s["w"], s["d"], s["z"]
+    if s["steps"]:
+        for i, g in enumerate((2, 1, 0)): draw_solid(V, mk(rect(cx, cy, w + g, d + g), .5, "#ece5d6", z=z + .5 * i, wall="#d6ccb8"), o)
+        z += 1.5
+    parts = []
+    if s["core"]: ox, oy, cw, cd = s["core"]; parts.append(mk(rect(cx + ox, cy + oy, cw, cd), s["col_h"], "#ece3cf", z=z, wall=s["wall"] if s["wall"] != "#f2ece0" else "#efe6d3"))
+    def run(x0, y0, x1, y1):
+        n = max(2, int(math.hypot(x1 - x0, y1 - y0) / 2.4) + 1)
+        return [(x0 + (x1 - x0) * k / (n - 1), y0 + (y1 - y0) * k / (n - 1)) for k in range(n)]
+    hw, hd = w / 2 - .7, d / 2 - .7; spots = []
+    if s["cols"] == "all": spots = run(-hw, -hd, hw, -hd) + run(-hw, hd, hw, hd) + run(-hw, -hd, -hw, hd)[1:-1] + run(hw, -hd, hw, hd)[1:-1]
+    else:
+        side = {"n": run(-hw, hd, hw, hd), "s": run(-hw, -hd, hw, -hd), "e": run(hw, -hd, hw, hd), "w": run(-hw, -hd, -hw, hd)}
+        spots = [q for k in s["cols"] for q in side[k]]
+    parts += [mk(rect(cx + a, cy + b, .9, .9), s["col_h"], "#f7f2e6", z=z, wall="#f4eee0") for a, b in spots]
+    for q in (sorted(parts, key=lambda q: -sum(depth(x, y) for x, y in q["pts"]) / 4) if V.iso else parts): draw_solid(V, q, o)
+    zt = z + s["col_h"]; draw_solid(V, mk(rect(cx, cy, w, d), 1.2, "#efe6d2", z=zt, wall="#ebe1cc"), o); zt += 1.2
+    zr, ov = zt + s["roof_h"], .5; x0, x1, y0, y1 = cx - w / 2 - ov, cx + w / 2 + ov, cy - d / 2 - ov, cy + d / 2 + ov
+    if s["ridge"] == "x":
+        panels = [([(x0, cy, zr), (x1, cy, zr), (x1, y1, zt), (x0, y1, zt)], lit(0, 1)), ([(x0, y0, zt), (x1, y0, zt), (x1, cy, zr), (x0, cy, zr)], lit(0, -1))]
+        gable = [(x1, y0, zt), (x1, y1, zt), (x1, cy, zr)]
+        rows = lambda pts, t: [[pts[0][k] + (pts[3][k] - pts[0][k]) * t for k in range(3)], [pts[1][k] + (pts[2][k] - pts[1][k]) * t for k in range(3)]]
+    else:
+        panels = [([(x0, y0, zt), (cx, y0, zr), (cx, y1, zr), (x0, y1, zt)], lit(-1, 0)), ([(cx, y0, zr), (x1, y0, zt), (x1, y1, zt), (cx, y1, zr)], lit(1, 0))]
+        gable = [(x0, y0, zt), (x1, y0, zt), (cx, y0, zr)]
+        rows = lambda pts, t: [[pts[0][k] + (pts[1][k] - pts[0][k]) * t for k in range(3)], [pts[3][k] + (pts[2][k] - pts[3][k]) * t for k in range(3)]]
+    for pts, f in panels:
+        o.append(poly3(V, pts, shade(s["roof"], f), shade(s["roof"], .62), .5))
+        for t in (.25, .5, .75):
+            o.append('<polyline points="%s" fill="none" stroke="%s" stroke-width=".7" opacity=".5"/>' % (" ".join("%.1f,%.1f" % V.p(q[0], q[1], q[2] if V.iso else 0) for q in rows(pts, t)), shade(s["roof"], .6)))
+    if V.iso: o.append(poly3(V, gable, "#f1eadb", "#b9ad94", .6))                                  # the pediment that faces us
+
 def draw_tree(V, t, z, o):
     x, y, sp = t
+    if detailed(x, y) and SHADOWS:                                          # a shadow on the ground, away from the sun
+        if sp in ("cypress", "pine"):
+            L = 11 if sp == "cypress" else 9; o.append('<polygon points="%s" fill="#3a2a14" opacity=".2"/>' % V.poly(hull([(x - .9 * SUN[1], y + .9 * SUN[0]), (x + .9 * SUN[1], y - .9 * SUN[0]), (x + SUN[0] * L, y + SUN[1] * L)]), z if V.iso else 0))
+        else:
+            o.append('<polygon points="%s" fill="#3a2a14" opacity=".2"/>' % V.poly([(x + SUN[0] * 3 + 2.6 * math.cos(a / 5 * math.pi), y + SUN[1] * 3 + 2.6 * math.sin(a / 5 * math.pi)) for a in range(10)], z if V.iso else 0))
+    if sp == "pine":
+        if V.iso:
+            bx, by = V.p(x, y, z); tx, ty = V.p(x, y, z + 9)
+            o.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="#2f5a3c" stroke="#22432c" stroke-width=".6" stroke-linejoin="round"/>' % (bx - 2.6 * V.k, by - .8 * V.k, bx + 2.6 * V.k, by - .8 * V.k, tx, ty))
+            o.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="#3b6e49" opacity=".8"/>' % (bx - 2.6 * V.k, by - .8 * V.k, bx, by - .5 * V.k, tx, ty))
+        else: o.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#2f5a3c"/>' % (*V.p(x, y), 2.4 * V.k))
+        return
     if sp == "cypress":
         if V.iso:
             bx, by = V.p(x, y, z); tx, ty = V.p(x, y, z + 11)
@@ -346,11 +545,19 @@ TOPS = [s["z"] + s["h"] for s in HILL]
 
 def draw(V, cid):
     o = []
-    # sea and beach
-    xs = [x for x in range(-300, 301, 6)]
-    o.append('<polygon points="%s" fill="#8ec3d4"/>' % V.poly([(x, shore(x)) for x in xs] + [(300, -400), (-300, -400)]))
-    o.append('<polyline points="%s" fill="none" stroke="#efe0b8" stroke-width="%.1f"/>' % (V.poly([(x, shore(x) + 3) for x in xs]), 7 * V.k))
-    o.append('<polyline points="%s" fill="none" stroke="#6aaac0" stroke-width="%.1f" stroke-dasharray="%.1f %.1f"/>' % (V.poly([(x, shore(x) - 8) for x in xs]), .6 * V.k, 4 * V.k, 3 * V.k))
+    # sea and beach (the siege has neither)
+    xs = [x for x in range(-300, 301, 6)] if not SIEGE else []
+    if xs: o.append('<polygon points="%s" fill="#8ec3d4"/>' % V.poly([(x, shore(x)) for x in xs] + [(300, -400), (-300, -400)]))
+    if NIGHT and xs:                                                               # moonlight glinting on the water, in short broken strokes
+        g = random.Random(5)
+        for _ in range(70):
+            x = g.uniform(-260, 160); y = shore(x) - g.uniform(14, 120); L = g.uniform(3, 9)
+            o.append('<polyline points="%s" fill="none" stroke="#cfe3ff" stroke-width="%.1f" stroke-linecap="round" opacity="%.2f"/>' % (V.poly([(x, y), (x + L * .8, y + L * .25)]), .45 * V.k, g.uniform(.25, .7)))
+    if xs: o.append('<polyline points="%s" fill="none" stroke="#efe0b8" stroke-width="%.1f"/>' % (V.poly([(x, shore(x) + 3) for x in xs]), 7 * V.k))
+    if xs: o.append('<polyline points="%s" fill="none" stroke="#6aaac0" stroke-width="%.1f" stroke-dasharray="%.1f %.1f"/>' % (V.poly([(x, shore(x) - 8) for x in xs]), .6 * V.k, 4 * V.k, 3 * V.k))
+    if DETAIL and xs:
+        for off, dash, gap in ((18, 7, 9), (30, 5, 13), (44, 9, 17)):
+            o.append('<polyline points="%s" fill="none" stroke="#7fb6c8" stroke-width="%.1f" stroke-dasharray="%.1f %.1f" stroke-linecap="round" opacity=".8"/>' % (V.poly([(x + off * .7, shore(x) - off) for x in xs]), .5 * V.k, dash * V.k, gap * V.k))
     for f in FLAT:
         if "circle" in f:
             cx, cy, r = f["circle"]; rg = [(cx + r * math.cos(a / 12 * math.pi), cy + r * math.sin(a / 12 * math.pi)) for a in range(24)]
@@ -358,6 +565,12 @@ def draw(V, cid):
         o.append('<polygon points="%s" fill="%s" stroke="%s" stroke-width="%s"/>' % (V.poly(f["pts"], f["z"]), f["fill"], f["stroke"] or "none", 1 if f["stroke"] else 0))
         if f.get("rows"):
             (x0, y0), _, (x1, y1), _ = f["pts"]; y = y0 + 2.5
+            if f["fill"] != "#c9cf8a":                                     # wheat: fine furrows, across or along
+                ax, step = f["rows"]; t = (x0 if ax == "x" else y0) + step
+                while t < (x1 if ax == "x" else y1):
+                    seg = [(t, y0 + 1), (t, y1 - 1)] if ax == "x" else [(x0 + 1, t), (x1 - 1, t)]
+                    o.append('<polyline points="%s" stroke="%s" stroke-width="%.2f" opacity=".5"/>' % (V.poly(seg), shade(f["fill"], .82), .45 * V.k)); t += step
+                continue
             while y < y1: o.append('<polyline points="%s" stroke="#6f8a3e" stroke-width="%.2f" stroke-dasharray="%.1f %.1f"/>' % (V.poly([(x0 + 2, y), (x1 - 2, y)]), .9 * V.k, 1.2 * V.k, .8 * V.k)); y += f["rows"][1]
     draw_roads(V, o)
     # Sort everything into: ground things behind the hill; the hill, terrace by terrace, each followed by what stands on its far
@@ -371,11 +584,11 @@ def draw(V, cid):
         if lvl is None: (before if V.iso and depth(x, y) > DH and (y > 150 or x < -95) else after).append(th)
         elif V.iso and depth(x, y) <= DH and lvl < len(HILL) - 1: after.append(th)
         else: on[lvl].append(th)
-    put = lambda th: draw_tree(V, th[1], th[3], o) if th[0] == "tree" else draw_solid(V, th[1], o)
+    put = lambda th: draw_tree(V, th[1], th[3], o) if th[0] == "tree" else draw_any(V, th[1], o)
     far = lambda th: -depth(*th[2])
     for th in sorted(before, key=far): put(th)
     for i, h in enumerate(HILL):
-        draw_solid(V, h, o)
+        draw_any(V, dict(h, shadow=DETAIL, tier=True), o)
         z = TOPS[i]
         o.append('<clipPath id="%s-h%d"><polygon points="%s"/></clipPath><g clip-path="url(#%s-h%d)">' % (cid, i, V.poly(h["pts"], z if V.iso else 0), cid, i))
         draw_roads(V, o, z if V.iso else 0)                                    # streets carry on across the terrace
@@ -412,7 +625,7 @@ def svg():
     P = 640; s1 = P / (2 * (L + 20)); ox, oy = 20 + P / 2, 70 + P / 2
     out.append('<text x="20" y="40" class="h">Plan, north up</text><text x="20" y="58" class="c">metres from the crossroads; the dashed diamond is what the overview shows</text>')
     out.append('<clipPath id="c1"><rect x="20" y="70" width="%d" height="%d"/></clipPath><g clip-path="url(#c1)"><rect x="20" y="70" width="%d" height="%d" fill="#cfd8a4"/>' % (P, P, P, P))
-    V1 = View(ox, oy, s1, False); out += draw(V1, "c1")
+    V1 = View(ox, oy, s1, False); d1 = '<rect x="20" y="70" width="%d" height="%d" fill="%s"/>' % (P, P, GROUND) + "".join(draw(V1, "c1")); out.append(night(d1, V1) if NIGHT else d1)
     out.append('<polygon points="%s" fill="none" stroke="#333" stroke-width="1.2" stroke-dasharray="6 5"/>' % V1.poly([(0, L), (L, 0), (0, -L), (-L, 0)]))
     out += labels(V1)
     out.append('</g><rect x="20" y="70" width="%d" height="%d" fill="none" stroke="#999"/>' % (P, P))
@@ -423,7 +636,7 @@ def svg():
     FW = 840; k2 = FW / (R2 * L); FH = FW * 3 / 4; fx, fy = 700, 70
     out.append('<text x="%d" y="40" class="h">Seen from the southeast, 4:3</text><text x="%d" y="58" class="c">orthographic, camera %.1f° above the horizon, so the main streets run corner to corner</text>' % (fx, fx, math.degrees(ELEV)))
     out.append('<clipPath id="c2"><rect x="%d" y="%d" width="%d" height="%d"/></clipPath><g clip-path="url(#c2)"><rect x="%d" y="%d" width="%d" height="%d" fill="#cfd8a4"/>' % (fx, fy, FW, FH, fx, fy, FW, FH))
-    V2 = View(fx + FW / 2, fy + FH / 2, k2, True); out += draw(V2, "c2")
+    V2 = View(fx + FW / 2, fy + FH / 2, k2, True); d2 = '<rect x="%d" y="%d" width="%d" height="%d" fill="%s"/>' % (fx, fy, FW, FH, GROUND) + "".join(draw(V2, "c2")); out.append(night(d2, V2) if NIGHT else d2)
     out.append('<path d="M%d %d L%d %d M%d %d L%d %d" stroke="#333" stroke-width="1" stroke-dasharray="6 5" opacity=".55"/>' % (fx, fy, fx + FW, fy + FH, fx + FW, fy, fx, fy + FH))
     out += labels(V2, (fx, fx + FW))
     out.append('</g><rect x="%d" y="%d" width="%d" height="%d" fill="none" stroke="#999"/>' % (fx, fy, FW, FH))
@@ -462,9 +675,30 @@ def zroute(x, y):
         return TOP - (TOP - 3) * (WEST_STAIR["x0"] - x) / (WEST_STAIR["x0"] - WEST_STAIR["x1"])
     return zat(x, y)
 
+def night(body, V):
+    """Moonlight: every colour that is not a light source is darkened and cooled; then the glows are laid over it all."""
+    import re
+    def cool(m):
+        h = "#" + m.group(1).lower()
+        if h in LIGHTS: return h
+        r, g, b = (int(h[i:i + 2], 16) for i in (1, 3, 5)); l = .3 * r + .59 * g + .11 * b
+        mix = lambda c: c * .68 + l * .32                                  # keep most of each colour's own hue, so roofs stay roofs
+        return "#%02x%02x%02x" % (int(mix(r) * .40 + 10), int(mix(g) * .44 + 16), min(255, int(mix(b) * .56 + 38)))
+    body = re.sub(r"#([0-9a-fA-F]{6})\b", cool, body)
+    defs = ('<defs><radialGradient id="glow-fire"><stop offset="0" stop-color="#ffcf6e" stop-opacity=".95"/><stop offset=".3" stop-color="#ff8c2a" stop-opacity=".5"/>'
+            '<stop offset="1" stop-color="#ff8c2a" stop-opacity="0"/></radialGradient><radialGradient id="glow-torch"><stop offset="0" stop-color="#fff1c4" stop-opacity="1"/>'
+            '<stop offset=".25" stop-color="#ffb347" stop-opacity=".6"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient></defs>')
+    lights = ""
+    for x, y, z, r, kind in GLOWS:
+        px, py = V.p(x, y, z if V.iso else 0); rx = r * V.k
+        lights += '<ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="%.1f" fill="url(#glow-%s)"/>' % (px, py, rx, rx * (.75 if V.iso and kind == "fire" else 1), kind)
+        if kind == "torch": lights += '<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#fff1c4"/>' % (px, py, .5 * V.k)
+    return defs + body + '<g style="mix-blend-mode:screen">' + lights + "</g>"
+
 def app_js():
     AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
-    body = '<rect width="%d" height="%d" fill="#cfd8a4"/>' % (AW, AH) + "".join(draw(V, "city"))
+    body = '<rect width="%d" height="%d" fill="%s"/>' % (AW, AH, GROUND) + "".join(draw(V, "city"))
+    if NIGHT: body = night(body, V)
     G, key = graph(); r1 = lambda p: [round(p[0], 1), round(p[1], 1)]
     places = {n: r1(V.p(*at, zat(*at))) for n, (at, door) in APP_PLACES.items()}
     doors = {n: r1(V.p(*door, zroute(*door))) for n, (at, door) in APP_PLACES.items()}
@@ -494,7 +728,7 @@ def app_js():
     o = V.p(0, 0, 0); vec = lambda q: [round(q[0] - o[0], 4), round(q[1] - o[1], 4)]
     iso = dict(e=vec(V.p(1, 0, 0)), n=vec(V.p(0, 1, 0)), u=vec(V.p(0, 0, 1)))       # pixels per metre east, north and up
     import json
-    city = dict(w=AW, h=AH, svg=body, plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
+    city = dict(w=AW, h=AH, night=NIGHT, svg=body, plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
     frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
     name, view = ("SIEGE", "siege") if SIEGE else ("CITY", "city")
     head = "// The %s stage, written by world/city_mockup.py%s --app: the southeast picture, its places and the road routes between them.\n" % (view, " --siege" if SIEGE else "")
@@ -502,5 +736,13 @@ def app_js():
     diag = "STAGES.%s = { w: %s.w, h: %s.h, places: %s, roads: {}, label: {}, inset: {}, img: null };   // for the Abstraction register\n" % (view, name, name, json.dumps(frac))
     return head + data + diag
 
+def crop_svg(x0, x1, y0, y1):
+    AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
+    pts = [V.p(x, y, z) for x in (x0, x1) for y in (y0, y1) for z in (0, 34)]
+    bx0, bx1, by0, by1 = min(p[0] for p in pts), max(p[0] for p in pts), min(p[1] for p in pts), max(p[1] for p in pts)
+    body = '<rect x="-2000" y="-2000" width="6000" height="6000" fill="%s"/>' % GROUND + "".join(draw(V, "crop"))
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="%.1f %.1f %.1f %.1f">%s</svg>' % ((bx1 - bx0) * 1.6, (by1 - by0) * 1.6, bx0, by0, bx1 - bx0, by1 - by0, body)
+
+if "--crop" in sys.argv: open(sys.argv[sys.argv.index("--crop") + 1], "w").write(crop_svg(-70, 120, 25, 205))
 open(sys.argv[1], "w").write(svg())
 if "--app" in sys.argv: open(sys.argv[sys.argv.index("--app") + 1], "w").write(app_js())

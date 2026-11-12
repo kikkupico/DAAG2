@@ -152,3 +152,8 @@
   .panel .say { font-size: 15.5px; line-height: 1.45; }
   .panel .fcol { padding: 8px 12px 10px; gap: 6px; }
 }
+
+/* at night the messengers and their trails glow brighter, to stand out on the moonlit ground */
+.stage.city.night .in .trail { stroke: #59b4ff; } .stage.city.night .out .trail { stroke: #ffb340; } .stage.city.night .lost .trail { stroke: #ff6f9f; }
+.stage.city.night .in .mx circle { fill: #59b4ff; } .stage.city.night .out .mx circle { fill: #ffb340; } .stage.city.night .lost .mx circle { fill: #ff6f9f; }
+.stage.city.night .trail { opacity: .95; } .stage.city.night .way { opacity: .9; }
