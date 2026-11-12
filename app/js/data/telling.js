@@ -9,6 +9,10 @@ clocks: { hat: "merchant",
     ["(1,A) then (1,B)", "(1, fishery) then (1, granary)"],
     ["B's news", "the granary's order"], ["C's news", "the winery's order"], ["B's old hi", "the granary's old order"], ["below A's own", "nothing new to the fishery"], ["unordered", "neither came first"]],
   tale: "The fishery, the granary and the winery sell to customers and order from one another all day, with no shared clock to say which order was written first. So each numbers the lines of its ledger. Every sale, every order sent and every order received takes the next number, and every order carries the number of the line it was written on. Whoever receives an order skips ahead, past its number. A cause then always carries a smaller number than its effect.",
+  frame: {
+    goal: "Number every ledger line so an order always carries a smaller number than anything it led to, and all three houses can list the day's lines in one agreed order. Keeping a tally of the lines heard of from each house also shows when neither of two lines led to the other.",
+    shared: "No common ledger. The order is read off the numbers written on orders. Beforehand the houses agree only on the numbering rule and on each other's names, which settle ties.",
+    assumes: "No town clock. A courier may be slow or lose an order: numbering waits for no reply. No house is ever handed to a new keeper." },
   gloss: [["the fishery, the granary, the winery", "nodes A, B, C"], ["a sale to a customer", "a local event"], ["an order", "a message (“hi”, “news”)"], ["the last line number", "the counter"], ["@3 on an order", "written on line 3 of the sender's ledger"], ["the ox-cart", "the shared resource"]],
   scenes: {
     jump: { name: "Skipping past an order", prose: [
@@ -44,6 +48,10 @@ snapshot: { hat: "merchant", role: "merchant", client: "amphora maker",
     [/^units copy$/, "tally"], [/^units$/, "amphorae"], ["copied from B", "on the granary road"], ["copied from C", "on the winery road"],
     ["nothing yet (copying)", "none yet (road open)"], ["nothing (done)", "none (road closed)"], ["(copying)", "(road open)"], ["(done)", "(road closed)"], [/(\d+) units/g, "$1 amphorae"], ["marker", "inventory note"]],
   tale: "The town's amphora maker wants to know how many amphorae are in use on Paxos: every storeroom, plus whatever is on the road. Nobody stops trading to be counted. So the count travels as inventory notes, carried by the same couriers on the same roads as the goods, and never overtaking them. A note carries no number. It says only: count now. At its first note, a business counts its storeroom, writes the tally, and sends a note down every road it ships on. Until a note arrives by a road, the business also writes down every amphora that road delivers.",
+  frame: {
+    goal: "Count the amphorae in every storeroom, plus those on the road, so the tallies add up to a moment Paxos could really have been in, without anyone stopping trade.",
+    shared: "The count, in pieces: each business holds the tally of its own storeroom, plus the amphorae it wrote down from each road.",
+    assumes: "No courier loses goods or notes, and none overtakes another on the same road, though any trip can take any length of time. Every business can be reached, directly or through others. No business changes hands during a count." },
   gloss: [["the fishery, the granary, the winery", "nodes A, B, C"], ["amphorae", "units"], ["an inventory note", "a marker"], ["the tally", "a node's copy of its own value"], ["a road", "the stream of messages from one node"], ["the amphora maker", "whoever asks for the snapshot"]],
   scenes: {
     markers: { name: "With inventory notes", note: "The fishery's share of the count.", phases: ["Before the count", "The count"], prose: [
@@ -67,6 +75,10 @@ snapshot: { hat: "merchant", role: "merchant", client: "amphora maker",
 flp: { hat: "legislator", role: "legislator", client: "citizen", lex: [[/\bx\b/g, "red"], [/\by\b/g, "blue"]],
   stage: { view: "city", A: "fishery", B: "granary", C: "winery", also: ["temple"], client: "crossroads", labels: { fishery: "legislator A · fishery", granary: "legislator B · granary", winery: "legislator C · winery", crossroads: "a citizen" } },
   tale: "The temple columns need repainting, and each legislator starts out favouring red or blue. All who decide must decide the same. They vote by courier. A courier can take any length of time, and one legislator may be gone for good. A legislator who hears nothing cannot tell which has happened. A rule that decides without the silent one can be wrong; a rule that waits can wait forever.",
+  frame: {
+    goal: "Each legislator starts out favouring red or blue. Every legislator who decides must pick the same colour, and some legislator must decide. Either colour must be a possible outcome.",
+    shared: "Only the rule. Each legislator holds their own preference, and writes their decision once, in the ledger.",
+    assumes: "A courier takes any length of time and couriers arrive in any order, but none is lost and no vote is altered. No hourglasses: in each step a legislator receives one courier or none. At most one legislator is gone for good, with no successor. Legislators follow the rule exactly, and never toss a coin." },
   gloss: [["legislator", "node"], ["red, blue", "the two values, x and y"], ["gone for good", "stopped"]],
   scenes: {
     stopped: { name: "C is gone", note: "{A}'s rule, one example: wait for all three votes, but after three steps in a row with no courier, decide with the votes in hand. A tie goes to red.",
@@ -82,6 +94,10 @@ flp: { hat: "legislator", role: "legislator", client: "citizen", lex: [[/\bx\b/g
 suspect: { hat: "legislator",
   stage: { view: "city", A: "fishery", B: "granary", C: "winery", also: ["temple"], client: "crossroads", labels: { fishery: "legislator A · fishery", granary: "legislator B · granary", winery: "legislator C · winery", crossroads: "a citizen" } }, role: "legislator", client: "citizen", lex: [[/\bx\b/g, "red"], [/\by\b/g, "blue"], ["agree on a value", "settle the column colour"]],
   tale: "Red or blue for the temple columns? A legislator may suspect a silent colleague of being gone, and may be wrong. Suspicion only decides when to stop waiting and turn to the next president. It never decides the colour: a colour is locked once a majority says yes to one president, and every later president finds it. So a wrong suspicion costs time and nothing else.",
+  frame: {
+    goal: "Each legislator starts with a colour. Every legislator who decides picks the same one, it is one of the starting colours, and every legislator still sitting decides.",
+    shared: "Up front, the roll of legislators and the order in which they take turns presiding over rounds.",
+    assumes: "No courier is lost, but any can take any length of time. Fewer than half the legislators may be gone, for good. Each legislator keeps a list of suspects, and it can be wrong. The colour never depends on that list. Settling it needs a time after which some legislator still sitting is suspected by no one, which turning the hourglass longer after each mistake gives once couriers keep a steady pace." },
   gloss: [["legislator", "node"], ["president", "the coordinator of a round"], ["red, blue", "the two values, x and y"]],
   scenes: {
     forgive: { note: "Every legislator sends “alive” to the others now and then. {A} waits a while for each before suspecting them.",
@@ -104,6 +120,10 @@ suspect: { hat: "legislator",
 benor: { hat: "legislator",
   stage: { view: "city", A: "fishery", B: "granary", C: "winery", also: ["temple"], client: "crossroads", labels: { fishery: "legislator A · fishery", granary: "legislator B · granary", winery: "legislator C · winery", crossroads: "a citizen" } }, role: "legislator", client: "citizen", lex: [[/\bx\b/g, "red"], [/\by\b/g, "blue"], [/^value$/, "favours"]],
   tale: "The columns again, red or blue. Again any courier may take any length of time, and one legislator may be gone for good. No fixed rule can be sure to settle it. A rule with a coin can. In each round the legislators report their colours, and a colour is proposed only if more than half report it. A legislator who sees a proposal adopts it. One who sees none tosses a coin. Two colours can never both be proposed in one round, so the coin never risks a split. It only ends a tie, sooner or later.",
+  frame: {
+    goal: "Settle on red or blue with no assumption at all about how long couriers take, deciding with probability 1 as long as a majority of legislators remain.",
+    shared: "Only the rule and the number of legislators. Each legislator has their own coin.",
+    assumes: "Couriers take any length of time and arrive in any order, but do arrive. Fewer than half the legislators are gone. Nobody lies here; the paper gives a second rule for liars, which needs more than five legislators for each liar. Even whoever dispatches the couriers, seeing everything, cannot hold off a decision forever, except with probability 0." },
   gloss: [["legislator", "node"], ["red, blue", "the two values, x and y"], ["a tossed coin", "a random choice, each value equally likely"], ["gone for good", "stopped"]],
   scenes: {
     coin: { name: "No majority, so toss", note: "The rule, for three legislators of whom one may be gone: wait for two messages, your own included, and never for the third.",
@@ -130,6 +150,10 @@ commit: { hat: "merchant",
   lex: [[/^units$/, "amphorae of fish"], [/^transfer$/, "the swap"], ["working", "arranged"], ["agreed (can finish or undo)", "agreed (5 set aside)"], ["committed", "done"], ["undone", "called off"],
     ["request commit", "will you stand by the swap?"], [/^agree$/, "I will"], [/^commit$/, "the swap is on"], [/^abort$/, "the swap is off"], [/^ack$/, "noted"], ["verdict?", "on or off?"], ["no verdict yet", "still no word"]],
   tale: "The fishery and the granary arrange a swap: 5 amphorae of salt fish for 5 sacks of grain. Neither will hand over unless the other does. So the harbour notary asks each whether it will stand by the swap. A business that says yes sets its goods aside and can no longer back out. If both say yes, the notary writes the swap in the register and tells both it is on. If either says no, it is off. A business that has said yes and then hears nothing can neither hand its goods over nor put them back.",
+  frame: {
+    goal: "Either both businesses hand over their goods or neither does, though couriers get lost and a business may shut and reopen.",
+    shared: "The verdict, which is held in one place: the notary's register.",
+    assumes: "A courier can be lost, and the message is sent again. A business can shut and reopen from what it wrote down. Either business may refuse until it has said yes. A business that has said yes waits for the notary; Skeen calls this blocking and gives the conditions under which a protocol avoids it. Nobody lies." },
   gloss: [["the fishery, the granary", "participants A and B"], ["the notary", "the coordinator, K"], ["the swap", "the transaction"], ["set aside", "able to finish or undo"], ["on, off", "commit, abort"]],
   scenes: {
     agree: { name: "Both say yes", note: "The fishery is one of two parties to a swap: 5 amphorae of salt fish for 5 sacks of grain. The notary runs it.", prose: [
@@ -160,6 +184,10 @@ commit: { hat: "merchant",
 paxos: { hat: "legislator",
   stage: { view: "city", A: "fishery", B: "granary", C: "winery", P: "proposer P", Q: "proposer Q", also: ["temple"], client: "crossroads", labels: { fishery: "legislator A · fishery", granary: "legislator B · granary", winery: "legislator C · winery", crossroads: "a citizen" } }, role: "legislator", roles: { P: "proposer", Q: "proposer" }, client: "citizen", lex: [[/\bx\b/g, "red"], [/\by\b/g, "blue"], ["get red chosen", "paint the columns red"], ["get blue chosen", "paint the columns blue"]], peers: "legislators {A}, {B} and {C}",
   tale: "Red or blue for the temple columns? Legislators promise to ignore older rounds and accept proposals, and write both in the ledger. Once a majority accepts a colour in one round, every later round must propose that same colour. This is Leslie Lamport's part-time parliament, moved out of its Chamber: here nobody is ever in the same room.",
+  frame: {
+    goal: "Choose exactly one colour for the columns, and never change it once chosen.",
+    shared: "The chosen colour, though no legislator writes it down as such: it is whatever a majority of legislators accepted in the same round. Up front, everyone knows the roll of legislators, so “majority” means the same to all.",
+    assumes: "Legislators work at any pace and may leave office; a successor starts from the old one's ledger. Couriers can be delayed, sent twice or lost, but no message is ever altered. Nobody lies." },
   gloss: [["legislator", "voter"], ["red, blue", "the two values, x and y"], ["successor", "a replacement node"]],
   scenes: {
     round: { prose: [
@@ -194,6 +222,10 @@ vr: { hat: "legislator",
   stage: { view: "city", A: "fishery", B: "granary", C: "winery", also: ["temple"], client: "crossroads", labels: { fishery: "legislator A · fishery", granary: "legislator B · granary", winery: "legislator C · winery", crossroads: "a citizen" } }, role: "legislator", client: "citizen",
   lex: [["a=1", "columns red"], ["b=2", "olive tax 3"], ["c=3", "wool tax 4"], ["x=9", "fig tax 9"], ["y=5", "fish tax 5"], ["primary", "president"], ["backup", "member"], [/^events$/, "decrees"], ["events up to", "decrees up to"], [/^run /, "enact "]],
   tale: "The columns are settled, and now decrees keep coming. One legislator presides and does the work: each decree is numbered, and a record of it goes to the others. A decree is safe once a majority know it. The legislators in touch with one another, and which of them presides, make up a view. When the president falls silent the others form a new view, and whoever knows the most presides in it, so every decree a majority knew is carried over. Only the number of the current view goes in the ledger. Everything else is on the slate.",
+  frame: {
+    goal: "Keep decrees coming and the record of them intact when legislators fall silent or are cut off, with every legislator's copy of the record behaving as one.",
+    shared: "The decrees known to a majority. Up front, everyone knows the roll of legislators.",
+    assumes: "Couriers can be lost, delayed or arrive out of order, and the roads can be cut, splitting the legislators apart. A legislator who falls loses everything on the slate and keeps only the number of the current view, from the ledger, and says so on returning. If a majority fall at once, what they knew may be gone, and then no new view ever forms. Nobody lies." },
   gloss: [["legislator", "node"], ["president", "primary"], ["a view", "the nodes in touch, and which of them is primary"], ["v1.3", "view 1, event 3"], ["columns red, olive tax 3, fig tax 9", "the events a=1, b=2, x=9"]],
   scenes: {
     force: { name: "Making a decree safe", as: "president of view 1", note: "Decree “v1.2 olive tax 3” means view 1, decree 2, an olive tax of 3.", phases: ["Making a decree safe", "Signs of life"], prose: [
@@ -224,6 +256,10 @@ liars: { hat: "soldier", role: "lieutenant", roles: { S: "commander" },
   stage: { view: "siege", S: "commander's camp", A: "camp A", B: "camp B", C: "camp C", also: ["enemy city"] }, client: "camp", peers: "the commander {S} and lieutenant {B}",
   lex: [[/\bx\b/g, "attack"], [/\by\b/g, "retreat"], [/^value\(/, "order("], [/\bS said\b/g, "commander said"]],
   tale: "The commander sends each lieutenant an order, attack or retreat, and the lieutenants tell one another what they were told. Some officer may be a traitor who says different things to different people. With three officers and one traitor, no rule works. It takes four to outvote one. These are the generals of Lamport, Shostak and Pease, posted to Paxos.",
+  frame: {
+    goal: "The commander sends an order. All loyal lieutenants decide the same order, and if the commander is loyal, it is the order the commander sent.",
+    shared: "Up front: the roll of officers, which one commands, and a default order. Each lieutenant knows who sent every message they receive.",
+    assumes: "Every message sent arrives unchanged, and a missing one can be noticed; it then counts as the default order. Up to m officers are traitors and may say anything; the rest follow the rule. No officer is replaced." },
   gloss: [["commander", "sender"], ["lieutenant", "receiver"], ["traitor", "a node that lies"], ["attack, retreat", "the two values, x and y"]],
   scenes: {
     sender: { name: "Three officers: the commander lies", note: "Rule: pass on what {S} sent, then decide. On a tie {A} must go with {S}, or a lying {B} could overrule a loyal {S}.",
@@ -243,6 +279,10 @@ liars: { hat: "soldier", role: "lieutenant", roles: { S: "commander" },
 pbft: { hat: "soldier",
   stage: { view: "siege", A: "commander's camp", B: "camp A", C: "camp B", D: "camp C", also: ["enemy city"], labels: { "commander's camp": "officer A's camp", "camp A": "officer B's camp", "camp B": "officer C's camp", "camp C": "officer D's camp" } }, role: "officer", client: "quartermaster", lex: [[/add (\d)(?! agrees| commits)/g, "add $1 spears"], [/^total$/, "spears"], ["done(total 3)", "done(3 spears)"]], peers: "officers {A}, {C} and {D}",
   tale: "Four officers keep the garrison's count of spears, and one of them may be a traitor. One officer commands each view and puts requests in order; the others check with each other before acting. Two rounds of matching messages from three of the four mean no two loyal officers run different requests in the same slot. If the commanding officer stalls or cheats, the view changes and command passes on.",
+  frame: {
+    goal: "Every loyal officer carries out the same requests in the same order, and each quartermaster gets a correct answer, even if some officers are traitors.",
+    shared: "Up front, the roll of officers and which one commands in each view. Messages are sealed, so no officer can pose as another or alter what another said.",
+    assumes: "Messages can be lost, delayed, sent twice or arrive out of order. Up to f of 3f + 1 officers are traitors, and may say anything. The count is never wrong because of timing; progress needs delays that don't keep growing faster than the officers' hourglasses." },
   gloss: [["officer", "node (replica)"], ["the officer commanding a view", "the primary"], ["the count of spears", "the total"], ["quartermaster", "client"]],
   scenes: {
     order: { note: "Four officers, so one may be a traitor. {A} commands in view 0. {B} runs a request once three officers, {B} included, have committed to it.", prose: [pbft0,
@@ -267,6 +307,10 @@ linear: { hat: "scholar",
   stage: { view: "city", A: "northwest library", B: "temple library", labels: { "northwest library": "the town library", "temple library": "the hill school", "southeast library": "the cape library", crossroads: "a student" }, client: "crossroads" }, role: "scholar", client: "student",
   lex: [[/\bx\b/g, "250,000"], [/\by\b/g, "252,000"], ["read the value", "how many stadia round the Earth?"], [/^value$/, "stadia round the Earth"]],
   tale: "Two scholars each keep the figure for the distance round the Earth, and a student may ask either. A new measurement comes to one scholar, who passes it to the other. The two are as good as one scholar if every answer could have come from a single scholar who changed the figure once. Answers given while the new figure is on its way may go either way. But once any student has been told the new figure, no student who asks later may be told the old one. No scholar can check this alone. Only the world view, which sees every answer at once, can judge it.",
+  frame: {
+    goal: "Say exactly when the answers given by two scholars, to many students, at overlapping times, are answers a single scholar could have given.",
+    shared: "Nothing is prescribed. This is a test applied to what happened, not a way of making it happen.",
+    assumes: "Every question begins when it is asked and ends when it is answered, and an onlooker can put those moments in order. The paper is about objects shared by processes on one machine; here the same test is applied to scholars far apart. It shows two properties: each figure can be checked by itself, and no question is ever made to wait." },
   gloss: [["scholar", "node"], ["stadia round the Earth", "the value"], ["250,000, then 252,000", "x and y: the old value and the new"], ["a new measurement", "a write"], ["a student's question", "a read"]],
   scenes: {
     underway: { name: "While the new figure is on its way", note: "Two scholars each keep the figure. A new measurement goes to {B}, who passes it on. Either scholar answers students from the figure in hand.",
@@ -288,6 +332,10 @@ cap: { hat: "scholar",
   stage: { view: "city", A: "northwest library", B: "southeast library", labels: { "northwest library": "the town library", "temple library": "the hill school", "southeast library": "the cape library", crossroads: "a student" }, client: "crossroads" }, role: "scholar", client: "student",
   lex: [[/\bx\b/g, "250,000"], [/\by\b/g, "252,000"], ["read the value", "how many stadia round the Earth?"], [/^value$/, "stadia round the Earth"]],
   tale: "The scholars of Paxos reckon the distance round the Earth at 250,000 stadia, and a better measurement may arrive at any time. Two scholars each keep the figure, and a student may ask either. When every courier between them is lost, a scholar must answer without hearing from the other, perhaps with an old figure, or not answer at all. A correction that never arrived looks exactly like no correction.",
+  frame: {
+    goal: "Every student is told the latest figure, and every scholar who is working answers every student, even while couriers between the scholars are lost.",
+    shared: "One figure, which students ask for and new measurements change, with a copy kept by each scholar.",
+    assumes: "Any courier can be lost, and a scholar can't tell lost from slow. The paper proves the result both without hourglasses and with them. No scholar stops working, and nobody lies." },
   gloss: [["scholar", "node"], ["stadia round the Earth", "the value"], ["250,000, then 252,000", "x and y: the old value and the new"], ["student", "client"]],
   scenes: {
     fresh: { note: "{A}'s rule: ask {B} for anything newer, and if no reply comes before the hourglass runs out, answer with what {A} holds.",
@@ -302,6 +350,10 @@ cap: { hat: "scholar",
 quorum: { hat: "scholar", role: "librarian", client: "reader",
   stage: { view: "city", A: "northwest library", B: "temple library", C: "southeast library", labels: { "northwest library": "the town library", "temple library": "the hill school", "southeast library": "the cape library", crossroads: "a reader" }, client: "crossroads" }, lex: [["cart", "list"], ["milk", "Homer"], ["eggs", "Hesiod"], ["bread", "Sappho"]],
   tale: "Three librarians each keep a copy of a reader's list. A write waits for two of them to store it, and a read waits for two to answer. Any two of three share a librarian with any other two, so a read always finds the latest write. When two changes are made apart, both versions are kept and the reader combines them.",
+  frame: {
+    goal: "Keep a reader's list on several librarians' copies while some librarians are out of reach. With overlapping groups, a read sees the latest finished write. Where copies have changed apart, notice it.",
+    shared: "Up front, the number of copies and how many librarians a read and a write wait for. Each librarian holds whole versions of the list, each carrying a list of counts, one per librarian.",
+    assumes: "Couriers can be lost, delayed or arrive out of order. Copies are kept in the ledger, so a librarian can be succeeded. Gifford gives each copy a number of votes; here each has one. His own scheme uses a single version number and locks, so versions never diverge; the lists of counts are Parker's, for copies that take changes while apart. Nobody lies." },
   gloss: [["librarian", "node (replica)"], ["a reader's list", "the cart"], ["Homer, Hesiod, Sappho", "milk, eggs, bread"]],
   scenes: {
     overlap: { as: "the one the reader asks", note: "Three copies. A write waits for two of them, a read for two, so any read group shares a librarian with any write group.", outside: quorumOut, prose: [quorum0,
@@ -323,6 +375,10 @@ quorum: { hat: "scholar", role: "librarian", client: "reader",
 merge: { hat: "scholar",
   stage: { view: "city", A: "northwest library", B: "temple library", C: "southeast library", labels: { "northwest library": "the town library", "temple library": "the hill school", "southeast library": "the cape library", crossroads: "a copyist" }, client: "crossroads" }, role: "scholar", client: "copyist", lex: [[/^add 1$/, "1 scroll copied"], [/^add (\d+)$/, "$1 scrolls copied"], [/\bx\b/g, "Odyssey"]],
   tale: "Each scholar counts the scrolls copied in their own school and never waits for anyone. Now and then a scholar sends every count they know to the others, and whoever receives counts keeps the larger of each pair. Couriers may be lost, repeated or out of order. Once everyone has heard everything, all copies are equal.",
+  frame: {
+    goal: "Every scholar answers at once, without asking anyone, and all copies of the counts end up equal once couriers stop changing them.",
+    shared: "Up front, only the roll of scholars and the rule for combining counts. Each scholar holds a full copy and sends all of it.",
+    assumes: "Couriers can be lost, repeated, delayed or out of order, as long as some keep getting through. Counts are kept in the ledger. Nobody lies." },
   gloss: [["scholar", "node (replica)"], ["scrolls copied", "what is being counted"], ["the Odyssey", "the element x"], ["copyist", "client"]],
   scenes: {
     counter: { note: "“counts” holds how many scrolls each scholar's school has copied. The total is their sum.", prose: [
@@ -352,6 +408,10 @@ bayou: { hat: "scholar",
   stage: { view: "city", A: "northwest library", B: "temple library", P: "southeast library", labels: { "northwest library": "the town library", "temple library": "the hill school", "southeast library": "the cape library", crossroads: "a reader" }, client: "crossroads" }, role: "librarian", roles: { P: "head librarian" }, client: "reader", peers: "librarian {B} and the head librarian {P}",
   lex: [["at 10:00", "at the tenth hour"], ["else 11:00", "else the eleventh"], ["10:00", "tenth hour"], ["11:00", "eleventh hour"]],
   tale: "Readers book the reading room with any librarian, even one who is cut off from the rest. A booking shows at once but is marked tentative, and names a fallback hour in case the first is taken. The head librarian fixes the final order, and every librarian replays the bookings to match.",
+  frame: {
+    goal: "Let any reader book with any librarian, even one who is cut off, and have every librarian end up with the same bookings in the same order.",
+    shared: "The list of bookings, kept by every librarian. Up front, which librarian is the head.",
+    assumes: "Librarians are in touch only now and then, so bookings travel slowly and in any order, but each one reaches every librarian in the end. Bookings are kept in the ledger. Nobody lies." },
   gloss: [["librarian", "server"], ["head librarian", "the primary"], ["tenth hour, eleventh hour", "10:00, 11:00"]],
   scenes: {
     moved: { note: "Each booking names a first choice and a fallback. Bookings show at once but stay tentative until the head librarian, {P}, puts them in the final order.",
@@ -365,6 +425,10 @@ bayou: { hat: "scholar",
 cops: { hat: "scholar",
   stage: { view: "city", A: "northwest library", B: "southeast library", labels: { "northwest library": "the town library", "temple library": "the hill school", "southeast library": "the cape library", crossroads: "a visitor" }, client: "crossroads" }, role: "scholar", client: "visitor", lex: [["photo", "scroll"], ["album", "catalogue"], ["coast", "Iliad"], [/^delivered$/, "taken in"]],
   tale: "Two libraries each keep a full copy of the same records, and each answers its own visitors at once. Every note between them carries a list of counts: how many notes each library had sent when it was written. A library that receives a note out of turn holds it back until the earlier ones have come. A visitor at either library then never sees an effect without its cause.",
+  frame: {
+    goal: "Answer every visitor at their own library at once, and never show an effect before its cause.",
+    shared: "Each library holds a full copy of the records, and a count of how many notes it has taken in from each library.",
+    assumes: "Notes arrive in any order and after any delay, but do arrive. The paper deals with a library that stops sending in a separate step, which these scenes leave out. Nobody lies." },
   gloss: [["scholar, at one of two libraries", "node, at one of two sites"], ["scroll, catalogue", "photo, album"], ["the list of counts on a note", "the message's vector timestamp"], ["visitor", "client"]],
   scenes: {
     wait: { note: "{A} keeps the copy at one library, and writes made at the other reach it from {B}. Each is stamped with a list of counts: how many notes each library had sent when it was written.", outside: copsOut, prose: [

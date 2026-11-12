@@ -38,14 +38,16 @@ function paperHTML(it) {
   const p = it.p, f = p.frame, I = isleOf(p);
   const cite = `<div class="cite">${p.cite.split("\n").map(c => `<span>${esc(c)}</span>`).join("")}</div>`;
   const lexi = I ? `<dl class="lexi"><dt class="label">In the telling</dt><dd class="label">In plain terms</dd>${I.gloss.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>` : "";
+  const facts = g => `<dl class="facts">${[["The goal", g.goal], ["What is shared", g.shared], ["What it assumes", g.assumes]].map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   if (I) return `<h1>${esc(p.name)}</h1>
     <div class="gloss">${cite}${lexi}</div>
-    <p class="idea">Told among the ${HAT[I.hat][0].toLowerCase()} of Paxos. ${esc(HAT[I.hat][1])} ${esc(I.tale)}</p>`;
+    <p class="idea">Told among the ${HAT[I.hat][0].toLowerCase()} of Paxos. ${esc(HAT[I.hat][1])} ${esc(I.tale)}</p>
+    ${I.frame ? facts(I.frame) : ""}`;
   const gloss = (p.names || "").split(" · ").map(e => { const i = e.indexOf(" = "); return i < 0 ? `<dt>${esc(e)}</dt><dd></dd>` : `<dt>${esc(e.slice(0, i))}</dt><dd>${esc(e.slice(i + 3))}</dd>`; }).join("");
   return `<h1>${esc(p.name)}</h1>
     <div class="gloss">${cite}<dl>${gloss}</dl></div>
     <p class="idea">${esc(p.idea)}</p>
-    <dl class="facts">${[["The goal", f.goal], ["What is shared", f.shared], ["What it assumes", f.assumes]].map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
+    ${facts(f)}
     
 `;
 }
