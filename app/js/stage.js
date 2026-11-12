@@ -92,11 +92,13 @@ function cityHTML(it, S) {
   useGeo(S);
   const [bx, by, bw, bh] = cityBox(it, S), u = bw / 650, me = S[it.s.who], [mx] = GEO.places[me];
   const plain = reg !== "isle", baked = !plain && GEO.img;     // the drawn city and siege: baked to WebP by world/city_mockup.py, under the messengers
+  const r3 = baked && GEO.img3d && bg === "rendered", pic = r3 ? GEO.img3d : GEO.img;   // or the same frame rendered in Blender: same pixels, same roads
   const world = plain ? `<rect class="gnd" width="${GEO.w}" height="${GEO.h}"/><path class="rdn street" d="${GEO.plain.street}"/><path class="rdn road" d="${GEO.plain.road}"/>` : baked ? "" : GEO.svg;
-  return `<figure class="stage city${plain ? " abs" : GEO.night ? " night" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg${baked ? " baked" : ""}">`
-    + (baked ? `<img class="wld" src="${Object.values(GEO.img)[0]}" srcset="${Object.entries(GEO.img).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="${GEO.w}" height="${GEO.h}" alt="" decoding="async">` : "")
+  return `<figure class="stage city${plain ? " abs" : GEO.night ? " night" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-pic="${r3 ? "rendered" : "drawn"}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg${baked ? " baked" : ""}">`
+    + (baked ? `<img class="wld" src="${Object.values(pic)[0]}" srcset="${Object.entries(pic).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="${GEO.w}" height="${GEO.h}" alt="" decoding="async">` : "")
     + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
     + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
+    + (baked && GEO.img3d ? `<button type="button" class="bgsw" data-bg="toggle" aria-pressed="${r3}" title="${r3 ? "Show the drawn picture" : "Show the rendered picture"}">${r3 ? "Drawn" : "Rendered"}</button>` : "")
     + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></figure>`;
 }
 let cityAnim = 0;
@@ -166,7 +168,7 @@ document.addEventListener("keydown", e => {
 });
 function refreshStage() {
   const it = byKey(sel), el = $("stage"); if (!it || !el) return;
-  if (el.classList.contains("city") && el.dataset.scene === it.key && el.dataset.reg === reg) { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
+  if (el.classList.contains("city") && el.dataset.scene === it.key && el.dataset.reg === reg && (el.dataset.pic || "drawn") === (reg === "isle" && GEO.img3d && bg === "rendered" ? "rendered" : "drawn")) { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
   const keep = el.querySelector(".stw").scrollLeft; el.outerHTML = stageHTML(it); const s = $("stage") && $("stage").querySelector(".stw"); if (s) s.scrollLeft = keep; playCity();
 }
 
