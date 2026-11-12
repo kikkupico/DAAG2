@@ -78,11 +78,22 @@ def m_marble(key, par):
     return s.surface(s.bsdf(col, .5, s.bump(s.noise(22, 3, .6), .08, .02)))
 
 def m_paving(key, par):
-    """Stone flags: courts, stylobates, the theatre's orchestra margins."""
+    """Weathered stone flags: uneven joints, swept dust, lichen, and worn relief across courts and stylobates."""
     s = Sh(key); base = col_of(par, "#cdc3ac")
-    tx = s.tex2("stone_tiles_02", 4.5); col = s.tint(tx, "stone_tiles_02", base, raw=.25)
-    col = s.mix(s.rng(s.noise(.25, 4, .6), .45, .75, 0, .2), col, s.mix(1.0, col, (.8, .74, .64), "MULTIPLY"))
-    return s.surface(s.bsdf(col, .85, s.bump(s.lum(tx), .5, .06)))
+    tx = s.tex2("stone_tiles_02", 7.0); tx2 = s.tex2("large_floor_tiles_02", 6.8)
+    c_poly = s.tint(tx, "stone_tiles_02", base, raw=.3, gain=1.7)
+    c_slab = s.tint(tx2, "large_floor_tiles_02", base, raw=.25, gain=1.45)
+    col = s.mix(s.rng(s.noise(.22, 3, .6, w=2.3), .35, .65), c_poly, c_slab)
+    p_warp = s.mixv(.12, s.pos, s.noise(1.1, 3, .6, out="Color"))
+    bc, bf = s.brick(p_warp, 2.4, 1.8, .065, tuple(min(1, c * 1.08) for c in base), tuple(c * .84 for c in base), tuple(c * .58 for c in base), smooth=.35)
+    col = s.mix(.48, col, s.mix(1.0, col, bc, "MULTIPLY", clamp=False))
+    dust = s.tint(s.tex2("dry_ground_rocks", 7.5), "dry_ground_rocks", tuple(c * .86 for c in base), raw=.4)
+    col = s.mix(s.rng(s.noise(.18, 4, .65, w=3.1), .45, .72, 0, .55), col, dust)
+    col = s.mix(s.rng(s.noise(.25, 4, .6), .42, .74, 0, .35), col, s.mix(1.0, col, (.76, .7, .58), "MULTIPLY"))
+    moss = s.rng(s.noise(1.2, 4, .7, w=7.2), .60, .78, 0, .35)
+    col = s.mix(moss, col, lin("#878664"))
+    h = s.add(s.add(s.mul(s.lum(tx), .45), s.mul(s.lum(tx2), .35)), s.add(s.mul(bf, -.6), s.add(s.mul(s.noise(.55, 4, .7), .45), s.mul(s.noise(1.8, 4, .75), .35))))
+    return s.surface(s.bsdf(col, .9, s.bump(h, .95, .24)))
 
 def m_tile(key, par):
     """Fired clay roof tiles: every tile its own colour from the kiln, courses lapping, older roofs paler and greyer,
@@ -132,6 +143,12 @@ def m_bronze(key, par):
     s = Sh(key); n = s.noise(4, 4, .6)
     col = s.mix(s.rng(n, .4, .7), lin("#6a5536"), lin("#4f6a55"))
     return s.surface(s.bsdf(col, .45, None, Metallic=.85))
+
+def m_gold(key, par):
+    """Gilded bronze: warm gold leaf for akroteria, finials, and votive shields."""
+    s = Sh(key); c = col_of(par, "#d4a843"); n = s.noise(6, 3, .5)
+    col = s.mix(s.rng(n, .35, .65, 0, .2), c, tuple(x * .78 for x in c))
+    return s.surface(s.bsdf(col, .28, None, Metallic=.95))
 
 def m_pool(key, par):
     """Still water in a tank, a cistern mouth, a fountain basin."""
@@ -188,5 +205,5 @@ def m_canvas(key, par):
     return s.surface(s.bsdf(col, .92, s.bump(s.add(n, s.mul(f, .4)), .35, .05)))
 
 MAKERS = dict(canvas=m_canvas, glow=m_glow, fire=m_fire, frieze=m_frieze, net=m_net, leaf=m_leaf, bark=m_bark, flat=m_flat, plaster=m_plaster, ashlar=m_ashlar, rubble=m_rubble, drystone=m_drystone, marble=m_marble, paving=m_paving,
-              tile=m_tile, wood=m_wood, clay=m_clay, cloth=m_cloth, straw=m_straw, bronze=m_bronze, pool=m_pool, dark=m_dark, earth=m_earth,
+              tile=m_tile, wood=m_wood, clay=m_clay, cloth=m_cloth, straw=m_straw, bronze=m_bronze, gold=m_gold, pool=m_pool, dark=m_dark, earth=m_earth,
               emit=m_emit, paint=m_flat)

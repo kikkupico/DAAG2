@@ -143,12 +143,44 @@ def _profile(kind, pts):
     return [(p, bil(ZS, p[0], p[1])) for p in _subdivide(pts)]
 ZS0 = plain(X, Y, SD)                                                                    # the land without the hill (for the foot of the west stair)
 
+def _round_corners(pts, rad=5.5):
+    """Smooth sharp polyline corners on country roads with a local quadratic fillet."""
+    if len(pts) < 3: return list(pts)
+    out = [pts[0]]
+    for a, b, c in zip(pts, pts[1:], pts[2:]):
+        la = math.hypot(b[0] - a[0], b[1] - a[1]); lc = math.hypot(c[0] - b[0], c[1] - b[1])
+        if la < 1e-6 or lc < 1e-6: continue
+        d = min(rad, la * .35, lc * .35)
+        p0 = (b[0] + (a[0] - b[0]) * d / la, b[1] + (a[1] - b[1]) * d / la)
+        p2 = (b[0] + (c[0] - b[0]) * d / lc, b[1] + (c[1] - b[1]) * d / lc)
+        for k in range(5):
+            t = k / 4; mt = 1 - t
+            out.append((mt * mt * p0[0] + 2 * mt * t * b[0] + t * t * p2[0], mt * mt * p0[1] + 2 * mt * t * b[1] + t * t * p2[1]))
+    out.append(pts[-1]); return out
+
+def _meander_pts(pts, hw):
+    """Gently curve and wander country tracks away from gates and junctions."""
+    pts = _subdivide(_round_corners(pts), 3.0)
+    if len(pts) < 3: return pts
+    s = [0.0]
+    for a, b in zip(pts, pts[1:]): s.append(s[-1] + math.hypot(b[0] - a[0], b[1] - a[1]))
+    total = s[-1]; amp = min(1.15, hw * .38); out = [pts[0]]
+    for i in range(1, len(pts) - 1):
+        ax, ay = pts[i - 1]; bx, by = pts[i + 1]; L = math.hypot(bx - ax, by - ay) or 1.0
+        nx, ny = -(by - ay) / L, (bx - ax) / L; px, py = pts[i]
+        fade = min(1.0, s[i] / 8.0) * min(1.0, (total - s[i]) / 8.0)
+        fade = fade * fade * (3 - 2 * fade)
+        w = float(fbm(px, py, 26.0, 3, seed=71)) * amp * fade
+        out.append((px + nx * w, py + ny * w))
+    out.append(pts[-1]); return out
+
 def grade_roads():
     """Carve every road into the height field at its own profile, and write the road maps the ground's material draws from."""
     global Z
     best = np.full(X.shape, 1e9)
+    road_wig = fbm(XM, YM, 14.0, 3, seed=53) * 1.15 + fbm(XM, YM, 4.5, 3, seed=89) * 0.65
     for w, kind, pts in ROADS:
-        prof = _profile(kind, pts); hw = w / 2
+        prof = _profile(kind, pts); hw = w / 2; mud = kind in ("road", "path")
         for (a, za), (b, zb) in zip(prof, prof[1:]):
             GRADED.append((a, b, za, zb, hw, kind))
             sub = win(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]), hw + 5)
@@ -158,10 +190,18 @@ def grade_roads():
             near = d < best[sub]
             Zs = Z[sub]; Zs[near] = (Zs * (1 - wgt) + zl * wgt)[near]; bs = best[sub]; bs[near & (wgt > 0)] = d[near & (wgt > 0)]
             LOCK[sub] |= d < hw + .4
-            if kind == "stair": continue                                                  # stairs are built, not painted
+            if kind == "stair" or mud: continue                                           # stairs are built; mud roads painted below
             subm = win(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]), hw + 10, MRES, NM)
             dm, _ = np_segdist(a[0], a[1], b[0], b[1], XM[subm], YM[subm]); m = (dm - hw) < ROAD_D[subm]
             ROAD_D[subm] = np.where(m, dm - hw, ROAD_D[subm]); ROAD_LAT[subm] = np.where(m, dm / hw, ROAD_LAT[subm]); ROAD_K[subm] = np.where(m, KIND_V[kind], ROAD_K[subm])
+        if mud:
+            vpts = _meander_pts(pts, hw)
+            for a, b in zip(vpts, vpts[1:]):
+                subm = win(min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]), hw + 12, MRES, NM)
+                dm, _ = np_segdist(a[0], a[1], b[0], b[1], XM[subm], YM[subm])
+                dm_e = dm + road_wig[subm] * np.clip(dm / max(hw, .5), 0.0, 1.0)
+                m = (dm_e - hw) < ROAD_D[subm]
+                ROAD_D[subm] = np.where(m, dm_e - hw, ROAD_D[subm]); ROAD_LAT[subm] = np.where(m, np.clip(dm_e / max(hw, .5), 0.0, 4.0), ROAD_LAT[subm]); ROAD_K[subm] = np.where(m, KIND_V[kind], ROAD_K[subm])
 def zroute(x, y):
     """A walker's height at a point on a road: the graded profile of the nearest stretch."""
     bd = 1e9; bz = None
@@ -246,7 +286,7 @@ def field(P, kind, angle, feather=.8):
     """A tilled plot: its cover and the direction of its rows (degrees from east)."""
     for k in ("stubble", "plough", "green"): paint(k, P, feather=feather, how="clear")
     paint(kind, P, feather=feather)
-    x0, y0, x1, y1 = bbox(P); sub = win(x0, y0, x1, y1, 2, MRES, NM); m = np_inpoly(grow(P, 1.0), XM[sub], YM[sub])
+    x0, y0, x1, y1 = bbox(P); sub = win(x0, y0, x1, y1, feather + 1.5, MRES, NM); m = np_inpoly(grow(P, feather + .5), XM[sub], YM[sub])
     COV["fcos"][sub] = np.where(m, math.cos(math.radians(angle)) * .5 + .5, COV["fcos"][sub]); COV["fsin"][sub] = np.where(m, math.sin(math.radians(angle)) * .5 + .5, COV["fsin"][sub])
 
 def earthwork(P, bumps, closed=True, keep_clear=2.2):
@@ -293,7 +333,7 @@ def _maps(s):
     if "road" not in MAPIMG:
         MAPIMG["road"] = map_image("m_road", (ROAD_D, ROAD_LAT, ROAD_K), True)
         MAPIMG["c1"] = map_image("m_cov1", (COV["sand"], COV["rock"], COV["earth"])); MAPIMG["c2"] = map_image("m_cov2", (COV["pave"], COV["gravel"], COV["wet"]))
-        MAPIMG["c3"] = map_image("m_cov3", (COV["stubble"], COV["plough"], COV["green"])); MAPIMG["c4"] = map_image("m_cov4", (COV["fcos"], COV["fsin"], COV["lush"]))
+        MAPIMG["c3"] = map_image("m_cov3", (COV["stubble"], COV["plough"], COV["green"])); MAPIMG["c4"] = map_image("m_cov4", (COV["fcos"], COV["fsin"], COV["lush"]), True)
     return {k: read_map(s, im) for k, im in MAPIMG.items()}
 MAPIMG = {}
 def _finish(s, col, alpha=None, rough=.92, bump=.55, height=None):
@@ -336,7 +376,7 @@ def field_material():
     def rows(period, wob=.15):
         ph = s.madd(s.noise(.25, 2, .5, w=9.1), wob * 6.283, s.mul(across, 6.283 / period)); return s.madd(s.math("SINE", ph), .5, .5)
     patch = s.noise(.11, 4, .65, w=6.6); weeds = s.rng(s.noise(.3, 5, .7, w=2.9), .6, .78)
-    r_st, r_pl, r_gr = rows(1.3), rows(.85, .3), rows(1.4, .08)
+    r_st, r_pl, r_gr = rows(1.3), rows(.85, .18), rows(1.4, .08)
     stub = s.tint(s.tex2("withered_grass", 5), "withered_grass", lin("#d8c27c"), raw=.12)
     stub = M(s.rng(patch, .3, .75, 0, .5), stub, lin("#c2a868")); stub = M(s.mul(r_st, .4), stub, lin("#a58c58"))
     plo = s.tint(s.tex2("farm_soil", 4), "farm_soil", lin("#7c5843"), raw=.3)
@@ -345,7 +385,9 @@ def field_material():
     grn = M(s.rng(s.madd(s.sub(s.noise(1.2, 3, .7, w=8.2), .5), .5, r_gr), .3, .8), lin("#86694a"), s.tint(s.tex("sparse_grass", 4), "sparse_grass", lin("#62803e"), raw=.3))
     col = M(s.rng(c3[1], .3, .7), stub, plo); col = M(s.rng(c3[2], .3, .7), col, grn)
     hgt = s.mixf(s.rng(c3[1], .3, .7), s.mul(r_st, .25), s.mul(r_pl, .35))
-    a = s.rng(s.madd(s.sub(s.noise(.3, 4, .7, w=7.3), .5), 1.1, s.madd(s.sub(fine, .5), .4, s.maxf(c3[0], s.maxf(c3[1], c3[2])))), .32, .6)
+    cov = s.maxf(c3[0], s.maxf(c3[1], c3[2]))
+    edge_n = s.add(s.mul(s.sub(s.noise(.12, 4, .65, w=1.9), .5), 2.8), s.mul(s.sub(s.noise(.38, 4, .7, w=7.3), .5), 2.2))
+    a = s.rng(s.madd(edge_n, s.rng(cov, .08, .92, 1.0, .18), s.madd(s.sub(fine, .5), .4, cov)), .34, .62)
     return _finish(s, col, a, height=hgt)
 
 def shore_material():
@@ -357,28 +399,39 @@ def shore_material():
     return _finish(s, col, s.rng(s.madd(s.sub(fine, .5), .4, c1[0]), .4, .75), bump=.3)
 
 def road_material():
-    """Roads and paving: a ragged edge and a trodden verge; ruts on dirt roads, packed earth in the streets, slabs on the avenues."""
+    """Roads and paving: natural mud tracks with wandering grassy edges and ruts, packed earth in the streets, slabs on the avenues."""
     s = Sh("roads"); M = s.mix; m = _maps(s); rd, c2 = m["road"], m["c2"]; fine = s.noise(.9, 4, .7)
-    trod = s.tint(s.tex("dirt_aerial_03", 12), "dirt_aerial_03", lin("#c6ad84"), raw=.2)
-    wig = s.madd(s.sub(s.noise(.16, 3, .6, w=1.3), .5), 3.0, s.mul(s.sub(s.noise(1.1, 4, .6, w=2.7), .5), 1.2))
-    soft = s.rng(rd[2], 0, 1, 1.0, .12)                                                    # paved edges are straight
+    trod = s.tint(s.tex("dirt_aerial_03", 11), "dirt_aerial_03", lin("#bfa278"), raw=.2)
+    wig = s.add(s.mul(s.sub(s.noise(.12, 3, .6, w=1.3), .5), 5.0), s.add(s.mul(s.sub(s.noise(.45, 4, .65, w=2.7), .5), 3.2), s.mul(s.sub(s.noise(1.9, 4, .7, w=4.1), .5), 1.4)))
+    soft = s.rng(rd[2], 0, .45, 1.0, .06)                                                 # mud road edges wander; streets & paving stay straight
     e = s.madd(wig, soft, rd[0])
-    on = s.rng(e, .3, -.3); verge = s.mul(s.rng(e, 3.0, .1, 0, .8), s.rng(rd[2], 0, .5, 1.0, .25))
-    dirt = s.tint(s.tex2("stony_dirt_path", 5), "stony_dirt_path", lin("#c7ad85"), raw=.2)
-    rut = s.rng(s.math("ABSOLUTE", s.sub(s.madd(s.sub(s.noise(2.5, 3, .6, w=5.1), .5), .1, rd[1]), .45)), .16, .03, 0, .4)
-    dirt = M(rut, dirt, s.mix(1.0, dirt, (.66, .58, .5), "MULTIPLY"))
-    street = s.tint(s.tex2("dirt_aerial_02", 9), "dirt_aerial_02", lin("#cdb791"), raw=.15)
-    street = M(s.rng(s.noise(1.3, 4, .7, w=4.4), .52, .7), street, s.tint(s.tex("gravelly_sand", 2.5), "gravelly_sand", lin("#c3b79d"), raw=.2))
-    street = M(s.rng(rd[1], .12, .03, 0, .45), street, s.mix(1.0, street, (.6, .56, .5), "MULTIPLY"))    # the drain down the middle
-    slabs = s.tint(s.tex2("stone_tiles_02", 6), "stone_tiles_02", lin("#cdc2aa"), raw=.3)
-    pav = slabs
-    slabs = M(s.rng(s.noise(.5, 4, .7, w=8.8), .55, .78), slabs, street)                   # earth trodden over the slabs in patches
+    is_mud = s.rng(rd[2], .05, .35, 1.0, 0.0)
+    e_mud = s.madd(s.mul(s.sub(s.noise(.75, 3, .7, w=9.2), .48), 2.2), is_mud, e)
+    on = s.mixf(is_mud, s.rng(e, .3, -.3), s.rng(e_mud, 1.1, -.7))
+    verge = s.mul(s.mul(s.rng(e_mud, 2.8, .1, 0, .55), s.rng(s.noise(.35, 3, .6, w=6.3), .35, .68)), s.rng(rd[2], 0, .5, 1.0, .2))
+    mud_a = s.tint(s.tex("dirt_aerial_02", 8), "dirt_aerial_02", lin("#bfa277"), raw=.2)
+    dirt = M(s.rng(s.noise(.25, 3, .65, w=2.1), .38, .65), mud_a, trod)
+    gravel = s.tint(s.tex("stony_dirt_path", 5), "stony_dirt_path", lin("#bda47d"), raw=.2)
+    dirt = M(s.rng(s.noise(.22, 3, .65, w=3.7), .48, .66, 0, .48), dirt, gravel)
+    rut = s.rng(s.math("ABSOLUTE", s.sub(s.madd(s.sub(s.noise(1.8, 3, .6, w=5.1), .5), .22, rd[1]), .4)), .20, .03, 0, .38)
+    dirt = M(rut, dirt, s.mix(1.0, dirt, (.68, .60, .52), "MULTIPLY"))
+    st_earth = s.tint(s.tex("dry_ground_rocks", 7.5), "dry_ground_rocks", lin("#c5ad84"), raw=.35)
+    st_cob = s.tint(s.tex("cobblestone_large_01", 7.0), "cobblestone_large_01", lin("#c4b79d"), raw=.45, gain=1.4)
+    street = M(s.rng(s.noise(.38, 3, .7, w=4.4), .46, .66, 0, .65), st_earth, st_cob)
+    drain_d = s.madd(s.sub(s.noise(1.5, 3, .6, w=3.1), .5), .12, rd[1])
+    street = M(s.mul(s.rng(drain_d, .14, .03, 0, .42), s.rng(s.noise(.35, 3, .6, w=1.7), .35, .65)), street, s.mix(1.0, street, (.62, .57, .5), "MULTIPLY"))
+    street = M(s.mul(s.rng(rd[1], .72, .98), s.rng(s.noise(1.6, 3, .7, w=6.1), .48, .72, 0, .38)), street, lin("#8d885f"))
+    slabs = s.tint(s.tex("stone_tiles_02", 7.2), "stone_tiles_02", lin("#cfc4ab"), raw=.35, gain=1.9)
+    slabs = M(s.rng(s.noise(.28, 3, .6, w=5.8), .4, .68, 0, .55), slabs, st_cob)
+    pav = M(s.rng(s.noise(.24, 3, .65, w=3.4), .46, .72, 0, .52), slabs, st_earth)
+    slabs = M(s.rng(s.noise(.35, 3, .7, w=8.8), .48, .72, 0, .58), slabs, street)         # earth trodden over the slabs in patches
     rc = M(s.rng(rd[2], .2, .35), dirt, street); rc = M(s.rng(rd[2], .7, .85), rc, slabs)
     paved = s.rng(s.madd(fine, .2, c2[0]), .45, .65)                                       # paving laid by builders: courts, the agora's margins, the sanctuary
     col = M(on, trod, rc); col = M(s.mul(paved, s.sub(1.0, on)), col, pav)
-    crown = s.mul(s.rng(s.madd(s.sub(s.noise(1.6, 4, .6, w=7.7), .5), .9, rd[1]), .14, -.04, 0, .5), s.rng(rd[2], .1, .3, 1.0, 0.0))   # grass down the middle of a cart road
+    crown = s.mul(s.rng(s.madd(s.sub(s.noise(1.2, 3, .65, w=7.7), .5), 1.1, rd[1]), .18, -.04, 0, .55), s.rng(rd[2], .1, .3, 1.0, 0.0))   # grass down the middle of a cart road
     a = s.maxf(s.maxf(s.mul(on, s.sub(1.0, crown)), verge), paved)
-    return _finish(s, col, a)
+    hgt = s.add(s.mul(s.noise(.48, 4, .75), .55), s.mul(s.noise(1.5, 4, .7), .45))
+    return _finish(s, col, a, rough=.93, bump=.95, height=hgt)
 
 def sea_material():
     s = Sh("sea")
@@ -427,7 +480,7 @@ def finish():
     grid_mesh("ground", keep, 0.0, ground_material())
     grid_mesh("fields", keep & near(np.maximum(COV["stubble"], np.maximum(COV["plough"], COV["green"]))), .02, field_material())
     grid_mesh("shore", keep & near(COV["sand"]), .03, shore_material())
-    grid_mesh("roads", keep & (near(COV["pave"]) | near(-ROAD_D, -3.6, 1)), .045, road_material())
+    grid_mesh("roads", keep & (near(COV["pave"]) | near(-ROAD_D, -5.2, 2)), .045, road_material())
     if SHORE:
         a = lim + 60; me = bpy.data.meshes.new("sea"); me.from_pydata([(-a, -a, 0), (a, -a, 0), (a, a, 0), (-a, a, 0)], [], [[0, 1, 2, 3]])
         me.materials.append(sea_material()); ROOT.objects.link(bpy.data.objects.new("sea", me))

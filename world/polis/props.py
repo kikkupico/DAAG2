@@ -43,15 +43,73 @@ def _statue(metal, base_h=1.2, h=1.9):
     return f
 STATUE_B = part("statue_bronze", _statue(True)); STATUE_M = part("statue_marble", _statue(False))
 def _colossus():
-    boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 3.4, 3.4, 0, .4); boxr("marble:#e6dfcf", "marble:#ece6d8", 0, 0, 2.8, 2.8, .4, 2.8); boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 3.1, 3.1, 2.8, 3.05)
-    with core.placed(0, 0, 0, 3.05): _figure("bronze", 6.2)
-    beam("bronze", (.95, .3, 3.1), (1.0, .3, 10.4), .06, 6)                              # her spear
+    # stepped, moulded marble pedestal with a bronze inscription plaque
+    boxr("marble:#d9d0bd", "marble:#e4dcc9", 0, 0, 4.0, 4.0, 0, .35)
+    boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 3.4, 3.4, .35, .7)
+    boxr("marble:#e6dfcf", "marble:#ece6d8", 0, 0, 2.75, 2.75, .7, 3.0)
+    boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 3.15, 3.15, 3.0, 3.3)
+    boxr("bronze", "bronze", 0, 1.38, 1.6, .08, 1.3, 2.3)
+    with core.placed(0, 0, 0, 3.3):
+        _figure("bronze", 6.4)
+        # Corinthian helmet crest and gilded plume
+        boxr("gold", "gold", 0, .05, .24, .95, 6.25, 6.85)
+        # aegis collar / breastplate accent
+        lathe("gold", 0, 0, [(.88, 4.45), (.96, 4.9), (.62, 5.35)], 10)
+    # raised spear with gilded tip, and her round hoplon shield beside her left leg
+    beam("bronze", (.98, .25, 3.35), (1.05, .25, 10.6), .065, 6)
+    lathe("gold", 1.05, .25, [(.09, 10.6), (.12, 10.75), (.02, 11.15)], 8, cap_top=True)
+    cyl("bronze", -1.15, .15, .95, 3.35, 5.15, 16)
+    boxr("gold", "gold", -1.15, 1.1, .35, .08, 4.1, 4.45)
 COLOSSUS = part("colossus", _colossus)
 STELE = part("stele", lambda: (boxr("marble:#ddd5c2", "marble:#ddd5c2", 0, 0, .7, .34, 0, .16), boxr("marble:#e9e3d4", "marble:#efe9dc", 0, 0, .52, .16, .16, 1.5)))
 HERM = part("herm", lambda: (boxr("marble:#e3dccb", "marble:#e3dccb", 0, 0, .3, .26, 0, 1.45), lathe("marble:#ece6d8", 0, 0, [(.1, 1.45), (.14, 1.55), (.13, 1.7), (.05, 1.78)], 8)))
 BASE = part("base", lambda: (boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 1.5, 1.5, 0, .25), boxr("marble:#e6dfcf", "marble:#ece6d8", 0, 0, 1.25, 1.25, .25, 1.0)))
-VOTIVE = part("votive_column", lambda: (boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, .9, .9, 0, .3), lathe("marble:#ece6d8", 0, 0, [(.28, .3), (.24, 4.2), (.36, 4.4)], 12),
-                                        boxr("marble:#e6dfcf", "marble:#ece6d8", 0, 0, .8, .8, 4.4, 4.6), core.STACK[-1].face("bronze", [(-.2, -.2, 4.6), (.2, -.2, 4.6), (0, 0, 5.4)]), core.STACK[-1].face("bronze", [(.2, .2, 4.6), (-.2, .2, 4.6), (0, 0, 5.4)])))
+VOTIVE = part("votive_column", lambda: (boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 1.05, 1.05, 0, .3), lathe("marble:#ece6d8", 0, 0, [(.34, .3), (.26, 4.3), (.4, 4.55)], 12),
+                                        boxr("marble:#e6dfcf", "marble:#ece6d8", 0, 0, .86, .86, 4.55, 4.75),
+                                        lathe("gold", 0, 0, [(.28, 4.75), (.34, 5.1), (.18, 5.35)], 10, cap_top=True),
+                                        beam("bronze", (-.26, -.26, 4.75), (-.14, -.14, 5.25), .03, 5),
+                                        beam("bronze", (.26, -.26, 4.75), (.14, -.14, 5.25), .03, 5),
+                                        beam("bronze", (0, .32, 4.75), (0, .18, 5.25), .03, 5)))
+def _tripod():
+    """A bronze Delphic tripod cauldron on a marble plinth."""
+    boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 1.15, 1.15, 0, .24)
+    boxr("marble:#e6dfcf", "marble:#ece6d8", 0, 0, .92, .92, .24, .58)
+    for k in range(3):
+        a = k * 2 * math.pi / 3 + math.pi / 6
+        beam("bronze", (.34 * math.cos(a), .34 * math.sin(a), .58), (.24 * math.cos(a), .24 * math.sin(a), 1.48), .035, 6)
+    lathe("bronze", 0, 0, [(.08, 1.18), (.34, 1.38), (.38, 1.56), (.34, 1.62)], 12, cap_top=True)
+    lathe("gold", 0, 0, [(.36, 1.56), (.4, 1.62), (.36, 1.65)], 12)
+    for s in (-1, 1):
+        beam("gold", (s * .35, 0, 1.62), (s * .44, 0, 1.88), .025, 5)
+TRIPOD = part("tripod", _tripod)
+def _basin():
+    """A marble perirrhanterion (purification water basin) on a fluted pedestal."""
+    boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, .9, .9, 0, .16)
+    lathe("marble:#ece6d8", 0, 0, [(.26, .16), (.16, .55), (.18, .92), (.56, 1.06), (.6, 1.18), (.52, 1.18), (.46, 1.08)], 14)
+    cyl("pool", 0, 0, .48, 1.11, 1.13, 14)
+BASIN = part("basin", _basin)
+def _brazier():
+    """A bronze tripod brazier with charcoal embers."""
+    boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, .75, .75, 0, .14)
+    for k in range(3):
+        a = k * 2 * math.pi / 3
+        beam("bronze", (.24 * math.cos(a), .24 * math.sin(a), .14), (.2 * math.cos(a), .2 * math.sin(a), .92), .028, 6)
+    lathe("bronze", 0, 0, [(.06, .74), (.3, .9), (.34, 1.04), (.28, 1.04)], 12, cap_top=True)
+    cyl("fire" if core.NIGHT else "paint:#9e3a18", 0, 0, .24, .98, 1.04, 10)
+BRAZIER = part("brazier", _brazier)
+def _equestrian():
+    """An honorific bronze equestrian monument on a high stepped marble pedestal."""
+    boxr("marble:#d9d0bd", "marble:#e4dcc9", 0, 0, 1.8, 3.0, 0, .3)
+    boxr("marble:#e6dfcf", "marble:#ece6d8", 0, 0, 1.35, 2.4, .3, 1.95)
+    boxr("marble:#ddd5c2", "marble:#e6dfcf", 0, 0, 1.55, 2.65, 1.95, 2.15)
+    # horse body, neck, head, four legs, and rider
+    beam("bronze", (0, -.65, 3.05), (0, .65, 3.12), .28, 8)
+    beam("bronze", (0, .55, 3.15), (0, .95, 3.85), .16, 7)
+    beam("bronze", (0, .92, 3.82), (0, 1.25, 3.65), .11, 6)
+    for sx, sy in ((-.18, -.58), (.18, -.58), (-.18, .55)): beam("bronze", (sx, sy, 2.15), (sx, sy, 3.0), .06, 6)
+    beam("bronze", (.18, .55, 3.0), (.18, .85, 2.55), .055, 6)
+    with core.placed(0, -.05, 0, 3.2): _figure("bronze", 1.55)
+EQUESTRIAN = part("equestrian", _equestrian)
 BENCH = part("bench", lambda: (boxr("marble:#e0d8c6", "marble:#e9e3d4", 0, 0, 2.4, .5, .3, .45), boxr("marble:#d8cfbb", None, -.9, 0, .3, .45, 0, .3), boxr("marble:#d8cfbb", None, .9, 0, .3, .45, 0, .3)))
 def _exedra():                                                                            # a curved stone bench for sitting and talking
     n = 10

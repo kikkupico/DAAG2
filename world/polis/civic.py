@@ -57,19 +57,33 @@ def temple(cx, cy, rot, w, l, hc, nf, ns, order="ionic", z=None, key=MARBLE, tk=
             panel("bronze", (c[0], yf), (c[2], yf), (c[2] - c[0]) / 2 - min(2.4, (c[2] - c[0]) * .32) * .26, min(2.4, (c[2] - c[0]) * .32) * .46, zs, zs + hc * .66, .08)
             if peripteral: colonnade((c[0] + (c[2] - c[0]) * .33, c[1] + .4), (c[0] + (c[2] - c[0]) * .67, c[1] + .4), 2, order, hc, r, zs, key, rot=0)
         rise = (E[2][0] - E[0][0]) / 2 * .26
-        gable(E[0][0], E[0][1], E[2][0], E[2][1], ztop, rise, "y", va, "paint:#8fa3b8", None, zb=zs, key=tk, ov=.5, rake=.45)
+        gable(E[0][0], E[0][1], E[2][0], E[2][1], ztop, rise, "y", va, "paint:#354f6b", None, zb=zs, key=tk, ov=.5, rake=.45)
         for yy, sgn in ((E[0][1] - .46, -1), (E[2][1] + .46, 1)):                         # the raking cornice and the figures in the pediment
             for sx in (-1, 1):
                 core.bar(key, (sx * (E[2][0] + .5), yy, ztop - .05), (0, yy, ztop + rise + .12), .5, .3)
             core.bar(key, (E[0][0] - .5, yy, ztop + .04), (E[2][0] + .5, yy, ztop + .04), .5, .2)
-            for k in range(5):
-                t = (k + .5) / 5 * 2 - 1; hh = rise * (1 - abs(t)) * .7
-                if hh > .25: boxr("marble:#f3efe5", "marble:#f3efe5", t * (E[2][0] - .6), yy - sgn * .25, .5, .2, ztop + .15, ztop + .15 + hh)
+            for k in range(7):
+                t = (k + .5) / 7 * 2 - 1; hh = rise * (1 - abs(t)) * .75
+                if hh > .22:
+                    xx = t * (E[2][0] - .7)
+                    boxr("marble:#f3efe5", "marble:#f3efe5", xx, yy - sgn * .24, .38, .22, ztop + .15, ztop + .15 + hh * .78)
+                    core.cyl("marble:#f3efe5", xx, yy - sgn * .24, .13, ztop + .15 + hh * .78, ztop + .15 + hh, 8)
             inst(AKRO, 0, yy, ztop + rise + .25, 0); inst(AKRO, E[0][0] - .2, yy, ztop + .2, 0, .7); inst(AKRO, E[2][0] + .2, yy, ztop + .2, 0, .7)
+        if peripteral:
+            # marble antefixes along the eaves and gilded votive shields on the front and side architrave
+            for sx in (-1, 1):
+                for k in range(ns * 2 - 1):
+                    yy = lerp(E[0][1] + .2, E[2][1] - .2, k / max(1, ns * 2 - 2))
+                    boxr("marble:#efe9dc", "gold", sx * (E[2][0] + .42), yy, .16, .26, ztop - .04, ztop + .28)
+            for k in range(nf - 1):
+                xx = lerp(E[0][0] + bx * .5, E[2][0] - bx * .5, k / max(1, nf - 2))
+                core.cyl("gold", xx, E[0][1] - .06, .34, zs + hc + hc * .02, zs + hc + hc * .16, 12)
     return zs
 def _akro():
-    for r_ in (0, 1):
-        face("paint:#c9a44e", [(-.38, 0, 0), (.38, 0, 0), (.5, 0, .55), (0, 0, 1.1), (-.5, 0, .55)][::1 if r_ else -1])
+    boxr("marble:#e8e1d0", "marble:#efe9dc", 0, 0, .55, .45, 0, .22)
+    core.lathe("gold", 0, 0, [(.18, .22), (.32, .55), (.44, .88), (.22, 1.2), (.04, 1.45)], 8, cap_top=True)
+    for sx in (-1, 1):
+        core.beam("gold", (sx * .14, 0, .35), (sx * .52, 0, .95), .07, 6)
 AKRO = props.part("akroterion", _akro)
 
 def hall(x0, y0, x1, y1, h, axis, wk=STONE, tk="tile:#b8754f", z=None, door_side="s", windows=True, va=.4, porch=0, blend=1.0, g=None):

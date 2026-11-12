@@ -192,9 +192,21 @@ def tombs(g):
                 land.take_disc(x, yy, 2.6)
         GROVES.append(([(x0, y - 11), (x1, y - 11), (x1, y + 11), (x0, y + 11)], "tombs", 11.0))
 
+def _natural_field(Q, seed):
+    """Give an unwalled tilled plot organically wandering borders and rounded turn-corners."""
+    rg = random.Random(seed); pts = []; ph1, ph2 = rg.uniform(0, 6.28), rg.uniform(0, 6.28)
+    for idx, (a, b) in enumerate(zip(Q, Q[1:] + Q[:1])):
+        dx, dy = b[0] - a[0], b[1] - a[1]; L = math.hypot(dx, dy)
+        nx, ny = dy / max(1e-6, L), -dx / max(1e-6, L); steps = max(5, int(L / 2.0))
+        for k in range(steps):
+            t = k / steps; fade = math.sin(math.pi * t) ** .55
+            wob = fade * (1.15 * math.sin(t * 6.28 + ph1 + idx * 1.7) + .55 * math.sin(t * 12.56 + ph2) + rg.uniform(-.45, .45))
+            pts.append((a[0] + dx * t + nx * wob, a[1] + dy * t + ny * wob))
+    return core.chaikin(pts, 1)
+
 def fields(g, estates):
     """Small tilled plots east of the town and along the coast road: stubble after the harvest, fallow under the plough, a
-    few green with pulse or vegetables; each plot with its own direction of ploughing, some bounded by dry-stone walls."""
+    few green with pulse or vegetables; each plot ploughed parallel to its own edges, walled plots neat, open ones natural."""
     def plots(x0, y0, x1, y1, w, depth, ang0):
         y = y0
         while y < y1 - 6:
@@ -206,9 +218,18 @@ def fields(g, estates):
                 if ok:
                     k = g.random(); kind = "stubble" if k < .5 else "plough" if k < .74 else "green" if k < .86 else None
                     Q = grow(P, -1.3)
-                    if kind: land.field(Q, kind, ang0 + g.choice((0, 0, 90)) + g.uniform(-4, 4)); FIELDS.append((Q, kind))
+                    which = g.choice((0, 0, 1)) if kind else 0
+                    if kind: _ = g.uniform(-4, 4)
+                    walled = g.random() < .5; wall_h = g.uniform(.7, 1.0) if walled else 0.0
+                    ux = ((Q[1][0] - Q[0][0] + Q[2][0] - Q[3][0]) * .5, (Q[1][1] - Q[0][1] + Q[2][1] - Q[3][1]) * .5)
+                    uy = ((Q[3][0] - Q[0][0] + Q[2][0] - Q[1][0]) * .5, (Q[3][1] - Q[0][1] + Q[2][1] - Q[1][1]) * .5)
+                    dir_v = ux if which == 0 else uy
+                    angle = math.degrees(math.atan2(dir_v[1], dir_v[0]))
+                    if kind:
+                        Fp = Q if walled else _natural_field(Q, int(round(cx * 31 + cy * 97)))
+                        land.field(Fp, kind, angle, feather=.8 if walled else 2.8); FIELDS.append((Fp, kind))
                     else: GROVES.append((Q, "olive", 8.5))
-                    if g.random() < .5: drystone(P, closed=True, h=g.uniform(.7, 1.0))
+                    if walled: drystone(P, closed=True, h=wall_h)
                     if kind == "stubble" and g.random() < .5:
                         for _ in range(g.randint(4, 10)):
                             px, py = cx + g.uniform(-ww / 3, ww / 3), cy + g.uniform(-d / 3, d / 3)
