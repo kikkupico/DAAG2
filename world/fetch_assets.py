@@ -11,13 +11,23 @@ UA = {"User-Agent": "diorama-build/0.1"}
 
 # Surface textures, tiled at real-world size. 2k is already finer than one rendered pixel at our scale.
 TEXTURES = ["coast_sand_01", "dry_ground_rocks", "aerial_grass_rock", "rocky_terrain_02", "stony_dirt_path", "white_rough_plaster", "white_stucco_02",
-            "yellow_plaster", "marble_01", "clay_roof_tiles", "medieval_blocks_05", "brown_planks_09", "hessian_230", "thatch_roof_angled"]
+            "yellow_plaster", "marble_01", "clay_roof_tiles", "medieval_blocks_05", "brown_planks_09", "hessian_230", "thatch_roof_angled",
+            # added for world/build_polis.py: aerial ground, limestone crag, ashlar and rubble masonry, weathered plaster, paving
+            "aerial_ground_rock", "dirt_aerial_02", "dirt_aerial_03", "aerial_rocks_02", "marble_cliff_03", "marble_cliff_05", "rocky_terrain_03",
+            "aerial_beach_01", "aerial_beach_02", "withered_grass", "sparse_grass", "farm_soil", "dry_mud_field_001", "gravelly_sand", "coast_sand_rocks_02",
+            "sandstone_blocks_08", "sandstone_blocks_05", "white_sandstone_blocks_02", "old_stone_wall", "rustic_stone_wall", "stacked_stone_wall",
+            "worn_plaster_wall", "plaster_stone_wall_01", "rough_plaster_broken", "white_plaster_rough_01", "beige_wall_001", "clay_plaster",
+            "stone_tiles_02", "large_floor_tiles_02", "cobblestone_large_01", "mixed_stone_tiles", "clay_roof_tiles_02"]
 TEX_MAPS = ["Diffuse", "nor_gl", "Rough"]
 TEX_RES = "2k"
 # Scanned and modelled objects, taken as .blend files with their textures.
 MODELS = ["tree_small_02", "island_tree_02", "searsia_burchellii", "searsia_lucida", "shrub_01", "shrub_02", "shrub_04", "grass_medium_01",
           "wild_rooibos_bush", "namaqualand_stones_01", "boulder_01", "wicker_basket_01", "wooden_crate_02", "ceramic_vase_01",
-          "ceramic_vase_03", "jug_01"]
+          "ceramic_vase_03", "jug_01",
+          # added for world/build_polis.py: scanned crags and boulders, olive-like and pine trees, statuary
+          "namaqualand_boulder_02", "namaqualand_boulder_03", "namaqualand_boulder_05", "namaqualand_boulder_06", "namaqualand_cliff_02", "rock_face_01",
+          "rock_face_02", "coastal_cliff_02", "coast_rocks_05", "rock_moss_set_01", "rock_moss_set_02", "island_tree_01", "island_tree_03",
+          "jacaranda_tree", "pine_tree_01", "marble_bust_01", "horse_statue_01"]
 MODEL_RES = "1k"
 # Skies with no sun in them (the sun is a lamp, set to the drawing's shadows), for world/build_world3d.py.
 HDRIS = ["kloofendal_48d_partly_cloudy_puresky", "qwantani_puresky"]
