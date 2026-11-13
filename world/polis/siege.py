@@ -3,7 +3,8 @@ town, "the ground between the camps secured by a trench and a double palisade, w
 The messengers' ring road runs between the two palisades. Against the walls stand the engines of a Hellenistic siege: a wheeled
 tower (helepolis), a battery of torsion stone-throwers behind wicker mantlets, and a mound with a ram under its tortoise
 (as Polybius describes at Echinous, 9.41). Inside, the gates are barred and the defenders are raising a second wall behind
-the threatened corner. No people: watch-fires, torches and a few lamps stand in for them."""
+the threatened corner. No people: banked hearths of glowing coals, cressets and a few lamps stand in for them.
+Nothing is caught in motion: no standing flames, no smoke; the picture must hold as a still, living place."""
 import bpy, math, random
 from . import core, land, arch, props, houses, walls, civic
 from .core import S, ROOT, face, wall, walls as wallsf, cap, prism, boxr, box, rect, grow, inst, lerp, placed, beam, bar, lathe, cyl, Part, centre, along, inpoly
@@ -75,11 +76,11 @@ def _standard():
 STANDARD = part("standard", _standard)
 def _fire():
     for k in range(9): lathe("rubble:#8a857a", .85 * math.cos(k * .7), .85 * math.sin(k * .7), [(.2, 0), (.16, .22)], 6)
-    for k in range(5): beam("wood:#2e2218", (.65 * math.cos(k * 1.26), .65 * math.sin(k * 1.26), .06), (0, 0, .4), .07, 5)
-    lathe("fire", 0, 0, [(.5, .08), (.36, .5), (.05, 1.15)], 8, cap_top=False)
+    for k in range(5): beam("wood:#2e2218", (.7 * math.cos(k * 1.26), .7 * math.sin(k * 1.26), .1), (.15 * math.cos(k * 1.26 + .5), .15 * math.sin(k * 1.26 + .5), .2), .07, 5)
+    lathe("fire", 0, 0, [(.6, .06), (.5, .17), (.22, .24)], 10)                             # a banked hearth: a bed of glowing coals, no standing flame
 FIRE = part("campfire", _fire)
 def _torch():
-    beam(DARKWOOD, (0, 0, 0), (0, 0, 2.3), .05, 5); lathe("flat:#2a2622", 0, 0, [(.1, 2.3), (.17, 2.5)], 6); lathe("fire", 0, 0, [(.16, 2.5), (.12, 2.75), (.02, 3.05)], 6, cap_top=False)
+    beam(DARKWOOD, (0, 0, 0), (0, 0, 2.3), .05, 5); lathe("flat:#2a2622", 0, 0, [(.1, 2.3), (.17, 2.5)], 6); lathe("fire", 0, 0, [(.16, 2.5), (.15, 2.6), (.06, 2.68)], 6)
 TORCH = part("torch", _torch)
 def _catapult():                                                                          # a torsion stone-thrower: the stock on its stand, the spring-frame, two arms; it points along +x
     for s in (-.28, .28): bar(DARKWOOD, (-2.6, s, .35), (1.9, s, 2.3), .16, .2)
@@ -261,7 +262,7 @@ def town_defence(g):
     for i, (x, y, ze) in enumerate(walls.TOWERS):                                         # watch-fires in iron baskets by every other tower
         if i % 2 == 0:
             r = math.hypot(x, y); px, py = x * (1 - 1.7 / r) - y / r * 4.7, y * (1 - 1.7 / r) + x / r * 4.7; zz = walls.q(land.zt(px, py) + walls.H_WALL) + 1.3
-            lathe("flat:#2a2622", px, py, [(.1, zz - 1.3), (.1, zz - .5), (.3, zz - .3), (.34, zz - .1)], 6); lathe("fire", px, py, [(.3, zz - .1), (.2, zz + .3), (.03, zz + .7)], 6, cap_top=False); light(px, py, zz + .8, 260, "torch")
+            lathe("flat:#2a2622", px, py, [(.1, zz - 1.3), (.1, zz - .5), (.3, zz - .3), (.34, zz - .1)], 6); lathe("fire", px, py, [(.33, zz - .12), (.31, zz - .02), (.12, zz + .05)], 8); light(px, py, zz + .8, 260, "torch")
     for x, y in ((-17.0, -12.0), (12.0, -20.0)): fire(x, y, land.zt(x, y), 600)
 
 def build():
@@ -271,6 +272,6 @@ def build():
     if not core.flag("--no-engines"): mound(g); tower_attack(g); battery(g)
     town_defence(g)
     for x, y, z, w, kind in LIGHTS:
-        L = bpy.data.lights.new(kind, "POINT"); L.energy = w * float(core.opt("--lamps", 1.0)); L.color = (1.0, .42, .13) if kind == "fire" else (1.0, .55, .22); L.shadow_soft_size = .35 if kind == "fire" else .15
+        L = bpy.data.lights.new(kind, "POINT"); L.energy = w * float(core.opt("--lamps", 2.5)); L.color = (1.0, .42, .13) if kind == "fire" else (1.0, .55, .22); L.shadow_soft_size = .35 if kind == "fire" else .15
         o = bpy.data.objects.new(kind, L); ROOT.objects.link(o); o.location = (x, y, z)
     print("SIEGE: %d lights" % len(LIGHTS))
