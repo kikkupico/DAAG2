@@ -18,7 +18,7 @@ function indexHTML(it, land) {
   const chev = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5L7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const paper = p => {
     const open = expanded.has(p.id), here = land && p === cur, inside = !land && p === cur;
-    const scenes = open ? `<ul class="scl">${p.scenes.map(s => { const x = byKey(`${p.id}-${s.id}`); return `<li><button type="button" class="sl" data-key="${x.key}" aria-pressed="${!land && x === it}"><span>${esc(nameOf(x))}</span>${ocMark(x.oc, "xo")}</button></li>`; }).join("")}</ul>` : "";
+    const scenes = open ? `<ul class="scl">${p.scenes.map(s => { const x = byKey(`${p.id}-${s.id}`); return `<li><button type="button" class="sl" data-key="${x.key}" aria-pressed="${!land && x === it}"><span>${esc(nameOf(x))}</span>${ocMark(x.oc)}</button></li>`; }).join("")}</ul>` : "";
     return `<div class="pg${matches(p) ? "" : " off"}${open ? " open" : ""}"><div class="prow"><button type="button" class="pl" data-key="${p.id}" aria-pressed="${here}"${inside ? ` aria-current="true"` : ""}><span>${esc(paperName(p))}</span><small>${esc(p.year)}</small></button><button type="button" class="chev" data-tog="${p.id}" aria-expanded="${open}" aria-label="Scenes in ${esc(paperName(p))}">${chev}</button></div>${scenes}</div>`;
   };
   return `<button type="button" class="pl map" data-key="map" aria-pressed="${!it}"><span>${U().map}</span></button>`
@@ -32,7 +32,7 @@ function indexHTML(it, land) {
 function landHTML(it) {
   const xs = it.p.scenes.map(s => byKey(`${it.p.id}-${s.id}`));
   return `<div class="start"><button type="button" class="btn go-out" data-key="${it.key}">Start with the first scene</button>
-    <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol></div>`;
+    <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol>${sumHTML(it.p, true)}</div>`;
 }
 // A result's header: its name and sources, the idea, three facts, then the words the telling uses.
 function paperHTML(it) {
@@ -54,10 +54,12 @@ function paperHTML(it) {
 // What each step is told as, in the current register.
 function tellOf(it) {
   const s = it.s, O = ovOf(it), rows = buildRows(s);
+  const brief = O ? mk(O.outside || "") : s.outside ? nodeText(s.outside, s) : "";     // how things stand beyond the node's sight, told with the starting step
   rows.forEach(r => {
     r.say = O ? mk(O.prose[r.t] || "") : nodeText(r.note, s);
     r.sayPlain = O ? (O.prose[r.t] || "").replace(/[{}]/g, "") : r.note;
     r.aside = O ? mk((O.out || {})[r.t] || "") : r.out ? nodeText(r.out, s) : "";
+    if (!r.t && brief) r.aside = r.aside ? brief + " " + r.aside : brief;
   });
   const phases = (s.phases || []).map(([from, name, why], i) => [from, O ? (O.phases || [])[i] || name : name, O ? "" : why]);
   return { rows, phases };
@@ -75,13 +77,17 @@ function ctlHTML(it) {     // one circle per step
   const say = r => `Step ${r.t}: ${r.sayPlain}`;
   const dot = r => `<button type="button" class="sd ${cls(r)}" data-step="${r.t}" title="${esc(say(r))}" aria-label="${esc(say(r))}"${r.t === n ? ` aria-current="step"` : ""}>${r.t}</button>`;
   const ph = phases.length ? phases : [[0, ""]];
-  const end = `<button type="button" class="sd fin${atEnd ? " on" : ""}" data-step="${rows.length}" title="${U().endStep}" aria-label="${U().endStep}"${atEnd ? ` aria-current="step"` : ""}><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.2l2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+  const end = `<button type="button" class="sd fin${atEnd ? " on" : ""}" data-step="${rows.length}" title="${U().endStep}. ${VERDICT[it.oc]}" aria-label="${U().endStep}. ${VERDICT[it.oc]}"${atEnd ? ` aria-current="step"` : ""}><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">${OC[it.oc]}</svg></button>`;
   const groups = ph.map(([from, name], i) => `<div class="sg">${name ? `<span class="label">${esc(name)}</span>` : ""}<div class="dots">${rows.slice(from, i + 1 < ph.length ? ph[i + 1][0] : rows.length).map(dot).join("")}${i === ph.length - 1 ? end : ""}</div></div>`).join("");
   const k = U().strip;
   return `<div class="sctl" id="sctl">
     <button type="button" class="btn sm arrow" data-stage="-1" aria-label="Previous step"${stageStep ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sgs">${groups}</div><button type="button" class="btn sm arrow" data-stage="1" aria-label="Next step"${atEnd ? " disabled" : ""}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 2.5L10 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div></div></div>`;
 }
+// The world view: what happened out of the node's sight. It is set into the telling at the step it belongs to, always in the second ink
+// and a dashed frame, under an eye and a line saying whose sight it lies beyond, so it never reads as something the node knows.
+const EYE = `<svg class="eye" width="17" height="12" viewBox="0 0 17 12" aria-hidden="true"><path d="M1 6c2.1-3.3 4.6-5 7.5-5s5.4 1.7 7.5 5c-2.1 3.3-4.6 5-7.5 5S3.1 9.3 1 6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8.5" cy="6" r="2.3" fill="currentColor"/></svg>`;
+const sysHTML = (it, body, cls = "") => `<div class="sys${cls ? " " + cls : ""}"><p class="sys-h">${EYE}<b>${U().seen}</b><span>${U().unseen(isleOf(it.p) ? whoOf(it) : "node " + whoOf(it))}</span></p>${body}</div>`;
 const whoOf = it => { const I = isleOf(it.p), n = nmOf(I, it.s.who); return n ? "the " + esc(n) : (I ? esc(roleOf(I, it.s.who)) + " " : "") + ND(esc(it.s.who)); };
 function timelineHTML(it, col, dv, only) {      // only: one step's number, or "end"; the panel under the picture shows just that
   const s = it.s, I = isleOf(it.p), { rows, phases } = tellOf(it), seen = new Map(), me = whoOf(it);
@@ -95,16 +101,14 @@ function timelineHTML(it, col, dv, only) {      // only: one step's number, or "
     if (!solo && phaseAt.has(r.t)) { const [name, why] = phaseAt.get(r.t); tl += `<div class="band ph"><b>${esc(name)}</b>${why ? `<i>${nodeText(why, s)}</i>` : ""}</div>`; }
     tl += `<div class="in">${msgs(r.recv, "in", seen, r.t, I)}</div>`
       + `<div class="band core${solo ? " solo" : ""}" id="st-${col}-${r.t}"><span class="tm" aria-label="step ${r.t}">${r.t}</span>${dv === r.t ? `<span class="dv">First difference</span>` : ""}<p class="say">${r.say}</p>${stateBox(r, I)}</div>`
-      + `<div class="outb">${msgs(r.sent, "out", seen, r.t, I)}${r.aside ? `<p class="xo aside">${r.aside}</p>` : ""}</div>`;
+      + `<div class="outb">${msgs(r.sent, "out", seen, r.t, I)}${r.aside ? sysHTML(it, `<p>${r.aside}</p>`) : ""}</div>`;
   });
   const through = whole ? "" : `, through step ${same},`;
   const twinLine = !tw ? "" : `${I ? cap(me) : "Node " + me} takes exactly these steps${through} in “${esc(nameOf(tw))}” too. Only the world differs.`;
   if (!solo || only === "end") tl += `<div class="band end"><span class="tm" aria-hidden="true"></span>
-      <p class="xi">That is everything ${I ? me : "node " + me} can know.${tw ? " At least two different worlds look exactly like this from in here." : ""}</p>
-      <div class="xi"><button type="button" class="btn go-out" data-lens="outside">${U().goOut}</button></div>
-      <p class="xo verdict">${ocMark(it.oc)}${U().seen}: ${VERDICT[it.oc].toLowerCase()}</p>
-      <p class="xo">${esc(TAKE[it.key])}${tw ? " " + twinLine : ""}</p>
-      <div class="xo btns">${tw ? `<button type="button" class="btn go-out" data-key="${tw.key}" data-keep="1">Swap worlds</button>` : ""}<button type="button" class="btn" data-lens="inside">${U().goIn}</button></div>
+      <p>That is everything ${I ? me : "node " + me} can know.${tw ? " At least two different worlds look exactly like this from in here." : ""}</p>
+      ${sysHTML(it, `<p class="verdict">${ocMark(it.oc)}${VERDICT[it.oc]}</p><p>${esc(TAKE[it.key])}${tw ? " " + twinLine : ""}</p>`)}
+      ${solo && s === it.p.scenes[it.p.scenes.length - 1] ? sumHTML(it.p) : ""}
     </div>`;
   return `<div class="tlw"><div class="tl">${tl}</div></div>`;
 }
@@ -119,13 +123,26 @@ function panelHTML(it) {
     ${ph ? `<p class="sp-ph"><b>${esc(ph[1])}</b>${ph[2] ? ` <i>${nodeText(ph[2], s)}</i>` : ""}</p>` : ""}
     <p class="say">${r.say}</p>
     <div class="flow">${col("fin", U().arrives, msgs(r.recv, "in", seen, r.t, I), U().noneIn)}${col("fst", U().kept, stateBox(r, I))}${col("fout", U().leaves, msgs(r.sent, "out", seen, r.t, I), U().noneOut)}</div>
-    ${r.aside ? `<p class="xo aside">${r.aside}</p>` : ""}
+    ${r.aside ? sysHTML(it, `<p>${r.aside}</p>`) : ""}
   </div></div>`;
 }
 const noteOf = it => { const O = ovOf(it); return O ? mk(O.note || "") : it.s.note ? nodeText(it.s.note, it.s) : ""; };
-function briefHTML(it) {
-  const O = ovOf(it), text = O ? mk(O.outside || "") : it.s.outside ? nodeText(it.s.outside, it.s) : "";
-  return text ? `<div class="xo brief"><span class="label">${O ? "What the world view shows, and " + (nmOf(isleOf(it.p), it.s.who) ? "the " + esc(nmOf(isleOf(it.p), it.s.who)) : esc(it.s.who)) + " could not see" : `What ${esc(it.s.who)} cannot see`}</span><p>${text}</p></div>` : "";
+// What a scene is based on: the idea in the literature's own terms, and the paper it comes from. The same in both registers.
+function basisHTML(it) {
+  const b = BASIS[it.key]; if (!b) return "";
+  const lines = it.p.cite.split("\n"), src = b[1].map(i => { const c = lines[i].replace(/^Related: /, ""), k = c.indexOf(" · "); return `<span>${esc(c.slice(0, k))}, <cite>${esc(c.slice(k + 3).replace(/ \(.*\)$/, ""))}</cite></span>`; }).join("");
+  // the thread: each scene's part in the result's argument, this one marked, ending where the argument lands
+  const A = ARC[it.p.id], arc = !A ? "" : `<div><dt class="label">Argument</dt><dd><ol class="arc" aria-label="Scene ${it.p.scenes.indexOf(it.s) + 1} of ${it.p.scenes.length} in the argument">${it.p.scenes.map(s => `<li><button type="button" data-key="${it.p.id}-${s.id}"${s === it.s ? ` aria-current="true"` : ""}>${esc(A.steps[s.id])}</button></li>`).join("")}<li class="fin">${esc(A.end)}</li></ol></dd></div>`;
+  return `<dl class="basis"><div><dt class="label">Concept</dt><dd>${esc(b[0])}</dd></div><div><dt class="label">${b[1].length > 1 ? "Papers" : "Paper"}</dt><dd>${src}</dd></div>${arc}</dl>`;
+}
+// What a result's scenes add up to: each scene's outcome and takeaway side by side, then the idea that only follows from all of them.
+// Shown at the end of the result's last scene, and (the idea alone) on the result's own page under its list of scenes.
+const COUNT = ["", "", "two", "three", "four", "five"];
+function sumHTML(p, bare) {
+  const A = ARC[p.id]; if (!A) return "";
+  const xs = p.scenes.map(s => byKey(`${p.id}-${s.id}`)), n = COUNT[xs.length] || xs.length;
+  const list = bare ? "" : `<ul>${xs.map(x => `<li>${ocMark(x.oc)}<button type="button" data-key="${x.key}">${esc(nameOf(x))}</button><span>${esc(TAKE[x.key])}</span></li>`).join("")}</ul>`;
+  return `<section class="sum"><p class="label">What the ${n} scenes add up to</p>${list}<p class="together">${bare ? "" : `<b class="label">Together</b>`}${esc(A.sum[reg === "isle" ? 1 : 0])}</p></section>`;
 }
 const pointHTML = it => `<p class="point"><span class="label">${U().point}: </span>${esc(TAKE[it.key])}</p>`;
 function castHTML(it) {
@@ -140,19 +157,19 @@ function castHTML(it) {
 function sceneHTML(it) {
   const { p, s } = it, I = isleOf(p);
   const other = byKey(PAIR[it.key]), both = cmp && other;
-  const lensBtns = `<button type="button" class="lsw" role="switch" data-lens="toggle" aria-checked="${lens === "outside"}"><span class="tr" aria-hidden="true"><span class="kn"></span></span>${U().outBtn}</button>`;
   const cmpBtn = other ? `<button type="button" class="btn sm" data-cmp="1" aria-pressed="${!!both}">${both ? "Close comparison" : `Compare with “${esc(nameOf(other))}”`}</button>` : "";
   const i = ALL.indexOf(it), prev = ALL[i - 1], next = ALL[i + 1];
   const pg = (x, word) => x ? `<button type="button" data-key="${x.key}"><span class="label">${word}${x.p !== p ? " · " + esc(paperName(x.p)) : ""}</span><span>${esc(nameOf(x))}</span></button>` : "";
   let body;
   if (both) {
     const d = firstDiff(s, other.s);
-    const column = (x, n) => `<section class="col"><h3>${esc(nameOf(x))}${ocMark(x.oc, "xo")}</h3>${pointHTML(x)}${noteOf(x) ? `<p class="rule">${noteOf(x)}</p>` : ""}${briefHTML(x)}${timelineHTML(x, n, d)}</section>`;
+    const column = (x, n) => `<section class="col"><h3>${esc(nameOf(x))}${ocMark(x.oc)}</h3>${pointHTML(x)}${noteOf(x) ? `<p class="rule">${noteOf(x)}</p>` : ""}${timelineHTML(x, n, d)}</section>`;
     body = `<p class="cmpnote">${d < 0 ? U().same : d === 0 ? U().differ0 : U().until(d)}</p><div class="cmp">${column(it, 0)}${column(other, 1)}</div>`;
-  } else body = briefHTML(it) + `<div class="player">${stripHTML(it)}</div>`;
+  } else body = `<div class="player">${stripHTML(it)}</div>`;
   return `<div class="scene-head">
-      <div class="stitle"><h2>${esc(nameOf(it))}</h2><div class="ctl">${cmpBtn}${lensBtns}</div></div>
+      <div class="stitle"><h2>${esc(nameOf(it))}</h2>${cmpBtn ? `<div class="ctl">${cmpBtn}</div>` : ""}</div>
       ${both ? "" : pointHTML(it)}
+      ${basisHTML(it)}
       <p class="cast">${castHTML(it)}</p>
       ${noteOf(it) && !both ? `<p class="rule">${noteOf(it)}</p>` : ""}
     </div>
@@ -187,7 +204,7 @@ function mapHTML() {
   const svg = `<div class="mapbox"><svg viewBox="0 0 980 610" role="group" aria-label="How the sixteen lead to one another">${g}</svg></div>`;
   const start = `<button type="button" class="btn go-out" data-key="${ALL[0].key}">Start with ${esc(paperName(ALL[0].p))}</button>`;
   const words = [["Courier", "A message. It may be slow, lost, or overtaken by a later one."], ["Ledger", "Permanent state. It passes to whoever takes over."], ["Slate", "Temporary state. It is wiped when its owner goes."],
-    ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody on the island has it."]];
+    ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody on the island has it. Here it is set beside the telling, in a dashed frame."]];
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
   const sect = (label, body) => `<section class="sect"><p class="label">${label}</p>${body}</section>`;
   if (isle) return `<div class="map">
@@ -201,7 +218,7 @@ function mapHTML() {
   </div>`;
   return `<div class="map">
     <div class="intro"><h1>${U().title}</h1>
-      <p class="idea">Each result is told as a few short scenes from inside one node. You see what it holds, what arrives and what it sends. Then you step outside and see what it could not.</p>
+      <p class="idea">Each result is told as a few short scenes from inside one node. You see what it holds, what arrives and what it sends. What it could not see is set beside each step, in a dashed frame.</p>
       ${start}</div>
     ${sect("An arrow leads to a result that answers the problem, or builds on it", svg)}
   </div>`;

@@ -32,9 +32,31 @@ h2 { font: 500 var(--t-h2)/1.15 var(--serif); letter-spacing: -.01em; text-wrap:
 .point .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .cast, .rule { font: var(--t-md)/1.55 var(--sans); color: var(--soft); max-width: var(--measure); }
 .nd { display: inline-block; font: 600 .76em/1.3 var(--mono); font-style: normal; border: 1.2px solid currentColor; border-radius: 2px; padding: 0 3px; margin: 0 1px; vertical-align: .08em; }
-.brief { border-left: 3px solid var(--out); border-radius: 0 8px 8px 0; background: var(--out-wash); color: var(--out); padding: var(--s3) var(--s4); display: grid; gap: var(--s1); font: var(--t-lg)/1.5 var(--serif); }
-.brief .label { color: inherit; }
-.brief p { max-width: var(--measure); }
+/* what the scene is based on: the concept and its paper, as two labelled lines */
+.basis { display: grid; gap: 2px; font: var(--t-sm)/1.5 var(--sans); }
+.basis > div { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: var(--s2); align-items: baseline; }
+.basis dd { max-width: var(--measure); } .basis dd:has(.arc) { max-width: none; }
+.basis dd span { display: block; }
+.basis cite { font-style: italic; }
+/* the thread through a result's scenes: one phrase per scene with arrows between, this scene's in full ink, then where it all lands */
+.arc { display: block; margin: 0; padding: 0; list-style: none; color: var(--soft); }
+.arc li { display: inline; }
+.arc li + li::before { content: "\2192"; margin: 0 .45em; }
+.arc button { display: inline; font: inherit; color: inherit; text-align: left; }
+.arc button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.arc button[aria-current] { color: var(--ink); font-weight: 600; }
+.arc .fin { font-style: italic; }
+/* what the scenes add up to */
+.sum { display: grid; gap: var(--s3); width: 100%; }
+.end .sum { margin-top: var(--s3); padding-top: var(--s4); border-top: 1px solid var(--line); }
+.sum .label { font: 500 var(--t-xs)/1.35 var(--mono); }
+.sum ul { display: grid; gap: var(--s2); margin: 0; padding: 0; list-style: none; max-width: var(--measure); }
+.sum li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 0 var(--s2); align-items: baseline; }
+.sum li button { justify-self: start; text-align: left; font: 500 var(--t-md)/1.45 var(--serif); }
+.sum li button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sum li span { grid-column: 2; font: var(--t-sm)/1.5 var(--sans); color: var(--soft); }
+.sum .together { font: var(--t-lg)/1.5 var(--serif); max-width: var(--measure); text-wrap: pretty; }
+.sum .together .label { display: block; margin-bottom: var(--s1); }
 .ctl { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; }
 .btn.sm { padding: 9px 14px; font-size: var(--t-sm); font-weight: 500; border-width: 1px; border-color: var(--line); background: var(--room); }
 

@@ -89,7 +89,7 @@ function msgs(list, dir, seen, t, I) {
     const before = dir === "out" && g.text.length > 24 ? seen.get(g.raw) : undefined;
     if (dir === "out" && before === undefined) seen.set(g.raw, t);
     const text = !g.text ? "" : before !== undefined ? `<span class="txt again" title="${esc(g.text)}">same ${esc(g.text.split(/[(@]/)[0].trim())} as step ${before}</span>` : msgText(g.text);
-    const tag = gone.length ? `<span class="xo losttag">${all ? "lost" : gone.join(", ") + " lost"}</span>` : "";
+    const tag = gone.length ? `<span class="losttag">${all ? "lost" : gone.join(", ") + " lost"}</span>` : "";
     const body = `<span class="mb">${chips}${text}${tag}</span>`;
     const wire = `<span class="wire" aria-hidden="true"></span>`, word = g.kind === "nothing" ? "" : `<span class="sr">${dir === "in" ? "from" : "to"}</span>`;
     return `<div class="m ${g.kind}${all ? " lost" : ""}">${dir === "in" ? word + body + wire : wire + word + body}</div>`;

@@ -64,7 +64,7 @@
 .who.ext { border: 1.5px dashed var(--soft); background: transparent; color: var(--soft); font-weight: 500; }
 .txt { min-width: 0; overflow-wrap: anywhere; }
 .who + .who { margin-left: -3px; }
-:root[data-lens="outside"] .who.lw { border: 1.5px dashed var(--out); color: var(--out); text-decoration: line-through; }
+.who.lw { border: 1.5px dashed var(--out); color: var(--out); text-decoration: line-through; }
 .again { font: var(--t-sm)/1.4 var(--sans); color: var(--soft); }
 .card { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 3px 0; }
 .card b { font-weight: 600; margin-right: 8px; }
@@ -76,10 +76,9 @@
 .m.timer .wire::after { border-left-color: var(--soft); }
 .m.nothing .wire::after { display: none; }
 .losttag { font: 600 var(--t-xs)/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--out); border: 1.2px dashed var(--out); border-radius: 3px; padding: 3px 5px; }
-:root[data-lens="outside"] .m.lost .wire { background: repeating-linear-gradient(90deg, var(--out) 0 4px, transparent 4px 8px); width: 30px; margin-right: 8px; }
-:root[data-lens="outside"] .m.lost .wire::after { border: 0; content: "\2715"; right: -11px; font: 700 12px/1 var(--sans); color: var(--out); }
-:root[data-lens="outside"] .m.lost .txt { text-decoration: line-through; text-decoration-color: var(--out); }
-.aside { margin: 2px 0 0 16px; padding: 3px 0 3px 12px; border-left: 2px dashed var(--out); color: var(--out); font: var(--t-md)/1.5 var(--serif); max-width: 44ch; }
+.m.lost .wire { background: repeating-linear-gradient(90deg, var(--out) 0 4px, transparent 4px 8px); width: 30px; margin-right: 8px; }
+.m.lost .wire::after { border: 0; content: "\2715"; right: -11px; font: 700 12px/1 var(--sans); color: var(--out); }
+.m.lost .txt { text-decoration: line-through; text-decoration-color: var(--out); }
 
 /* the end of every timeline */
 .end { border-radius: 0 0 12px 12px; display: grid; gap: var(--s3); justify-items: start; }
@@ -89,7 +88,16 @@
 .btn:hover { background: var(--ink); color: var(--room); }
 .btn.go-out { background: var(--out); border-color: var(--out); color: var(--on-out); }
 .btn.go-out:hover { filter: brightness(1.1); }
-.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+/* the world view, set into the telling: the second ink inside a dashed frame, under an eye and a line saying whose sight it lies beyond.
+   Nothing the node holds or handles is ever drawn this way. */
+.sys { display: grid; gap: var(--s1); justify-items: start; max-width: var(--measure); padding: var(--s2) var(--s3) var(--s3); border: 1.5px dashed var(--out); border-radius: 8px; background: var(--out-wash); color: var(--out); }
+.sys .sys-h { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; max-width: none; font: 600 var(--t-xs)/1.5 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.sys-h .eye { flex: none; }
+.sys-h b { font-weight: 600; }
+.sys-h > span { font: 400 var(--t-sm)/1.5 var(--sans); letter-spacing: 0; text-transform: none; }
+.sys p { font: var(--t-md)/1.5 var(--serif); }
+.sys p.verdict { font: 600 var(--t-md)/1.3 var(--sans); }
+.outb .sys { margin: 4px 0 0 16px; max-width: 44ch; }
 
 .pager { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s4); margin-top: var(--s5); padding-top: var(--s5); border-top: 1px solid var(--line); }
 .pager button { display: grid; gap: var(--s1); font: 500 var(--t-lg)/1.3 var(--serif); max-width: 100%; }
@@ -109,7 +117,7 @@
   .tl { grid-template-columns: minmax(0, 1fr); }
   .tl > * { grid-column: 1; }
   .lane-h.l, .lane-h.r, .in:empty, .wire { display: none; }
-  :root:not([data-lens="outside"]) .outb:not(:has(.m)) { display: none; }
+  .outb:not(:has(.m, .sys)) { display: none; }
   .outb:empty { display: none; }
   .band { border-radius: 8px; border-top: 0; }
   .mid-h { margin-bottom: 4px; }
@@ -121,7 +129,7 @@
   .in .mb { justify-content: flex-start; text-align: left; }
   .m { align-items: flex-start; }
   .m .sr { position: static; flex: none; width: auto; height: auto; overflow: visible; clip-path: none; color: var(--soft); line-height: 24px; }
-  .aside { margin-left: 0; max-width: none; }
+  .outb .sys { margin-left: 0; max-width: none; }
   .end { margin-top: 14px; }
 }
 

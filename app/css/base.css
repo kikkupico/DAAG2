@@ -53,13 +53,6 @@ p, h1, h2, h3, dl, dd, ul, figure { margin: 0; }
 .label { font: 500 var(--t-xs)/1.35 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* the two lenses: .xo exists only outside, .xi only inside */
-:root:not([data-lens="outside"]) .xo { display: none !important; }
-:root[data-lens="outside"] .xi { display: none !important; }
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-lens="outside"] .xo { animation: ink .4s ease both; }
-  @keyframes ink { from { opacity: 0; transform: translateY(4px); } }
-}
 
 /* page frame: a collapsible drawer, then the content. Open, the drawer takes a column on wide screens and overlays on narrow ones. */
 .app { --dw: 300px; display: grid; grid-template-columns: var(--dw) minmax(0, 1fr); transition: grid-template-columns .22s ease; }

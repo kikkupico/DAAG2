@@ -36,12 +36,6 @@
 .stepbar .stage { margin: 0; }
 .stepbar .stv { max-width: calc(40vh * var(--ar, 2)); margin-inline: auto; }      /* capped by width, so the box never outgrows the screen */
 @media (max-width: 640px) { .stepbar .stage .inset { display: none; } }      /* on a phone the close-up would drop below the picture and make the pinned box too tall */
-/* the world view switch */
-.lsw { display: inline-flex; align-items: center; gap: 10px; flex: none; padding: 6px 4px; font: 500 var(--t-sm)/1 var(--sans); color: var(--ink); background: none; border: 0; cursor: pointer; }
-.lsw .tr { position: relative; width: 42px; height: 24px; border-radius: 99px; background: var(--line); transition: background .2s; }
-.lsw .kn { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--room); box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
-.lsw[aria-checked="true"] .tr { background: var(--out); } .lsw[aria-checked="true"] .kn { transform: translateX(18px); }
-.lsw:focus-visible { outline: 2px solid var(--out); outline-offset: 3px; border-radius: 6px; }
 
 .stage { margin-bottom: 12px; }
 /* the Abstraction register's diagram: the island's layout without the island */
@@ -102,7 +96,6 @@
 .panel .sp-ph b { font-weight: 500; }
 .panel .sp-ph i { font: var(--t-sm)/1.4 var(--sans); letter-spacing: 0; text-transform: none; margin-left: var(--s2); }
 .panel .fst .state { margin-top: 0; }
-.panel .aside { margin: 0; }
 .panel .end { padding: var(--s2) var(--s2) var(--s1); } .panel .end::before, .panel .end .tm { display: none; }
 .stepbar .panel { container-type: inline-size; }
 /* always three columns, so what arrives and what leaves are always in the same place; stacked on a narrow screen */

@@ -11,7 +11,7 @@ const PAPERS = [
   scenes: SCENES.clocks },
 {
   id: "snapshot", name: "Snapshots", year: "1985",
-  cite: "Chandy & Lamport · Distributed Snapshots: Determining Global States",
+  cite: "Chandy & Lamport 1985 · Distributed Snapshots: Determining Global States",
   idea: "When its first marker arrives, a node reads its own value and writes a copy. Until a marker arrives on each incoming stream, it also writes down every message that stream delivers. The copies plus the written-down messages add up to a state the system could have been in.",
   names: "units copy = the process's recorded state · copied from B = recorded state of the channel from B",
   frame: {

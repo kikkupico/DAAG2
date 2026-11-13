@@ -1,10 +1,4 @@
 // ---------- wiring ----------
-function setLens(v) {
-  lens = v;
-  document.documentElement.dataset.lens = v;
-  document.querySelectorAll(".lsw").forEach(b => b.setAttribute("aria-checked", String(v === "outside")));
-  try { localStorage.setItem("lens", v); } catch (e) {}
-}
 // A key is "map", a result's id (its own page), or a scene.
 const isPaper = k => PAPERS.some(x => x.id === k);
 const resolve = k => { const p = PAPERS.find(x => x.id === k); return p ? byKey(`${p.id}-${p.scenes[0].id}`) : byKey(k); };
@@ -27,7 +21,7 @@ function render() {
   $("paper").hidden = !land;
   $("paper").innerHTML = land ? paperHTML(it) : "";
   $("scene").innerHTML = land ? landHTML(it) : it ? sceneHTML(it) : mapHTML();
-  setLens(lens); centreStage();
+  centreStage();
   try { if (location.hash.slice(1) !== sel) history.replaceState(null, "", "#" + sel); } catch (e) {}
 }
 const WIDE = window.matchMedia("(min-width: 1100px)");
@@ -56,7 +50,6 @@ function act(b) {
   if (d.key) go(d.key, !!d.keep, b.closest("#drawer") ? "top" : b.closest(".pager") ? "scene" : "");
   else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("app").dataset.drawer !== "open" : d.drawer === "open");
   else if (d.tog) { expanded.has(d.tog) ? expanded.delete(d.tog) : expanded.add(d.tog); renderDrawer(); }
-  else if (d.lens) setLens(d.lens === "toggle" ? (lens === "outside" ? "inside" : "outside") : d.lens);
   else if (d.reg) { reg = d.reg; try { localStorage.setItem("reg", reg); } catch (e) {} render(); }
   else if (d.cmp) { cmp = !cmp; render(); }
   else if (d.haz) { haz.has(d.haz) ? haz.delete(d.haz) : haz.add(d.haz); renderDrawer(); }
@@ -64,7 +57,7 @@ function act(b) {
   else if (d.stage) showStep(stageStep + +d.stage);
   else if (d.step) showStep(+d.step);
 }
-const HOT = "[data-key],[data-drawer],[data-tog],[data-lens],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage]";
+const HOT = "[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && !WIDE.matches && $("app").dataset.drawer === "open") { setDrawer(false, true); $("dtog").focus(); return; }
