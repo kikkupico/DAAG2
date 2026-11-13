@@ -15,20 +15,20 @@
 .stage .stv { position: relative; } .stage .stv > * { min-width: 0; } .stage .stw { max-width: 100%; contain: inline-size; } .stepbar, .stepbar .sgs { min-width: 0; }      /* the wide picture scrolls inside its frame; it must not widen the page */      /* the picture's frame: a corner close-up sits on it, not on the scrolling picture or the caption */
 .stage .inset.r { right: 10px; } .stage .inset.l { left: 10px; } .stage .inset.t { top: 10px; } .stage .inset.b { bottom: 10px; }
 .stage .inset.below { position: static; display: flex; align-items: center; gap: 10px; width: auto; margin: 10px 12px 0; box-shadow: none; border: 1px solid var(--line); }
-.stage .inset.below { background: var(--room); } .stage .inset.below img { width: 150px; flex: none; } .stage .inset.below span { color: var(--soft); font-size: 12px; }
+.stage .inset.below { background: var(--room); } .stage .inset.below img { width: 150px; flex: none; } .stage .inset.below span { color: var(--soft); font-size: var(--t-xs); }
 
 .stage .inset img { display: block; width: 100%; height: auto; }
-.stage .inset span { display: block; padding: 4px 7px; font: 600 11px/1.2 var(--sans); color: #fff; }
+.stage .inset span { display: block; padding: 4px 7px; font: 600 var(--t-xs)/1.2 var(--sans); color: #fff; }
 @media (max-width: 640px) {    /* on a phone a corner close-up would cover a third of the picture, so it goes below */
   .stage .stv { display: flex; flex-direction: column; } .stage .inset { order: 2; position: static; display: flex; align-items: center; gap: 10px; width: auto; margin: 10px 12px 0; box-shadow: none; border: 1px solid var(--line); background: none; }
-  .stage .inset { background: var(--room); } .stage .inset img { width: 130px; flex: none; } .stage .inset span { color: var(--soft); font-size: 12px; }
+  .stage .inset { background: var(--room); } .stage .inset img { width: 130px; flex: none; } .stage .inset span { color: var(--soft); font-size: var(--t-xs); }
 }/* the stepper: pinned to the top of the screen while its scene's timeline is on screen */
-.stepbar { position: sticky; top: 52px; z-index: 6; margin: 0 0 18px; display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--line); box-shadow: 0 6px 18px -12px rgba(0,0,0,.5); }
+.stepbar { position: sticky; top: 52px; z-index: 6; margin: 0 0 var(--s4); display: flex; align-items: center; gap: var(--s3) var(--s4); flex-wrap: wrap; padding: var(--s3); border: 1px solid var(--line); }
 .stepbar .sgs { flex: 1; min-width: 0; }
-.stepbar .arrow { flex: none; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; line-height: 0; }
+.stepbar .arrow { flex: none; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; line-height: 0; }
 .stepbar .arrow svg { display: block; }
 .stepbar .arrow[disabled] { opacity: .35; }
-.stepbar .sctl { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.stepbar .sctl { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2) var(--s4); }
 .stepbar .sfoot { flex: 1 1 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding-left: 48px; }
 .stepbar .skey { flex: 1 1 auto; }
 /* the picture rides at the top of the stepper box; the stepper sits below it, in reach of a thumb, on one scrolling line */
@@ -37,7 +37,7 @@
 .stepbar .stv { max-width: calc(40vh * var(--ar, 2)); margin-inline: auto; }      /* capped by width, so the box never outgrows the screen */
 @media (max-width: 640px) { .stepbar .stage .inset { display: none; } }      /* on a phone the close-up would drop below the picture and make the pinned box too tall */
 /* the world view switch */
-.lsw { display: inline-flex; align-items: center; gap: 10px; flex: none; padding: 6px 4px; font: 600 13px/1 var(--sans); color: var(--ink); background: none; border: 0; cursor: pointer; }
+.lsw { display: inline-flex; align-items: center; gap: 10px; flex: none; padding: 6px 4px; font: 500 var(--t-sm)/1 var(--sans); color: var(--ink); background: none; border: 0; cursor: pointer; }
 .lsw .tr { position: relative; width: 42px; height: 24px; border-radius: 99px; background: var(--line); transition: background .2s; }
 .lsw .kn { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--room); box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .2s; }
 .lsw[aria-checked="true"] .tr { background: var(--out); } .lsw[aria-checked="true"] .kn { transform: translateX(18px); }
@@ -57,7 +57,7 @@
 .stage.abs .nd.cl rect { stroke-dasharray: 4 3; stroke: var(--soft); }
 .stage.abs .nd .ll { font: 700 17px/1 var(--mono); stroke: none; }
 .stage.abs .nd.me circle { fill: var(--node); stroke: var(--node); } .stage.abs .nd.me .ll { fill: var(--on-node); }
-.stage.abs .nd .nl { font: 600 13px/1 var(--sans); fill: var(--soft); }
+.stage.abs .nd .nl { font: 600 14px/1 var(--sans); fill: var(--soft); }
 
 /* the city stage: the picture is the svg itself, cropped by its viewBox; sizes are in em of the svg's font-size, which scales with the crop */
 .stage.city .stg { min-width: 0; }      /* the whole picture, sized to the room left on screen; its labels scale up when it is small */
@@ -77,15 +77,14 @@
 .stage.city .xx { font-size: 1.6em; fill: #ff7aa8; }
 .stage.city .pulse { fill: none; stroke: #ffd34d; stroke-width: .3em; }
 .stage.city .tmr text { fill: #ffe9a8; }
-.stage .replay { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--room); color: var(--ink); font: 600 12px/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.stage .replay { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--room); color: var(--ink); font: 600 var(--t-xs)/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .stage .replay svg, .stage.city .replay svg { position: static; display: block; width: 15px; height: 15px; cursor: inherit; }
 .stage .replay:hover { background: var(--line); }
-.stage .bgsw { position: absolute; right: 44px; top: 10px; z-index: 3; height: 26px; padding: 0 10px; border: 1px solid var(--line); border-radius: 13px; background: var(--room); color: var(--ink); font: 600 11.5px/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.stage .bgsw { position: absolute; right: 46px; top: 10px; z-index: 3; height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--room); color: var(--ink); font: 500 var(--t-xs)/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .stage .bgsw:hover { background: var(--line); }
-@media (max-width: 640px) { .stage .bgsw { right: 40px; height: 24px; padding: 0 7px; font-size: 10px; top: 11px; } }
 
 /* the player: the stepper and picture are the scene's main view, and the panel under them shows the chosen step */
-.player { display: grid; gap: 14px; margin-bottom: 24px; }
+.player { display: grid; gap: var(--s4); }
 .player .stepbar { position: static; margin: 0; }
 .player .panel .band.core.solo { border-radius: 0 0 10px 10px; }
 .player .panel .band.core, .player .panel .band.end { animation: panel-in .25s ease-out; }
@@ -101,19 +100,20 @@
 .panel .band.ph { background: var(--node-wash); border-radius: 6px; }
 .panel .in { padding-right: 4px; } .panel .outb { padding-left: 4px; }
 /* the panel: the step in words across the width, then a strip that reads arrives, then what is kept, then leaves */
-.panel .sp { display: grid; gap: 12px; padding: 6px 6px 4px; animation: panel-in .25s ease-out; }
+.panel .sp { display: grid; gap: var(--s3); padding: var(--s2) var(--s2) var(--s1); animation: panel-in .25s ease-out; }
 @media (prefers-reduced-motion: reduce) { .panel .sp { animation: none; } }
-.panel .sp-ph { font: 600 13px/1.4 var(--sans); }
-.panel .sp-ph i { font: italic 14.5px/1.4 var(--serif); font-weight: 400; color: var(--soft); margin-left: 6px; }
+.panel .sp-ph { font: 500 var(--t-xs)/1.35 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
+.panel .sp-ph b { font-weight: 500; }
+.panel .sp-ph i { font: var(--t-sm)/1.4 var(--sans); letter-spacing: 0; text-transform: none; margin-left: var(--s2); }
 .panel .fst .state { margin-top: 0; }
 .panel .aside { margin: 0; }
-.panel .end { padding: 8px 6px 4px; } .panel .end::before, .panel .end .tm { display: none; }
+.panel .end { padding: var(--s2) var(--s2) var(--s1); } .panel .end::before, .panel .end .tm { display: none; }
 .stepbar .panel { container-type: inline-size; }
 /* always three columns, so what arrives and what leaves are always in the same place; stacked on a narrow screen */
 .panel .flow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); border-radius: 8px; background: var(--ground); }
-.panel .fcol { display: grid; gap: 9px; align-content: start; min-width: 0; padding: 12px 16px 14px; }
+.panel .fcol { display: grid; gap: var(--s2); align-content: start; min-width: 0; padding: var(--s3) var(--s4) var(--s4); }
 .panel .fcol + .fcol { border-left: 1px solid var(--line); }
-.panel .fcol .none { font: italic 14.5px/1.4 var(--serif); color: var(--soft); }
+.panel .fcol .none { font: var(--t-sm)/1.45 var(--sans); color: var(--soft); }
 .panel .fin .m { justify-content: space-between; }
 @container (max-width: 600px) {
   .panel .flow { grid-template-columns: minmax(0, 1fr); }
@@ -136,11 +136,16 @@
 .stage.city.abs .tag { font-family: var(--mono); font-weight: 500; }
 
 /* the whole box, stepper, picture and the step's panel, should fit on one screen: the picture takes the height the rest leaves */
-.player .stepbar .stv { max-width: max(260px * var(--ar, 2), calc((100svh - 480px) * var(--ar, 2))); }
+.player .stepbar .stv { max-width: max(260px * var(--ar, 2), calc((100svh - 560px) * var(--ar, 2))); }
+/* in the box the picture carries its own rounded corners, so a picture narrower than the box sits in it without a frame */
+.stepbar .stage { border: 0; background: none; overflow: visible; }
+.stepbar .stv { border-radius: 8px; overflow: hidden; }
+/* the step groups already name the phase; the panel repeats it only where it has the reason to add, or on a phone, where the groups lose their names */
+@media (min-width: 641px) { .panel .sp-ph:not(:has(i)) { display: none; } }
 @media (max-width: 640px) {
   .stepbar .skey { display: none; }                      /* the dots carry the same marks; the key costs three lines on a phone */
   .stepbar .sfoot { padding-left: 0; justify-content: flex-end; }
-  .stepbar .sd:not(.skey .sd) { width: 23px; height: 23px; font-size: 11px; }      /* smaller dots, so a scene's steps fit on one row */
+  .stepbar .sd:not(.skey .sd) { width: 24px; height: 24px; }      /* smaller dots, so a scene's steps fit on one row */
   .stepbar .sd.r::before, .stepbar .sd.s::after { width: 5px; }
   .stepbar .dots { gap: 7px; }
   .stepbar .sg > .label { display: none; }      /* the panel names the current phase, so the groups can share one row */
@@ -149,7 +154,7 @@
   .stepbar, .stepbar .sctl { gap: 8px 8px; }
   .player .stepbar .stage.city .stv { max-width: 100%; }
   .panel .sp { gap: 8px; padding-inline: 0; }
-  .panel .say { font-size: 15.5px; line-height: 1.45; }
+  .panel .say { font-size: var(--t-md); }
   .panel .fcol { padding: 8px 12px 10px; gap: 6px; }
 }
 

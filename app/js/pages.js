@@ -10,7 +10,7 @@ function facetsHTML() {
     return `<button type="button" data-haz="${id}" aria-pressed="${on}"${c || on ? "" : ` class="zero"`}><span>${isle_(plain, isle)}</span><b>${c}</b></button>`; }).join("");
   return `<div class="fhead"><span class="label">${U().inplay}</span>${haz.size ? `<button type="button" class="link" data-hazclear="1">Clear</button>` : ""}</div>
     <div class="chips" role="group" aria-label="${U().inplay}. ${U().pick}.">${chips}</div>
-    <p class="fnote" aria-live="polite">${haz.size ? (hit ? `<b>${hit}</b> of ${PAPERS.length} ${hit === 1 ? one : many} have ${haz.size > 1 ? "all of these" : "this"} in play.` : `No ${one} has all of these in play.`) : U().pick + "."}</p>`;
+    <p class="fnote" aria-live="polite">${haz.size ? (hit ? `<b>${hit}</b> of ${PAPERS.length} ${hit === 1 ? one : many} have ${haz.size > 1 ? "all of these" : "this"} in play.` : `No ${one} has all of these in play.`) : ""}</p>`;
 }
 const isle_ = (plain, isle) => reg === "isle" ? isle : plain;
 function indexHTML(it, land) {
@@ -30,26 +30,25 @@ function indexHTML(it, land) {
 }
 // A result's own page: the shared header, then the way in.
 function landHTML(it) {
-  const n = it.p.scenes.length;
-  return `<div class="start"><p class="fine">${n} ${n === 1 ? "scene" : "scenes"}: ${listAnd(it.p.scenes.map(s => esc(nameOf(byKey(`${it.p.id}-${s.id}`)))))}.</p>
-    <div><button type="button" class="btn go-out" data-key="${it.key}">Start exploring</button></div></div>`;
+  const xs = it.p.scenes.map(s => byKey(`${it.p.id}-${s.id}`));
+  return `<div class="start"><button type="button" class="btn go-out" data-key="${it.key}">Start with the first scene</button>
+    <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol></div>`;
 }
+// A result's header: its name and sources, the idea, three facts, then the words the telling uses.
 function paperHTML(it) {
-  const p = it.p, f = p.frame, I = isleOf(p);
-  const cite = `<div class="cite">${p.cite.split("\n").map(c => `<span>${esc(c)}</span>`).join("")}</div>`;
-  const lexi = I ? `<dl class="lexi"><dt class="label">In the telling</dt><dd class="label">In plain terms</dd>${I.gloss.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>` : "";
+  const p = it.p, I = isleOf(p);
+  const head = `<div class="phead"><h1>${esc(p.name)}</h1><p class="cite">${p.cite.split("\n").map(c => `<span>${esc(c)}</span>`).join("")}</p></div>`;
   const facts = g => `<dl class="facts">${[["The goal", g.goal], ["What is shared", g.shared], ["What it assumes", g.assumes]].map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
-  if (I) return `<h1>${esc(p.name)}</h1>
-    <div class="gloss">${cite}${lexi}</div>
+  const words = (label, list) => list.length ? `<div class="words"><p class="label">${label}</p><dl class="lexi">${list.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>` : "";
+  if (I) return `${head}
     <p class="idea">Told among the ${HAT[I.hat][0].toLowerCase()} of Paxos. ${esc(HAT[I.hat][1])} ${esc(I.tale)}</p>
-    ${I.frame ? facts(I.frame) : ""}`;
-  const gloss = (p.names || "").split(" · ").map(e => { const i = e.indexOf(" = "); return i < 0 ? `<dt>${esc(e)}</dt><dd></dd>` : `<dt>${esc(e.slice(0, i))}</dt><dd>${esc(e.slice(i + 3))}</dd>`; }).join("");
-  return `<h1>${esc(p.name)}</h1>
-    <div class="gloss">${cite}<dl>${gloss}</dl></div>
+    ${I.frame ? facts(I.frame) : ""}
+    ${words("In the telling, in plain terms", I.gloss)}`;
+  const names = (p.names || "").split(" · ").filter(Boolean).map(e => { const i = e.indexOf(" = "); return i < 0 ? [e, ""] : [e.slice(0, i), e.slice(i + 3)]; });
+  return `${head}
     <p class="idea">${esc(p.idea)}</p>
-    ${facts(f)}
-    
-`;
+    ${facts(p.frame)}
+    ${words("Names used", names)}`;
 }
 
 // What each step is told as, in the current register.
@@ -186,26 +185,24 @@ function mapHTML() {
     g += `<g class="mn" role="button" tabindex="0" data-key="${p.id}" aria-label="${esc(paperName(p))}: ${esc(p.name)}"><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="5"/><text class="n1" x="${x + 13}" y="${y + 25}">${esc(paperName(p))}</text><text class="n2" x="${x + 13}" y="${y + 44}">${esc(isle ? HAT[TELL[p.id].hat][0] : `${p.year} · ${n} ${n === 1 ? "scene" : "scenes"}`)}</text></g>`;
   });
   const svg = `<div class="mapbox"><svg viewBox="0 0 980 610" role="group" aria-label="How the sixteen lead to one another">${g}</svg></div>`;
-  const start = `<div><button type="button" class="btn go-out" data-key="${ALL[0].key}">Start with ${esc(paperName(ALL[0].p))}</button></div>`;
+  const start = `<button type="button" class="btn go-out" data-key="${ALL[0].key}">Start with ${esc(paperName(ALL[0].p))}</button>`;
   const words = [["Courier", "A message. It may be slow, lost, or overtaken by a later one."], ["Ledger", "Permanent state. It passes to whoever takes over."], ["Slate", "Temporary state. It is wiped when its owner goes."],
     ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody on the island has it."]];
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
+  const sect = (label, body) => `<section class="sect"><p class="label">${label}</p>${body}</section>`;
   if (isle) return `<div class="map">
-    <h1>${U().title}</h1>
-    <p class="idea">Paxos has no assembly hall. Its people work from their own places, legislating part-time between other duties, and everything one of them knows about another arrived by courier. Sixteen results from distributed computing are told here as scenes from that island, each from inside one person's view.</p>
-    <p class="label">Four kinds of work, four kinds of problem</p>
-    ${items(Object.values(HAT))}
-    ${svg}
-    <p class="label">Six words used everywhere</p>
-    ${items(words)}
-    <p class="fine">The part-time legislators are Leslie Lamport's, from The Part-Time Parliament, and the commander and lieutenants are the generals of Lamport, Shostak and Pease. People have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same. Switch to Abstraction at any point to drop the island.</p>
-    ${start}
+    <div class="intro"><h1>${U().title}</h1>
+      <p class="idea">Paxos has no assembly hall. Its people work from their own places, legislating part-time between other duties, and everything one of them knows about another arrived by courier. Sixteen results from distributed computing are told here as scenes from that island, each from inside one person's view.</p>
+      ${start}</div>
+    ${sect("Four kinds of work, four kinds of problem", items(Object.values(HAT)))}
+    ${sect("How the sixteen lead to one another", svg)}
+    ${sect("Six words used everywhere", items(words))}
+    ${sect("About the telling", `<p class="fine">The part-time legislators are Leslie Lamport's, from The Part-Time Parliament, and the commander and lieutenants are the generals of Lamport, Shostak and Pease. People have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same. Switch to Abstraction at any point to drop the island.</p>`)}
   </div>`;
   return `<div class="map">
-    <h1>${U().title}</h1>
-    <p class="idea">Each result is told as a few short scenes from inside one node. You see what it holds, what arrives and what it sends. Then you step outside and see what it could not.</p>
-    <p class="idea">An arrow leads from a result to one that answers a problem it raises, or builds on it.</p>
-    ${svg}${start}
+    <div class="intro"><h1>${U().title}</h1>
+      <p class="idea">Each result is told as a few short scenes from inside one node. You see what it holds, what arrives and what it sends. Then you step outside and see what it could not.</p>
+      ${start}</div>
+    ${sect("An arrow leads to a result that answers the problem, or builds on it", svg)}
   </div>`;
 }
-

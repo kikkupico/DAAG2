@@ -22,9 +22,10 @@ function render() {
   $("brand").textContent = document.title = U().title;
   document.querySelectorAll(".reg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.reg === reg)));
   renderDrawer();
-  $("where").textContent = it ? paperName(it.p) + (land ? "" : " · " + nameOf(it)) : U().map;
-  $("paper").hidden = !it;
-  $("paper").innerHTML = it ? paperHTML(it) : "";
+  // a scene's page is the scene alone: the bar names its result, and leads back to the result's own page
+  $("where").innerHTML = !it ? esc(U().map) : land ? esc(paperName(it.p)) : `<button type="button" data-key="${it.p.id}">${esc(paperName(it.p))}</button><span class="sep" aria-hidden="true">/</span>${esc(nameOf(it))}`;
+  $("paper").hidden = !land;
+  $("paper").innerHTML = land ? paperHTML(it) : "";
   $("scene").innerHTML = land ? landHTML(it) : it ? sceneHTML(it) : mapHTML();
   setLens(lens); centreStage();
   try { if (location.hash.slice(1) !== sel) history.replaceState(null, "", "#" + sel); } catch (e) {}
