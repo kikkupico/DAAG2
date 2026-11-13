@@ -30,7 +30,7 @@
 .rest > summary:hover { color: var(--ink); }
 .rest .grp { margin-top: 8px; }
 .kv.chg .cur { font-weight: 600; background: var(--node-wash); box-shadow: 0 0 0 3px var(--node-wash); border-radius: 2px; }
-.was { display: inline-block; margin-left: 12px; font-size: var(--t-xs); color: var(--soft); }
+.was { display: inline-block; margin-left: 12px; font-size: var(--t-xs); font-style: italic; color: var(--soft); }
 
 /* marks inside values and messages */
 .val { display: inline-grid; place-items: center; width: 1.55em; height: 1.55em; border-radius: 50%; font: 600 .92em/1 var(--mono); vertical-align: -.2em; }

@@ -73,15 +73,11 @@
 .stage.city .mx circle { stroke: #fff; stroke-width: 2.2; } .stage.city .in .mx circle { fill: #1f77b4; } .stage.city .out .mx circle { fill: #e39a12; } .stage.city .lost .mx circle { fill: #d6336c; }
 .stage.city .mx .sh { fill: rgba(0,0,0,.28); }
 .stage.city .mx rect.scroll { fill: #f6ecd2; stroke: #5a4630; stroke-width: 1; } .stage.city .mx path.scroll { fill: none; stroke: #5a4630; stroke-width: 1.1; }
-.stage.city .tag { font-size: .9em; }
 .stage.city .xx { font-size: 1.6em; fill: #ff7aa8; }
 .stage.city .pulse { fill: none; stroke: #ffd34d; stroke-width: .3em; }
-.stage.city .tmr text { fill: #ffe9a8; }
 .stage .replay { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--room); color: var(--ink); font: 600 var(--t-xs)/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .stage .replay svg, .stage.city .replay svg { position: static; display: block; width: 15px; height: 15px; cursor: inherit; }
 .stage .replay:hover { background: var(--line); }
-.stage .bgsw { position: absolute; right: 46px; top: 10px; z-index: 3; height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--room); color: var(--ink); font: 500 var(--t-xs)/1 var(--sans); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
-.stage .bgsw:hover { background: var(--line); }
 
 /* the player: the stepper and picture are the scene's main view, and the panel under them shows the chosen step */
 .player { display: grid; gap: var(--s4); }
@@ -133,7 +129,6 @@
 .stage.city.abs .blk .bl { font: 700 1.25em/1 var(--mono); fill: var(--ink); stroke: none; }
 .stage.city.abs text { fill: var(--ink); stroke: var(--room); }
 .stage.city.abs .cpl.me text:not(.bl) { fill: var(--node); }
-.stage.city.abs .tag { font-family: var(--mono); font-weight: 500; }
 
 /* the whole box, stepper, picture and the step's panel, should fit on one screen: the picture takes the height the rest leaves */
 .player .stepbar .stv { max-width: max(260px * var(--ar, 2), calc((100svh - 560px) * var(--ar, 2))); }
@@ -174,3 +169,26 @@
 .stepbar .sgs > .sg:last-child { margin-right: auto; }
 .stepbar .sfoot { justify-content: center; padding-inline: 48px; }
 .stepbar .skey { flex: 0 1 auto; justify-content: center; }
+
+/* the picture's labels. A place wears a dark plate that leads with its node's chip, the same letter or name the step panel uses,
+   then says where it is; yours is gold. A message's tag is a slip of parchment in the machine's type, edged in its trail's colour.
+   stage.js sizes them and finds each a spot inside the frame, clear of the others. */
+.stage.city .lb text, .stage.city .tg text { stroke: none; }
+.stage.city .lb .bg { fill: rgba(8, 18, 27, .8); }
+.stage.city .lb .chip { fill: #fbfcfe; }
+.stage.city .lb .ct { font: 600 .8em/1 var(--mono); fill: #131a2e; text-anchor: middle; }
+.stage.city .lb .nm { font: 500 .84em/1 var(--sans); fill: #fff; }
+.stage.city .lb .sub { font: 500 .74em/1 var(--sans); fill: #fff; }
+.stage.city .lb .dec { stroke: #fff; stroke-width: .07em; }
+.stage.city .cpl.me .chip { fill: #ffd34d; } .stage.city .cpl.me .ct { fill: #131a2e; } .stage.city .cpl.me .nm, .stage.city .cpl.me .sub { fill: #fff; } .stage.city .cpl.me .yo { fill: #ffd34d; font-weight: 600; }
+.stage.city .cpl.cl .chip { fill: none; stroke: rgba(255, 255, 255, .75); stroke-width: .07em; stroke-dasharray: .24em .18em; }
+.stage.city .cpl.cl .ct { fill: #fff; font-weight: 500; }
+.stage.city .tg .bg { fill: #f8f0db; stroke: rgba(40, 28, 12, .45); stroke-width: .05em; }
+.stage.city .tg text { font: 500 .8em/1 var(--mono); fill: #2a2118; }
+.stage.city .tg.in .bar { fill: #1f77b4; } .stage.city .tg.out .bar { fill: #e39a12; } .stage.city .tg.lost .bar { fill: #d6336c; } .stage.city .tg.here .bar { fill: #c9a227; }
+.stage.city .tg .bar { clip-path: inset(0 round .2em 0 0 .2em); }
+.stage.city.abs .lb .bg { fill: var(--room); opacity: .88; }
+.stage.city.abs .lb .nm, .stage.city.abs .lb .sub, .stage.city.abs .cpl.me .nm, .stage.city.abs .cpl.me .sub { fill: var(--soft); } .stage.city.abs .cpl.me .yo { fill: var(--node); }
+.stage.city.abs .lb .dec { stroke: var(--ink); }
+.stage.city.abs .tg .bg { fill: var(--room); stroke: var(--line); stroke-width: .07em; }
+.stage.city.abs .tg text { fill: var(--ink); }

@@ -43,7 +43,53 @@ const cityRoute = (a, b) => {
 };
 const polyLen = pts => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
 const clamp01 = v => Math.max(0, Math.min(1, v));
-const edgeAnchor = x => x < GEO.w * .15 ? ["start", "-.8em"] : x > GEO.w * .85 ? ["end", ".8em"] : ["middle", "0"];     // labels near an edge read inward
+// ---------- labels: where the names of places and the messages' tags go ----------
+// Boxes are [left, top, right, bottom] in the picture's own units; E is one em of the picture's text.
+const boxHit = (a, b) => Math.max(0, Math.min(a[2], b[2]) - Math.max(a[0], b[0])) * Math.max(0, Math.min(a[3], b[3]) - Math.max(a[1], b[1]));
+function fitBox(w, h, spots, blocks, E) {      // the cheapest of the spots [left, top, cost], once pushed inside the frame: clear of every block [box, weight] if it can be
+  const pad = .35 * E; let best = null;
+  spots.forEach(([x, y, c]) => {
+    const bx = Math.max(pad, Math.min(GEO.w - pad - w, x)), by = Math.max(pad, Math.min(GEO.h - pad - h, y)), box = [bx, by, bx + w, by + h];
+    let cost = c + 3 * (Math.abs(bx - x) + Math.abs(by - y)) / E;
+    for (const [b, wt] of blocks) { const a = boxHit(box, b); if (a > 0) cost += wt * (1 + a / (E * E)); }
+    if (!best || cost < best.cost) best = { box, cost };
+  });
+  return best.box;
+}
+const setAll = (el, o) => { if (el) for (const k in o) el.setAttribute(k, typeof o[k] === "number" ? o[k].toFixed(1) : o[k]); };
+function sizeLabel(lb, E) {      // a place's plate: the node's chip, the place's name, and under them what it has decided
+  const q = c => lb.querySelector(c), ct = q(".ct"), nm = q(".nm"), sub = q(".sub"), px = .42 * E, py = .24 * E, rh = 1.2 * E;
+  let x = ct ? py : px, h = ct || nm ? py * 2 + rh : py;
+  if (ct) { const cw = Math.max(rh, ct.getComputedTextLength() + .64 * E); setAll(q(".chip"), { x, y: py, width: cw, height: rh, rx: .16 * E }); setAll(ct, { x: x + cw / 2, y: py + rh / 2 }); x += cw + (nm ? .38 * E : py - px); }
+  if (nm) { setAll(nm, { x, y: py + rh / 2 }); x += nm.getComputedTextLength(); }
+  let w = x + px;
+  if (sub) { setAll(q(".dec"), { cx: px + .34 * E, cy: h + .32 * E, r: .3 * E }); setAll(sub, { x: px + .9 * E, y: h + .32 * E }); w = Math.max(w, px * 2 + .9 * E + sub.getComputedTextLength()); h += .9 * E; }
+  setAll(q(".bg"), { width: w, height: h, rx: .28 * E });
+  return [w, h];
+}
+function layPlaces(fig, E) {     // puts each place's plate beside its mark, inside the frame and clear of the others; returns everything a tag must keep off
+  const svg = fig.querySelector(".stg > svg"), o = svg.getBoundingClientRect(), k = GEO.w / (o.width || GEO.w), plain = fig.classList.contains("abs"), g = .3 * E;
+  const blocks = [...fig.querySelectorAll(".replay")].map(b => { const q = b.getBoundingClientRect(); return [[(q.left - o.left) * k - g, (q.top - o.top) * k - g, (q.right - o.left) * k + g, (q.bottom - o.top) * k + g], 60]; });
+  const gs = [...fig.querySelectorAll(".cpl")], { e, n, u } = GEO.iso, hw = (e[0] + n[0]) * 7.6, dn = (e[1] - n[1]) * 7.6, up = dn - u[1] * 9;      // in the Abstraction register the mark is a block
+  const marks = gs.map(c => { const x = +c.dataset.x, y = +c.dataset.y; return plain ? [x - hw, y - up, x + hw, y + dn] : [x - .55 * E, y - .55 * E, x + .55 * E, y + .55 * E]; });
+  marks.forEach(m => blocks.push([m, 25]));
+  gs.map((c, i) => i).sort((a, b) => gs[b].classList.contains("me") - gs[a].classList.contains("me")).forEach(i => {
+    const lb = gs[i].querySelector(".lb"); if (!lb) return;
+    const [w, h] = sizeLabel(lb, E), [l, t, r, b] = marks[i], cx = (l + r) / 2, cy = (t + b) / 2;
+    const box = fitBox(w, h, [[cx - w / 2, b + g, 0], [cx - w / 2, t - g - h, 1], [r + g, cy - h / 2, 1.5], [l - g - w, cy - h / 2, 1.5], [l, b + g, 2], [r - w, b + g, 2], [l, t - g - h, 2.5], [r - w, t - g - h, 2.5]], blocks, E);
+    lb.setAttribute("transform", `translate(${box[0].toFixed(1)} ${box[1].toFixed(1)})`); blocks.push([box, 100]);
+  });
+  return blocks;
+}
+function layTag(g, p, blocks, E) {     // sizes a message's tag and finds where it comes to rest about the point p; returns its size and its centre's offset from p
+  const tx = g.querySelector("text"), h = 1.3 * E, w = tx.getComputedTextLength() + 1.05 * E, st = h + .14 * E, spots = [];
+  setAll(g.querySelector(".bg"), { width: w, height: h, rx: .2 * E }); setAll(g.querySelector(".bar"), { width: .24 * E, height: h }); setAll(tx, { x: .62 * E, y: h / 2 });
+  for (let k = 0; k < 5; k++) [0, -1, 1].forEach(sx => { const x = p[0] - w / 2 + sx * (w / 2 - .6 * E), c = k + (sx ? .6 : 0);
+    spots.push([x, p[1] - 1.9 * E - k * st - h / 2, c], [x, p[1] + 1.9 * E + k * st - h / 2, c + 1.5]); });
+  [-1, 1].forEach(sx => spots.push([p[0] - w / 2 + sx * (w / 2 + 1.2 * E), p[1] - h / 2, 2]));
+  const box = fitBox(w, h, spots, blocks, E); blocks.push([box, 100]);
+  return { w, h, fin: [(box[0] + box[2]) / 2 - p[0], (box[1] + box[3]) / 2 - p[1]] };
+}
 function cityCast(it, S) {
   useGeo(S);
   const inScene = new Set([it.s.who, ...(it.s.peers.match(/\b[A-Z]\b/g) || [])]);
@@ -76,17 +122,21 @@ function cityBlock(k, x, y, me, letter) {    // a node in the Abstraction regist
   return `<g class="blk${me ? " me" : ""}${letter ? "" : " cl"}">${face("fs", [[-s, -s, 0], [s, -s, 0], [s, -s, h], [-s, -s, h]])}${face("fe", [[s, -s, 0], [s, s, 0], [s, s, h], [s, -s, h]])}${face("ft", [[-s, -s, h], [s, -s, h], [s, s, h], [-s, s, h]])}`
     + `<text class="bl" x="${fx(tx)}" y="${fx(ty)}" dy=".36em" text-anchor="middle">${letter || "·"}</text></g>`;
 }
-function cityPlaces(it, S) {       // the names of the scene's places, yours marked, and what you have decided
+function cityPlaces(it, S) {       // the scene's places, each named as the step panel names its node: the same letter or business, then where it is
   useGeo(S);
   const { r, me, trips } = cityTrips(it, S), I = isleOf(it.p), fx = v => v.toFixed(1), plain = reg !== "isle";
   const letterOf = k => Object.keys(S).find(l => /^[A-Z]$/.test(l) && S[l] === k);
-  const title = k => plain ? (k === S.client ? U().client : "") : (S.labels && S.labels[k]) || (GEO.label && GEO.label[k]) || (/^(legislator|proposer|camp) /.test(k) ? k : "the " + k);
+  const site = k => ((S.labels && S.labels[k]) || (GEO.label && GEO.label[k]) || k.replace(/ [A-Z]$/, "")).replace(/^(the|an?) /, "");
   const shown = [...new Set([...cityCast(it, S), ...(trips.some(x => x.outside) ? [S.client] : []), ...(plain ? [] : (S.also || []).filter(k => GEO.places[k]))])];
-  if (plain) return shown.map(k => { const [x, y] = GEO.places[k], name = title(k) + (k === me ? "you" : "");
-    return `<g class="cpl${k === me ? " me" : ""}">${cityBlock(k, x, y, k === me, letterOf(k))}${name ? `<text x="${fx(x)}" y="${fx(y)}" dy="2.1em" dx="${edgeAnchor(x)[1]}" text-anchor="${edgeAnchor(x)[0]}">${esc(name)}${k === me && decided(r) ? ", decided " + esc(decided(r)) : ""}</text>` : ""}</g>`; }).join("");
-  const decidedV = decided(r), dv = decidedV && I ? lexT(decidedV, I) : decidedV;
-  return shown.map(k => { const [x, y] = GEO.places[k], name = title(k) + (k === me ? " (you)" : "");
-    return `<g class="cpl${k === me ? " me" : ""}"><circle class="pin" cx="${fx(x)}" cy="${fx(y)}" r=".4em"/><text x="${fx(x)}" y="${fx(y)}" dy="1.9em" dx="${edgeAnchor(x)[1]}" text-anchor="${edgeAnchor(x)[0]}">${esc(name)}</text>${k === me && dv ? `<circle class="dec d${esc(dv)}" cx="${fx(x)}" cy="${fx(y)}" r=".55em" transform="translate(0 -40)"/><text class="dect" x="${fx(x)}" y="${fx(y - 40)}" dx="${x > GEO.w * .75 ? "-.9em" : ".9em"}" dy=".35em" text-anchor="${x > GEO.w * .75 ? "end" : "start"}">decided ${esc(dv)}</text>` : ""}</g>`; }).join("");
+  const d0 = decided(r), dv = d0 && I ? lexT(d0, I) : d0;
+  return shown.map(k => {
+    const [x, y] = GEO.places[k], l = letterOf(k), cl = !l && k === S.client, you = k === me;
+    const chip = plain ? "" : l ? nmOf(I, l) || l : cl ? I.client || "" : "";
+    const name = plain ? (cl ? U().client : "") : site(k) === chip ? "" : site(k);
+    const lb = (chip ? `<rect class="chip"/><text class="ct" dy=".35em">${esc(chip)}</text>` : "")
+      + (name || you ? `<text class="nm" dy=".35em">${esc(name)}${you ? `<tspan class="yo">${name ? " · " : ""}you</tspan>` : ""}</text>` : "")
+      + (you && dv ? `<circle class="dec d${esc(dv)}"/><text class="sub" dy=".35em">decided ${esc(dv)}</text>` : "");
+    return `<g class="cpl${you ? " me" : ""}${cl ? " cl" : ""}" data-x="${fx(x)}" data-y="${fx(y)}">${plain ? cityBlock(k, x, y, you, l) : `<circle class="pin" cx="${fx(x)}" cy="${fx(y)}" r=".4em"/>`}${lb ? `<g class="lb"><rect class="bg"/>${lb}</g>` : ""}</g>`; }).join("");
 }
 function cityHTML(it, S) {
   useGeo(S);
@@ -97,8 +147,7 @@ function cityHTML(it, S) {
   return `<figure class="stage city${plain ? " abs" : GEO.night ? " night" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-pic="${r3 ? "rendered" : "drawn"}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg${baked ? " baked" : ""}">`
     + (baked ? `<img class="wld" src="${Object.values(pic)[0]}" srcset="${Object.entries(pic).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="${GEO.w}" height="${GEO.h}" alt="" decoding="async">` : "")
     + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
-    + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g></svg></div></div>`
-    + (baked && GEO.img3d ? `<button type="button" class="bgsw" data-bg="toggle" aria-pressed="${r3}" title="${r3 ? "Show the drawn picture" : "Show the rendered picture"}">${r3 ? "Drawn" : "Rendered"}</button>` : "")
+    + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g><g class="tags"></g></svg></div></div>`
     + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></figure>`;
 }
 let cityAnim = 0;
@@ -107,7 +156,7 @@ function playCity() {
   const fig = $("stage"), it = byKey(sel), S = it && stageOf(it); if (!fig || !fig.classList.contains("city") || !S) return;
   useGeo(S);
   const svg = fig.querySelector(".stg > svg"), W = svg.clientWidth || 1000, u = Math.max(+fig.dataset.u, 11.5 * GEO.w / (15 * W));    // on a small screen the text grows, so it stays about 11.5 px
-  svg.style.fontSize = (15 * u).toFixed(2) + "px";
+  svg.style.fontSize = (15 * u).toFixed(2) + "px"; cityW = svg.clientWidth;
   const { me, trips } = cityTrips(it, S), layer = fig.querySelector(".trips"), [px, py] = GEO.places[me], fx = v => v.toFixed(1);
   // the schedule, in seconds: timers, then arrivals, then the step itself at your place, then departures
   const SPEED = 560, walk = (x, k, t0) => { x.stop = x.lost ? .55 : 1; x.start = t0 + .25 * k; x.dur = Math.min(2.8, Math.max(.9, x.len / SPEED)) * x.stop; x.end = x.start + x.dur; };
@@ -117,28 +166,31 @@ function playCity() {
   const here = ins.length ? Math.max(...ins.map(x => x.end)) + .1 : t;
   outs.forEach((x, k) => walk(x, k, here + (ins.length || timers.length ? .5 : 0)));
   const T = Math.max(here + .9, ...trips.map(x => x.end + .7));
-  const ends = {}; trips.forEach(x => { if (x.kind === "walk") { const e = x.lost ? "lost" + x.to : x.to; x.stack = ends[e] = (ends[e] || 0) + 1; } });   // tags at one place stack up
-  const line = pts => pts.map(p => p.join(",")).join(" ");
-  layer.innerHTML = trips.map(x => x.kind === "here"
-    ? `<g class="tmr"><text x="${fx(px)}" y="${fx(py)}" dy="-2.2em" dx="${px < GEO.w * .3 ? "-1em" : px > GEO.w * .7 ? "1em" : "0"}" text-anchor="${px < GEO.w * .3 ? "start" : px > GEO.w * .7 ? "end" : "middle"}">${x.icon} ${esc(x.label)}</text></g>`
+  const line = pts => pts.map(p => p.join(",")).join(" "), E = 15 * u, tagLayer = fig.querySelector(".tags");
+  layer.innerHTML = trips.map(x => x.kind === "here" ? `<g></g>`
     : `<g class="trip ${x.dir}${x.lost ? " lost" : ""}"><polyline class="way" points="${line(x.pts)}"/><polyline class="trail" points="${line(x.pts)}" stroke-dasharray="${fx(x.len)} ${fx(x.len)}" stroke-dashoffset="${fx(x.len)}"/>`
       + `<g class="mx" opacity="0"><g transform="scale(${(u * .8).toFixed(3)})"><ellipse class="sh" rx="10" ry="3.6" cy="1"/><g class="bob"><circle r="11" cy="-9"/><rect class="scroll" x="-6" y="-13" width="12" height="8" rx="2"/><path class="scroll" d="M-3.5 -10.5h7M-3.5 -7.5h5"/></g></g></g>`
-      + `<text class="tag" text-anchor="middle" opacity="0">${esc(x.label)}</text><text class="xx" text-anchor="middle" dy=".35em" opacity="0">✕</text></g>`).join("")
+      + `<text class="xx" text-anchor="middle" dy=".35em" opacity="0">✕</text></g>`).join("")
     + `<circle class="pulse" cx="${fx(px)}" cy="${fx(py)}" r="0" opacity="0"/>`;
-  const gs = [...layer.children], pulse = layer.querySelector(".pulse");
+  tagLayer.innerHTML = trips.map(x => `<g class="tg ${x.kind === "here" ? "here" : x.dir + (x.lost ? " lost" : "")}" opacity="0"><rect class="bg"/><rect class="bar"/><text dy=".35em">${x.kind === "here" ? x.icon + " " : ""}${esc(x.label)}</text></g>`).join("");
+  const gs = [...layer.children], tags = [...tagLayer.children], pulse = layer.querySelector(".pulse");
+  // where every tag comes to rest: in the order they arrive, each clear of the places' names, the frame's edge and the tags before it
+  const blocks = layPlaces(fig, E), pad = .35 * E, ease = v => v * v * (3 - 2 * v);
+  trips.forEach((x, i) => { x.at = x.kind === "here" ? [px, py] : along(x.pts, x.stop); Object.assign(x, layTag(tags[i], x.at, blocks, E)); });
+  const put = (g, x, cx, cy) => g.setAttribute("transform", `translate(${fx(Math.max(pad, Math.min(GEO.w - pad - x.w, cx - x.w / 2)))} ${fx(Math.max(pad, Math.min(GEO.h - pad - x.h, cy - x.h / 2)))})`);
   const frame = now => {
     const t = (now - t0) / 1000;
     trips.forEach((x, i) => {
-      const g = gs[i];
-      if (x.kind === "here") { const a = clamp01((t - x.start) / .4); g.setAttribute("opacity", a); g.setAttribute("transform", `translate(${fx(px * (1 - (.7 + .3 * a)))} ${fx(py * (1 - (.7 + .3 * a)))}) scale(${(.7 + .3 * a).toFixed(3)})`); return; }
+      const g = gs[i], tag = tags[i];
+      if (x.kind === "here") { const a = clamp01((t - x.start) / .4); tag.setAttribute("opacity", a); put(tag, x, px + x.fin[0], py + x.fin[1] + (1 - a) * .5 * E); return; }
       const f = clamp01((t - x.start) / x.dur), p = f * x.stop, [cx, cy] = along(x.pts, p), done = t >= x.end, after = clamp01((t - x.end) / .45);
-      const [trail, mx, tag, xx] = [g.children[1], g.children[2], g.children[3], g.children[4]];
+      const [trail, mx, xx] = [g.children[1], g.children[2], g.children[3]];
       trail.setAttribute("stroke-dashoffset", fx(x.len * (1 - p)));
       mx.setAttribute("opacity", t < x.start ? 0 : done ? 1 - after : 1);
       mx.setAttribute("transform", `translate(${fx(cx)} ${fx(cy)})`);
       mx.children[0].children[1].setAttribute("transform", `translate(0 ${done ? 0 : fx(-Math.abs(Math.sin(t * 11)) * 3)})`);   // a little bounce as it walks
-      const [an, dx] = edgeAnchor(cx); if (x.an !== an) { x.an = an; tag.setAttribute("text-anchor", an); tag.setAttribute("dx", dx); }    // text layout is dear: only when it changes
-      tag.setAttribute("opacity", t < x.start ? 0 : 1); tag.setAttribute("x", fx(cx)); tag.setAttribute("y", fx(cy - (28 + (done ? 22 * (x.stack - 1) : 0)) * u));
+      const k = ease(clamp01((f - .5) / .5));      // the tag rides above its messenger, and over the last half of the walk eases to its resting place
+      tag.setAttribute("opacity", t < x.start ? 0 : 1); put(tag, x, cx + x.fin[0] * k, cy - 1.9 * E * (1 - k) + x.fin[1] * k);
       if (x.lost) { xx.setAttribute("x", fx(cx)); xx.setAttribute("y", fx(cy)); xx.setAttribute("opacity", done ? after : 0); }
     });
     const a = clamp01((t - here) / .8); pulse.setAttribute("r", fx((8 + 46 * a) * u)); pulse.setAttribute("opacity", t < here ? 0 : (1 - a).toFixed(3));
@@ -147,6 +199,10 @@ function playCity() {
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches, t0 = performance.now() - (still ? T * 1000 : 0);
   cityAnim = requestAnimationFrame(frame);
 }
+// The labels are measured, so they are laid out again once the page's fonts have loaded, and when the picture changes width.
+if (document.fonts && document.fonts.status !== "loaded") document.fonts.ready.then(() => playCity());
+let cityW = 0;
+{ let timer = 0; window.addEventListener("resize", () => { clearTimeout(timer); timer = setTimeout(() => { const s = document.querySelector("#stage .stg > svg"); if (s && s.clientWidth && s.clientWidth !== cityW) playCity(); }, 200); }); }
 document.addEventListener("click", e => { if (e.target.closest && (e.target.closest("[data-replay]") || e.target.closest(".stage.city .stg"))) playCity(); });
 
 function stageHTML(it) {       // both registers, every scene: the same messengers; only the background differs

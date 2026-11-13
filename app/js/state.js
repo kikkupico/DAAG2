@@ -1,8 +1,8 @@
 // ---------- state, and the two registers ----------
 let sel = "map", lens = "inside", cmp = false, reg = "isle";
 const haz = new Set();
-let bg = "drawn";               // the Allegory's background: the drawn city, or the same frame rendered in Blender
-try { if (localStorage.getItem("lens") === "outside") lens = "outside"; if (localStorage.getItem("reg") === "plain") reg = "plain"; if (localStorage.getItem("bg") === "rendered") bg = "rendered"; } catch (e) {}
+let bg = "rendered";            // the Allegory's background: the frame rendered in Blender (or ?bg=drawn for the drawn city)
+try { if (localStorage.getItem("lens") === "outside") lens = "outside"; if (localStorage.getItem("reg") === "plain") reg = "plain"; } catch (e) {}
 { const q = new URLSearchParams(location.search).get("bg"); if (q === "rendered" || q === "3d") bg = "rendered"; else if (q === "drawn") bg = "drawn"; }
 
 const UI = {

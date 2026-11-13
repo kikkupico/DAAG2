@@ -49,7 +49,7 @@ function stateBox(r, I) {
     if (!keys.length) return "";
     return `<div class="grp ${cls}"><span class="label">${label}</span>` + keys.map(k => {
       const v = cur[k], chg = !first && changed;
-      const was = chg && k in prev && !Array.isArray(v) ? `<span class="was">was ${stateVal(prev[k], null, I)}</span>` : "";
+      const was = chg && k in prev && !Array.isArray(v) ? `<span class="was">(was ${stateVal(prev[k], null, I)})</span>` : "";
       return `<div class="kv${chg ? " chg" : ""}"><span class="k">${esc(lexT(k, I))}</span><span class="v"><span class="cur">${stateVal(v, chg ? prev[k] : null, I)}</span>${was}</span></div>`;
     }).join("") + `</div>`;
   };
