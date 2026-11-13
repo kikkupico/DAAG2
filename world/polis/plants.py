@@ -3,7 +3,7 @@ and boulders on the acropolis; rocks along the shore.
 
 Trees are built as clouds of small leaf cards on a trunk (each species in several individuals); scanned shrubs and rocks come
 from Poly Haven. Nothing is planted on a road, and no tree where it would stand between the camera and a walker."""
-import bpy, math, os, random
+import bpy, math, os, random, zlib
 import numpy as np
 from mathutils import Vector
 from . import core, land, houses, country, props
@@ -29,7 +29,7 @@ def limb(key, pts, r0, r1):
 def make(name, fn, k=5):
     out = []
     for i in range(k):
-        g = random.Random(hash(name) % 1000 + i * 31)
+        g = random.Random(zlib.crc32(name.encode()) % 1000 + i * 31)
         with Part("%s%d" % (name, i)) as p: fn(g)
         out.append(p.mesh)
     return out
@@ -43,14 +43,14 @@ def _olive(g):
     for i in range(g.randint(3, 5)):
         a = g.uniform(0, 6.283); r = g.uniform(.5, 1.5); c = (lean + r * math.cos(a), r * math.sin(a), h + g.uniform(.9, 1.8)); rr = g.uniform(1.2, 1.9)
         blobs.append((*c, rr, rr, rr * .75)); limb("bark:#6b6252", [(lean, -.1, h), (c[0] * .7, c[1] * .7, c[2] - .2)], .13, .06)
-    cards("leaf:#7f8b62", blobs, 950, .26, g, .45, .3)
+    cards("leaf:#7f8b62", blobs, 1235, .26, g, .45, .3)
 def _plane(g):
     h = g.uniform(3.6, 4.8); limb("bark:#8f8a78", [(0, 0, 0), (.1, .1, h * .5), (0, 0, h)], .42, .3)
     blobs = []
     for i in range(g.randint(4, 6)):
         a = g.uniform(0, 6.283); r = g.uniform(1.2, 3.4); c = (r * math.cos(a), r * math.sin(a), h + g.uniform(1.8, 4.6)); rr = g.uniform(2.4, 3.6)
         blobs.append((*c, rr, rr, rr * .7)); limb("bark:#8f8a78", [(0, 0, h), (c[0] * .5, c[1] * .5, h + 1.4), (c[0] * .85, c[1] * .85, c[2])], .22, .08)
-    cards("leaf:#56703a", blobs, 1900, .5, g, .45, .35)
+    cards("leaf:#56703a", blobs, 2470, .5, g, .45, .35)
 def _stonepine(g):
     h = g.uniform(6.5, 9.5); lean = g.uniform(-.6, .6); limb("bark:#7a5a44", [(0, 0, 0), (lean * .3, 0, h * .5), (lean, 0, h)], .3, .2)
     blobs = []
@@ -65,6 +65,18 @@ def _aleppo(g):
 def _fig(g):
     limb("bark:#8a8474", [(0, 0, 0), (.1, 0, 1.0)], .16, .12); blobs = [(g.uniform(-.8, .8), g.uniform(-.8, .8), g.uniform(1.6, 2.6), 1.3, 1.3, .9) for _ in range(3)]
     cards("leaf:#4f7030", blobs, 520, .3, g, .4, .4)
+def _pomegranate(g):
+    limb("bark:#7a6a58", [(0, 0, 0), (g.uniform(-.08, .08), g.uniform(-.08, .08), .9)], .13, .09)
+    blobs = [(g.uniform(-.7, .7), g.uniform(-.7, .7), g.uniform(1.4, 2.2), 1.15, 1.15, .85) for _ in range(3)]
+    cards("leaf:#4f7a34", blobs, 480, .28, g, .4, .4)
+    cards("paint:#b3261e", blobs, 25, .14, g, .78, .3)
+def _almond(g):
+    limb("bark:#6b5c4c", [(0, 0, 0), (g.uniform(-.1, .1), 0, 1.3)], .16, .11)
+    blobs = []
+    for _ in range(4):
+        a = g.uniform(0, 6.283); r = g.uniform(.5, 1.2); c = (r * math.cos(a), r * math.sin(a), g.uniform(2.3, 3.2))
+        blobs.append((*c, 1.1, 1.1, .8)); limb("bark:#6b5c4c", [(0, 0, 1.25), (c[0] * .7, c[1] * .7, c[2] - .2)], .09, .05)
+    cards("leaf:#6f8a4a", blobs, 580, .28, g, .5, .35)
 def _vine(g):
     limb("bark:#5c4a38", [(0, 0, 0), (0, 0, .5)], .04, .03); cards("leaf:#62803a", [(0, 0, .62, .55, .55, .32)], 46, .17, g, .2, .5)
 def _bush(col, r, n, size):
@@ -74,6 +86,17 @@ def _bush(col, r, n, size):
     return f
 def _tuft(g): cards("leaf:#b3a468", [(0, 0, .18, .32, .32, .2)], 22, .13, g, .2, .8)
 def _reed(g): cards("leaf:#8c9a52", [(0, 0, .9, .5, .5, .9)], 60, .16, g, .2, .1)
+def _oleander(g):
+    """A 2.5 m stream-bank oleander bush: dark green foliage with ~15% pink flowers."""
+    blobs = []
+    for _ in range(g.randint(3, 5)):
+        a = g.uniform(0, 6.283); r = g.uniform(.25, .85); cz = g.uniform(1.0, 1.55)
+        rx = g.uniform(.75, 1.15); rz = g.uniform(.65, .95)
+        cx, cy = r * math.cos(a), r * math.sin(a)
+        blobs.append((cx, cy, cz, rx, rx, rz))
+        limb("bark:#6b5c4c", [(0, 0, 0), (cx * .65, cy * .65, cz * .8)], .05, .025)
+    cards("leaf:#3f6a3a", blobs, 390, .21, g, .35, .4)
+    cards("paint:#d8668c", blobs, 70, .19, g, .70, .4)
 
 # ---------------------------------------------------------------- scanned shrubs and rocks from Poly Haven
 def load(name, lods=("LOD2", "LOD1", "LOD3", "LOD0"), skip=("leaves_", "branches_", "geometry_nodes", "_trunk", "dead_branch")):
@@ -138,16 +161,18 @@ def hides_road(x, y, h, r):
 def build():
     g = random.Random(23); zt = land.zt
     CYP = make("cypress", _cypress, 6); OLI = make("olive", _olive, 7); PLA = make("plane", _plane, 4); SPI = make("stonepine", _stonepine, 4); ALE = make("aleppo", _aleppo, 5)
-    FIG = make("fig", _fig, 3); VINE = [collection_of(m, m.name) for m in make("vine", _vine, 4)]
+    FIG = make("fig", _fig, 3); POME = make("pomegranate", _pomegranate, 3); ALM = make("almond", _almond, 3)
+    VINE = [collection_of(m, m.name) for m in make("vine", _vine, 4)]
     def bushes(name, col, r, n, size, k=4): return [(collection_of(m, m.name), Vector((2 * r, 2 * r, 1.3 * r))) for m in make(name, _bush(col, r, n, size), k)]
     LENT = bushes("lentisk", "#586b3e", 1.0, 230, .15); KERM = bushes("kermes", "#4c5d38", .8, 190, .13); BROOM = bushes("broom", "#87895a", .7, 150, .12); SAGE = bushes("sage", "#9b9d82", .5, 100, .1)
     BURN = bushes("burnet", "#a08f5c", .45, 90, .1)
     TUFT = [(collection_of(m, m.name), Vector((.6, .6, .4))) for m in make("tuft", _tuft, 3)]; REED = [(collection_of(m, m.name), Vector((1, 1, 1.8))) for m in make("reed", _reed, 3)]
+    OLEANDER = [(collection_of(m, m.name), Vector((2.6, 2.6, 2.5))) for m in make("oleander", _oleander, 4)]
     ROCK = load("rock_moss_set_01", ("",)) + load("rock_moss_set_02", ("",)); BOUL = load("boulder_01", ("LOD3",)) + load("namaqualand_boulder_03", ("LOD3",))
     FACE = load("rock_face_01", ("",)) + load("rock_face_02", ("",)); CLIFF = load("namaqualand_cliff_02", ("LOD3",))
     for v in (ROCK, BOUL, FACE, CLIFF): retint(v, "#cdc6b4", .78)
-    TREE = dict(cypress=CYP, olive=OLI, plane=PLA, stonepine=SPI, aleppo=ALE, fig=FIG, court=FIG + OLI[:2])
-    SIZE = dict(cypress=(1.3, 11), olive=(2.6, 4.6), plane=(4.4, 9), stonepine=(4.2, 9.5), aleppo=(3.0, 9), fig=(1.8, 3.2), court=(1.8, 3.4))
+    TREE = dict(cypress=CYP, olive=OLI, plane=PLA, stonepine=SPI, aleppo=ALE, fig=FIG, pomegranate=POME, almond=ALM, court=FIG + OLI[:2])
+    SIZE = dict(cypress=(1.3, 11), olive=(2.6, 4.6), plane=(4.4, 9), stonepine=(4.2, 9.5), aleppo=(3.0, 9), fig=(1.8, 3.2), pomegranate=(1.6, 3.0), almond=(2.2, 4.0), court=(1.8, 3.4))
     planted = []
     def tree(kind, x, y, z=None, sc=None, check=True):
         r, h = SIZE[kind]; sc = sc or g.uniform(.85, 1.15)
@@ -166,16 +191,20 @@ def build():
                 px, py = x + g.uniform(-sp * .18, sp * .18), y + g.uniform(-sp * .18, sp * .18)
                 if inpoly(px, py, P) and in_view(px, py, 0, 25):
                     if kind == "olive": tree("olive", px, py)
+                    elif kind == "orchard": tree(g.choice(("fig", "pomegranate", "almond", "olive")), px, py)
                     elif kind == "school": tree(g.choice(("plane", "plane", "cypress", "stonepine")), px, py)
                     elif kind == "sacred" and g.random() < .5 and clear_of(px, py, country.KEEP_CLEAR): tree(g.choice(("cypress", "cypress", "stonepine", "olive")), px, py)
                     elif kind == "tombs" and g.random() < .4: tree("cypress", px, py)
                 x += sp
             y += sp * .9
     # --- the vineyards: head-trained vines in rows on turned red soil, a dry-stone terrace wall now and then
+    g0, fc0, fs0 = land.COV["green"].copy(), land.COV["fcos"].copy(), land.COV["fsin"].copy()
     for P, ang in country.VINEYARDS:
         x0, y0, x1, y1 = core.bbox(P); land.field(P, "plough", ang, 2.0)
         for K in country.KEEP_CLEAR:
-            for k in ("plough",): land.paint(k, K, how="clear", feather=2.0)
+            kx0, ky0, kx1, ky1 = core.bbox(K)
+            if kx0 < x1 + 4 and kx1 > x0 - 4 and ky0 < y1 + 4 and ky1 > y0 - 4:
+                for k in ("plough",): land.paint(k, K, how="clear", feather=2.0)
         c, s = math.cos(math.radians(ang)), math.sin(math.radians(ang)); cx, cy = (x0 + x1) / 2, (y0 + y1) / 2; ext = math.hypot(x1 - x0, y1 - y0) / 2
         v = -ext; row = 0
         while v < ext:
@@ -185,13 +214,43 @@ def build():
                 if x0 < px < x1 and y0 < py < y1 and in_view(px, py, 0, 10) and land.free(px, py) and land.road_dist(px, py) > 2.6 and clear_of(px, py, country.KEEP_CLEAR) and g.random() < .93:
                     Scatter.add(g.choice(VINE), px, py, zt(px, py), g.uniform(0, 6.283), g.uniform(.85, 1.25))
                 u += 1.5
-            if row % 7 == 6: country.drystone([(max(x0, min(x1, cx + c * t - s * (v + 1.1))), max(y0, min(y1, cy + s * t + c * (v + 1.1)))) for t in (-ext, ext)], h=.7)
+            if row % 7 == 6: country.drystone([(max(x0, min(x1, cx + c * t - s * (v + 1.1))), max(y0, min(y1, cy + s * t + c * (v + 1.1)))) for t in (-ext, ext)], h=.7, keep_clear=True)
             v += 2.2; row += 1
         land.take(P)
+    mg = g0 > 0
+    if mg.any(): land.COV["green"][mg] = np.maximum(land.COV["green"][mg], g0[mg]); land.COV["fcos"][mg] = fc0[mg]; land.COV["fsin"][mg] = fs0[mg]
+    # --- dry stream bed: reeds in the gravel channel, oleander and five or six plane trees on the banks
+    for pts, bed in country.STREAMS:
+        for x, y, ux, uy, d in core.along(pts, 2.0):
+            if not in_view(x, y, 0, 4) or land.road_dist(x, y) < 4.0: continue
+            if g.random() < .85:
+                for _ in range(g.randint(2, 4)):
+                    rx = x + g.uniform(-1.1, 1.1); ry = y + g.uniform(-1.1, 1.1)
+                    if in_view(rx, ry, 0, 2) and land.road_dist(rx, ry) > 4.0:
+                        strew(REED, rx, ry, zt(rx, ry), g, scale=g.uniform(.85, 1.35))
+        land.take(bed)
+        samples = [p for p in core.along(pts, 2.5) if in_view(p[0], p[1], 0, 0) and land.road_dist(p[0], p[1]) > 5.0]
+        n_planes = 0; plane_step = max(1, len(samples) // 6)
+        for idx in range(2, len(samples), plane_step):
+            if n_planes >= 6: break
+            x, y, ux, uy, d = samples[idx]
+            for s in (1, -1):
+                px, py = x - uy * s * g.uniform(3.4, 4.8), y + ux * s * g.uniform(3.4, 4.8)
+                if in_view(px, py, 0, 0) and land.road_dist(px, py) > 5.0 and tree("plane", px, py, sc=g.uniform(.8, 1.0)):
+                    n_planes += 1; break
+        for x, y, ux, uy, d in core.along(pts, 3.0):
+            if not in_view(x, y, 0, 2) or land.road_dist(x, y) < 4.5: continue
+            if g.random() < .88:
+                s = g.choice((-1, 1)); off = g.uniform(2.0, 3.6)
+                ox, oy = x - uy * s * off, y + ux * s * off
+                if in_view(ox, oy, 0, 2) and land.free(ox, oy, 1.0) and land.road_dist(ox, oy) > 4.0 and not hides_road(ox, oy, 2.5, 1.3):
+                    strew(OLEANDER, ox, oy, zt(ox, oy), g, scale=g.uniform(.9, 1.15))
+                    land.take_disc(ox, oy, 1.2)
     if core.SIEGE:
         # --- the besiegers' country: pine and oak woods, felled for a bowshot round the lines (the palisades and engines came from there)
         from . import siege
         far = [core.grow(P, 15) for P in siege.CLEAR]; STUMP = collection_of(siege.STUMP, "stump")
+        belt_out = core.grow(siege.OCT, siege.D_IN - 2); belt_in = siege.OCT
         for _ in range(16000):
             x, y = g.uniform(-240, 240), g.uniform(-240, 240)
             if not in_view(x, y, 0, 24) or any(inpoly(x, y, P) for P in siege.CLEAR) or not land.free(x, y, 1.0): continue
@@ -199,6 +258,12 @@ def build():
             if any(inpoly(x, y, P) for P in far):
                 if dense > -.3 and g.random() < .7: Scatter.add(STUMP, x, y, zt(x, y), g.uniform(0, 6.3), g.uniform(.7, 1.3)); land.take_disc(x, y, .6)
             elif dense > -.25 and all(math.hypot(x - a, y - b) > 3.0 for a, b in planted[-40:]): tree(g.choice(("aleppo", "aleppo", "aleppo", "stonepine", "plane", "cypress")), x, y, sc=g.uniform(.75, 1.2))
+        n_belt_stumps = 0
+        for _ in range(1200):
+            if n_belt_stumps >= 220: break
+            x, y = g.uniform(-110, 110), g.uniform(-110, 110)
+            if inpoly(x, y, belt_out) and not inpoly(x, y, belt_in) and land.free(x, y, .8):
+                Scatter.add(STUMP, x, y, zt(x, y), g.uniform(0, 6.3), g.uniform(.7, 1.3)); land.take_disc(x, y, .6); n_belt_stumps += 1
     # --- olives scattered over the open country in old, loose groves; a line of cypresses or pines here and there
     for _ in range(0 if core.SIEGE else 7000):
         x, y = g.uniform(-235, 235), g.uniform(-235, 235)
@@ -248,6 +313,9 @@ def build():
     for _ in range(int(core.opt("--scatter", 130000))):
         x, y = g.uniform(-240, 240), g.uniform(-240, 240)
         if not in_view(x, y, 0, 12) or not land.free(x, y): continue
+        if core.SIEGE and inpoly(x, y, belt_out) and not inpoly(x, y, belt_in):
+            if g.random() < .04: strew(TUFT, x, y, zt(x, y), g, scale=g.uniform(.7, 1.3))
+            continue
         sd = land.sd_at(x, y)
         if sd < 9: continue
         i, j = int((x + land.HALF) / land.STEP), int((y + land.HALF) / land.STEP)

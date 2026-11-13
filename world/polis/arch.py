@@ -6,7 +6,7 @@ from mathutils import Vector
 from . import core
 from .core import face, mesh, wall, walls, cap, prism, boxr, lathe, cyl, beam, bar, rect, box, ccw, area, centre, Part, inst, vnorm, oriented, lerp
 
-TILE_W = .56
+TILE_W = .88
 def wface(key, pts, zb=0.0, **kw):
     """A wall face of any outline: UVs are metres along it and metres above zb."""
     x0, y0 = pts[0][0], pts[0][1]
@@ -27,7 +27,7 @@ def tiles(pts, va=0.0, key="tile", ribs=True, fascia=.14, pitch=TILE_W):
         a0, a1 = P2[0][0], P2[1][0]
         face(key, [W(a0, 0), W(a1, 0), tuple(Vector(W(a1, .06)) - Vector((0, 0, fascia))), tuple(Vector(W(a0, .06)) - Vector((0, 0, fascia)))], [(a0, 0), (a1, 0), (a1, .01), (a0, .01)], va=va, vb=0.0)
     if not ribs: return
-    amin, amax = min(a for a, _ in P2), max(a for a, _ in P2); hw, hh, tw = .105, .085, .045
+    amin, amax = min(a for a, _ in P2), max(a for a, _ in P2); hw, hh, tw = .14, .12, .06
     k = max(1, round((amax - amin) / pitch)); step = (amax - amin) / k; a = amin + step / 2
     while a < amax - .1:
         bs = []
@@ -42,7 +42,7 @@ def tiles(pts, va=0.0, key="tile", ribs=True, fascia=.14, pitch=TILE_W):
             face(key, [TR0, R0, R1, TR1], [(a + tw, b0), (a + hw, b0), (a + hw, b1), (a + tw, b1)], va=va, vb=1.0)
             face(key, [L0, R0, TR0, TL0], [(a - hw, b0), (a + hw, b0), (a + tw, b0), (a - tw, b0)], va=va, vb=0.0)
         a += step
-def ridge(p, q, va=0.0, key="tile", r=.13):
+def ridge(p, q, va=0.0, key="tile", r=.19):
     """A line of cover tiles along a ridge or a hip."""
     p, q = Vector(p), Vector(q); ax = (q - p).normalized(); side = ax.cross(Vector((0, 0, 1))).normalized(); up = side.cross(ax)
     L = (q - p).length; sec = [(-r, -.02), (-r * .5, r * .7), (r * .5, r * .7), (r, -.02)]
@@ -89,10 +89,10 @@ def hip(x0, y0, x1, y1, z, rise, va=0.0, ov=.4, key="tile", ribs=True):
     c = [(x0, y0, z), (x1, y0, z), (x1, y1, z), (x0, y1, z)]
     if w >= d:
         tiles([c[0], c[1], rb, ra], va, key, ribs); tiles([c[2], c[3], ra, rb], va, key, ribs); tiles([c[1], c[2], rb], va, key, ribs); tiles([c[3], c[0], ra], va, key, ribs)
-        for a, b in ((c[0], ra), (c[3], ra), (c[1], rb), (c[2], rb)): ridge(a, b, va, key, .11)
+        for a, b in ((c[0], ra), (c[3], ra), (c[1], rb), (c[2], rb)): ridge(a, b, va, key, .18)
     else:
         tiles([c[1], c[2], rb, ra], va, key, ribs); tiles([c[3], c[0], ra, rb], va, key, ribs); tiles([c[0], c[1], ra], va, key, ribs); tiles([c[2], c[3], rb], va, key, ribs)
-        for a, b in ((c[0], ra), (c[1], ra), (c[2], rb), (c[3], rb)): ridge(a, b, va, key, .11)
+        for a, b in ((c[0], ra), (c[1], ra), (c[2], rb), (c[3], rb)): ridge(a, b, va, key, .18)
     if math.hypot(ra[0] - rb[0], ra[1] - rb[1]) > .3: ridge(ra, rb, va, key)
 
 # ---------------------------------------------------------------- openings in walls

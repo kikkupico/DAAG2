@@ -100,7 +100,7 @@ def m_tile(key, par):
     patches of newer tiles, lichen and soot. UV: metres along the eave and up the slope; vb = 1 on the cover tiles."""
     s = Sh(key); base = col_of(par, "#ad7550"); va = s.attr("va"); vb = s.attr("vb"); u, v, _ = s.xyz(s.uv)
     c1 = (base[0] * 1.22, base[1] * 1.2, base[2] * 1.12); c2 = (base[0] * .66, base[1] * .62, base[2] * .62)
-    bc, bf = s.brick(s.uv, .56, .5, .0, c1, c2, c2, offset=0.0, bias=-.1)
+    bc, bf = s.brick(s.uv, .88, .5, .0, c1, c2, c2, offset=0.0, bias=-.1)
     age = s.ramp(va, [(0, (1.1, .98, .86)), (.25, (1, 1, 1)), (.5, (.94, .97, 1.0)), (.75, (.84, .87, .88)), (1, (.7, .72, .72))])       # from new-fired to old and grey
     col = s.mix(1.0, bc, age, "MULTIPLY", clamp=False)
     col = s.hsv(col, s.rng(s.math("FRACT", s.mul(va, 7.31)), 0, 1, .492, .512), s.rng(s.math("FRACT", s.mul(va, 3.77)), 0, 1, .8, 1.08), 1.0)

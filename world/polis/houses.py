@@ -18,10 +18,14 @@ def room(key, x0, y0, x1, y1, z0, z1, kw):
     walls(key, box(x0, y0, x1, y1), z0 - .7, z1, zb=z0, **kw)
 def openings(x0, y0, x1, y1, side, z, g, n=None, kind="window", shutter=None, w=.55, h=.7, margin=1.0):
     p, q = EDGE[side](x0, y0, x1, y1); L = math.hypot(q[0] - p[0], q[1] - p[1]); n = max(1, int(L / 3.2)) if n is None else n
+    p_win = .3
+    if core.SIEGE and kind == "window":
+        dist = math.hypot((x0 + x1) / 2, (y0 + y1) / 2)
+        p_win = .45 - .33 * max(0.0, min(1.0, (dist - 40.0) / 40.0))
     for i in range(n):
         if kind == "window" and g.random() < .25: continue
         t = margin + (L - 2 * margin) * (i + .5) / n + g.uniform(-.3, .3)
-        lit = core.NIGHT and g.random() < (.18 if kind == "door" else .3)                  # lamplight in a few rooms at night
+        lit = core.NIGHT and g.random() < (.18 if kind == "door" else p_win)                  # lamplight in a few rooms at night
         if kind == "door": panel("glow" if lit else "dark", p, q, t, w, z, z + h, .04)
         elif lit: panel("glow", p, q, t, w, z, z + h, .05)
         else: window(p, q, t, z, w, h, shutter)

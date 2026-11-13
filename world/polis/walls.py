@@ -18,10 +18,15 @@ def parapet(a, b, n, ztop, key, va):
     """Breastwork and merlons along the outer edge of a stretch from a to b (n = outward unit normal)."""
     L = math.hypot(b[0] - a[0], b[1] - a[1]); ux, uy = (b[0] - a[0]) / L, (b[1] - a[1]) / L
     o0, o1 = THICK_NOW[0] / 2, THICK_NOW[0] / 2 - .5
-    A, B = (a[0] + n[0] * o0, a[1] + n[1] * o0), (b[0] + n[0] * o0, b[1] + n[1] * o0); C, D = (b[0] + n[0] * o1, b[1] + n[1] * o1), (a[0] + n[0] * o1, a[1] + n[1] * o1)
-    prism(key, "paving:#cfc6b0", [A, B, C, D], ztop, ztop + .95, zb=0, va=va, vb=ztop - 6)
+    mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
+    attacked = core.SIEGE and ((abs(my + 78) < 2 and -40 <= mx <= 0) or (abs(mx - 78) < 2 and 5 <= my <= 35))
+    notch = attacked and (math.hypot(mx + 20, my + 78) < 2.2 or math.hypot(mx - 78, my - 20) < 2.2)
+    if not notch:
+        A, B = (a[0] + n[0] * o0, a[1] + n[1] * o0), (b[0] + n[0] * o0, b[1] + n[1] * o0); C, D = (b[0] + n[0] * o1, b[1] + n[1] * o1), (a[0] + n[0] * o1, a[1] + n[1] * o1)
+        prism(key, "paving:#cfc6b0", [A, B, C, D], ztop, ztop + .95, zb=0, va=va, vb=ztop - 6)
     m = max(1, round(L / 2.15))
     for k in range(m):
+        if attacked and (notch or RND.random() < .5): continue
         t0, t1 = (k + .2) / m * L, (k + .8) / m * L
         P = lambda t, o: (a[0] + ux * t + n[0] * o, a[1] + uy * t + n[1] * o)
         prism(key, "paving:#cfc6b0", [P(t0, o0), P(t1, o0), P(t1, o1), P(t0, o1)], ztop + .95, ztop + 1.8, zb=0, va=va, vb=ztop - 6)
@@ -79,24 +84,44 @@ def tower(x, y, ux, uy, w=6.6, d=6.6, out=1.5, h=13.4, key="ashlar", abs_base=No
     land.take(R, 1.0); TOWERS.append((cx, cy, ze)); return ze
 
 TOWERS = []                                                                              # (x, y, eaves height) of every tower, for the night's watch-fires
-def gate(x, y, ux, uy, half=2.4, thick=THICK, spring=3.4, key="ashlar", h=H_WALL, lintel=False, open_in=True, shut=False):
+def gate(x, y, ux, uy, half=2.4, thick=THICK, spring=3.4, key="ashlar", h=H_WALL, lintel=False, open_in=True, shut=False, raise_h=0.0):
     """The masonry over a gate's passage: a round arch (or a flat lintel for a postern), the wall-walk and battlements above,
     and the leaves swung back against the passage walls."""
-    ang = math.degrees(math.atan2(uy, ux)); zg = land.zroute(x, y)[0] if land.zroute(x, y)[1] < 3 else land.zt(x, y); ztop = q(land.zt(x - ux * (half + 1.5), y - uy * (half + 1.5)) + h); r = half; zs = zg + spring; T = thick
+    ang = math.degrees(math.atan2(uy, ux)); zg = land.zroute(x, y)[0] if land.zroute(x, y)[1] < 3 else land.zt(x, y); zwall = q(land.zt(x - ux * (half + 1.5), y - uy * (half + 1.5)) + h); ztop = zwall + raise_h; r = half; zs = zg + spring; T = thick
+    gw = r + 1.4 if (not lintel and raise_h > 0) else r
     kw = dict(va=RND.random(), vb=zg)
     with placed(x, y, ang):
         n = 14; arc = [(-r + 2 * r * k / n, (zs + math.sqrt(max(0, r * r - (-r + 2 * r * k / n) ** 2))) if not lintel else zs) for k in range(n + 1)]
+        sp_top = zwall if raise_h > 0 else ztop
         for side in (-1, 1):
             yy = side * T / 2
             for (a0, z0), (a1, z1) in zip(arc, arc[1:]):
-                oriented(key, [(a0, yy, z0), (a1, yy, z1), (a1, yy, ztop), (a0, yy, ztop)], (0, side, 0), uv=[(a0, z0), (a1, z1), (a1, ztop), (a0, ztop)], **kw)
-                if not lintel:                                                            # the voussoirs: a ring of wedge stones standing a little proud
-                    k0, k1 = 1 + .55 / r, 1 + .55 / r; y2 = yy + side * .05
-                    oriented("ashlar:#bfb49a", [(a0, y2, z0), (a1, y2, z1), (a1 * k1, y2, zs + (z1 - zs) * k1), (a0 * k0, y2, zs + (z0 - zs) * k0)], (0, side, 0),
-                             uv=[(a0 * 3, 0), (a1 * 3, 0), (a1 * 3, .45), (a0 * 3, .45)], **kw)
+                oriented(key, [(a0, yy, z0), (a1, yy, z1), (a1, yy, sp_top), (a0, yy, sp_top)], (0, side, 0), uv=[(a0, z0), (a1, z1), (a1, sp_top), (a0, sp_top)], **kw)
+                if not lintel:                                                            # the voussoirs: a ring of pale wedge stones standing proud
+                    k = 1 + .8 / r; y1, y2 = yy - side * .02, yy + side * .15; pale = "marble:#e6dfcf"
+                    vx0, vx1 = a0 * k, a1 * k; vz0, vz1 = zs + (z0 - zs) * k, zs + (z1 - zs) * k
+                    oriented(pale, [(a0, y2, z0), (a1, y2, z1), (vx1, y2, vz1), (vx0, y2, vz0)], (0, side, 0), uv=[(a0 * 3, 0), (a1 * 3, 0), (a1 * 3, .8), (a0 * 3, .8)], **kw)
+                    oriented(pale, [(a0, y1, z0), (a1, y1, z1), (a1, y2, z1), (a0, y2, z0)], (-(a0 + a1), 0, -((z0 + z1) - 2 * zs)), **kw)
+                    oriented(pale, [(vx0, y1, vz0), (vx1, y1, vz1), (vx1, y2, vz1), (vx0, y2, vz0)], (a0 + a1, 0, (z0 + z1) - 2 * zs), **kw)
+            if not lintel:
+                y1, y2 = yy - side * .02, yy + side * .15; pale = "marble:#e6dfcf"
+                for sx in (-1, 1):
+                    oriented(pale, [(sx * r, y1, zs), (sx * (r + .8), y1, zs), (sx * (r + .8), y2, zs), (sx * r, y2, zs)], (0, 0, -1), **kw)
+                for sx in (-1, 1):                                                        # pale pilasters and capitals either side of the arch
+                    px = sx * (r + .7); y_in = yy - side * .05
+                    y_a, y_b = min(y_in, yy + side * .6), max(y_in, yy + side * .6)
+                    prism(pale, pale, box(px - .7, y_a, px + .7, y_b), zg - .5, ztop - 1.1, zb=0, **kw)
+                    y_ca, y_cb = min(y_in, yy + side * .65), max(y_in, yy + side * .65)
+                    prism(pale, pale, box(px - .9, y_ca, px + .9, y_cb), ztop - 1.1, ztop - .6, zb=0, **kw)
+                y_oa, y_ob = min(yy - side * .05, yy + side * .7), max(yy - side * .05, yy + side * .7)
+                prism(pale, pale, box(-gw - .3, y_oa, gw + .3, y_ob), ztop - .6, ztop, zb=0, **kw)
         for (a0, z0), (a1, z1) in zip(arc, arc[1:]):
             oriented(key, [(a0, -T / 2, z0), (a1, -T / 2, z1), (a1, T / 2, z1), (a0, T / 2, z0)], (0, 0, -1), **kw)
-        cap("paving:#cfc6b0", box(-r, -T / 2, r, T / 2), ztop)
+        if raise_h > 0:
+            prism(key, "paving:#cfc6b0", box(-gw, -T / 2, gw, T / 2), zwall, ztop, zb=0, **kw)
+            prism(key, key, box(-gw - .12, -T / 2 - .12, gw + .12, T / 2 + .12), zwall - .1, zwall + .2, zb=0, **kw)
+        else:
+            cap("paving:#cfc6b0", box(-r, -T / 2, r, T / 2), ztop)
         dk = "wood:#6b4f32"
         if shut:                                                                          # shut and barred: the leaves fill the arch, iron-bound, a beam across them
             for side in (-1, 1):
@@ -107,7 +132,12 @@ def gate(x, y, ux, uy, half=2.4, thick=THICK, spring=3.4, key="ashlar", h=H_WALL
         for a in (() if shut else (-r + .07, r - .07)):                                   # the leaves, open against the jambs on the town side
             s = 1 if open_in else -1
             oriented(dk, [(a, s * (T / 2 - r + .2), zg), (a, s * (T / 2 + .2), zg), (a, s * (T / 2 + .2), zs + .2), (a, s * (T / 2 - r + .2), zs + .2)], (-a, 0, 0))
-    THICK_NOW[0] = thick; pa, pb = (x - ux * r, y - uy * r), (x + ux * r, y + uy * r); parapet(pa, pb, (uy, -ux), ztop, key, kw["va"])
+    THICK_NOW[0] = thick; pa, pb = (x - ux * gw, y - uy * gw), (x + ux * gw, y + uy * gw); parapet(pa, pb, (uy, -ux), ztop, key, kw["va"])
+    if not lintel:
+        nx, ny = uy, -ux
+        apron = [(x - ux * gw - nx * 6.0, y - uy * gw - ny * 6.0), (x + ux * gw - nx * 6.0, y + uy * gw - ny * 6.0),
+                 (x + ux * gw + nx * 8.0, y + uy * gw + ny * 8.0), (x - ux * gw + nx * 8.0, y - uy * gw + ny * 8.0)]
+        land.paint("pave", apron, 1.0, .6)
 
 def build():
     hill = land.HILL
@@ -118,8 +148,8 @@ def build():
         ux, uy = (0, 1) if gy == 0 else (1, 0)                                            # along the wall, the country on the right
         if gx < 0: ux, uy = 0, -1
         if gy > 0: ux, uy = -1, 0
-        gate(gx, gy, ux, uy, half, shut=core.SIEGE)
-        for s in (-1, 1): tower(gx + ux * s * 8.2, gy + uy * s * 8.2, ux, uy, w=7.2, d=7.6, out=1.8, h=14.3)
+        gate(gx, gy, ux, uy, half, shut=core.SIEGE, raise_h=3.0)
+        for s in (-1, 1): tower(gx + ux * s * 8.2, gy + uy * s * 8.2, ux, uy, w=7.6, d=8.0, out=1.9, h=14.8)
     def towers_on(a, b, ts, **kw):
         L = math.hypot(b[0] - a[0], b[1] - a[1]); ux, uy = (b[0] - a[0]) / L, (b[1] - a[1]) / L
         for t in ts: tower(a[0] + ux * L * t, a[1] + uy * L * t, ux, uy, **kw)

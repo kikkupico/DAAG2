@@ -104,7 +104,7 @@ def peristyle(x0, y0, x1, y1, depths, h, hc, wk="plaster:#ece5d5", tk="tile:#b87
     """A building round a colonnaded court (a palaistra, a prytaneion): ranges of rooms `depths` = (n, e, s, w) deep, porticoes
     on all four sides of the court. `exedra` names a side whose range opens to the court through columns."""
     R = box(x0, y0, x1, y1); z0 = land.pad(R, z, blend=blend); land.take(R, .6); kw = dict(va=va, vb=.05); dn, de, ds, dw = depths
-    cap(floor, R, z0 + .03); walls("rubble", grow(R, .06), z0 - 1.2, z0 + .08)
+    cap(floor, R, z0 + .02); walls("rubble", grow(R, .06), z0 - 1.2, z0 + .08)
     cx0, cy0, cx1, cy1 = x0 + dw, y0 + ds, x1 - de, y1 - dn
     for bx, low in (((x0, y1 - dn, x1, y1), "s"), ((x0, y0, x0 + dw, y1 - dn), "e"), ((x1 - de, y0, x1, y1 - dn), "w"), ((x0 + dw, y0, x1 - de, y0 + ds), "n")):
         dd = {"s": dn, "e": dw, "w": de, "n": ds}[low]
@@ -246,10 +246,44 @@ def agora(g):
         for i in range(6): y = -10 - i * 3.0; inst(g.choice((props.STELE, props.HERM, props.STATUE_M)), x, y, z(x, y), math.pi / 2 if x < 0 else -math.pi / 2)
     inst(props.EXEDRA, -22, -24.5, z(-22, -24.5), 0); inst(props.EXEDRA, 14, -24.5, z(14, -24.5), 0); inst(props.VOTIVE, -9, -24, z(-9, -24)); inst(props.VOTIVE, 9.5, -9.5, z(9.5, -9.5))
     fountain_house(22.5, -9.2, "s")
-    for i, (x, y) in enumerate(((12, -15), (16.5, -15), (21, -15.5), (12.5, -20.5), (17, -20), (22, -21))):
-        inst(g.choice(props.STALLS), x, y, z(x, y), g.choice((0, math.pi)) + g.uniform(-.1, .1))
-        for _ in range(3): inst(g.choice((props.AMPH, props.SACK, props.BASKET)), x + g.uniform(-1.2, 1.2), y + g.uniform(-.3, .3), z(x, y) + (.85 if g.random() < .5 else 0), g.uniform(0, 6), .8)
+    stalls = [
+        (12, -15, g.choice((0, math.pi))), (16.5, -15, g.choice((0, math.pi))), (21, -15.5, g.choice((0, math.pi))),
+        (12.5, -20.5, g.choice((0, math.pi))), (17, -20, g.choice((0, math.pi))), (22, -21, g.choice((0, math.pi))),
+        (-26.2, -11.5, math.pi / 2), (-26.2, -15.5, math.pi / 2), (-26.2, -19.5, math.pi / 2), (-26.2, -23.5, math.pi / 2),
+        (-22.5, -11.5, -math.pi / 2), (-22.5, -15.5, -math.pi / 2), (-22.5, -19.5, -math.pi / 2), (-17.5, -22.5, 0.0),
+    ]
+    cloths = [0, 2, 1, 6, 3, 7, 8, 5, 9, 4, 6, 0, 7, 8]
+    g.shuffle(cloths)
+    for (x, y, rot), ci in zip(stalls, cloths):
+        assert land.road_dist(x, y) > 4, f"stall too close to road at {(x, y)}"
+        r = rot + g.uniform(-.08, .08); cr, sr = math.cos(r), math.sin(r)
+        inst(props.STALLS[ci], x, y, z(x, y), r)
+        for k in range(g.randint(6, 10)):
+            on_counter = k % 2 == 0
+            lx = g.uniform(-1.05, 1.05) if on_counter else g.uniform(-1.25, 1.25)
+            ly = g.uniform(-.72, -.28) if on_counter else g.uniform(-1.45, -1.00)
+            gx, gy = x + cr * lx - sr * ly, y + sr * lx + cr * ly
+            gz = (z(x, y) + .85) if on_counter else z(gx, gy)
+            inst(g.choice((props.AMPH, props.SACK, props.BASKET)), gx, gy, gz, g.uniform(0, 6), g.uniform(.78, .92))
+    for part_, cx, cy, ang in ((props.CART_AMPH, 25.2, -15.5, math.radians(-95)), (props.CART_SACKS, -19.5, -9.8, math.radians(-5))):
+        assert land.road_dist(cx, cy) > 5.5, f"cart too close to main street at {(cx, cy)}"
+        inst(part_, cx, cy, z(cx, cy), ang, 1.3)
+    bx, by = -13.5, -24.0; bz = z(bx, by)                                                # speakers' platform (bema) in front of the south stoa
+    with placed(bx, by, 0, bz):
+        prism(STONE, FLOOR, box(-1.5, -1.0, 1.5, 1.0), -.3, 1.0, zb=0)
+        prism(STONE, FLOOR, box(1.5, -.8, 1.9, .8), -.3, .67, zb=0)
+        prism(STONE, FLOOR, box(1.9, -.8, 2.3, .8), -.3, .33, zb=0)
+    inst(props.SUNDIAL, 10.0, -24.5, z(10.0, -24.5))
+    tx, ty, trot = 9.2, -17.5, math.pi / 2; tz = z(tx, ty)                               # standard measures table (sekoma) by the east stalls
+    inst(props.TABLE, tx, ty, tz, trot, 1.3)
+    with placed(tx, ty, math.degrees(trot), tz):
+        for dx, dy, r in ((-.62, .05, .15), (-.31, -.06, .13), (0.0, .06, .115), (.30, -.05, .10), (.58, .04, .09)):
+            core.cyl("dark:#221c16", dx, dy, r, 1.04, 1.10, 10)
     houses.TREES.append((-12, -11.5, z(-12, -11.5), "plane")); houses.TREES.append((25, -22.5, z(25, -22.5), "plane"))
+    for tx, ty in ((-11.0, -19.5), (14.5, -10.5)):
+        assert land.road_dist(tx, ty) >= 6, f"plane tree too close to road at {(tx, ty)}"
+        houses.TREES.append((tx, ty, z(tx, ty), "plane"))
+        inst(props.BENCH, tx, ty - 1.3, z(tx, ty - 1.3), 0)
 
 def north_quarter(g):
     """Behind the north stoa: the council house and the prytaneion to the east, a small sanctuary to the west."""
@@ -272,6 +306,10 @@ def gymnasium(g):
     z0, court = peristyle(4.6, -70.6, 35.0, -41.2, (6.2, 4.4, 4.2, 5.0), 3.9, 3.3, door_side="w", va=.2, exedra="n")
     for x, y in ((court[0] + 2, court[1] + 2), (court[2] - 2, court[3] - 2)): inst(props.HERM, x, y, z0)
     inst(props.BENCH, (court[0] + court[2]) / 2, court[1] + 1.0, z0)
+    cx, cy = (court[0] + court[2]) / 2 - .5, (court[1] + court[3]) / 2 + 1.0
+    land.paint("sand", box(cx - 3.0, cy - 1.5, cx + 3.0, cy + 1.5), 1.0, .4)
+    for y in (-53.0, -55.8): inst(props.BASIN, court[0] + 1.2, y, z0 + .02)
+    for k in range(4): inst(props.HERM, 15.0 + k * 2.6, court[3] - 1.7, z0 + .02)
 
 def build(g):
     if land.HILL: theatre(g)
