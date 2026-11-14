@@ -299,6 +299,14 @@ def build():
         for _ in range(26):                                                               # cypresses beside the broad stair
             y = g.uniform(44, 99); sx = g.choice((-1, 1)); x = sx * g.uniform(5.6, 8.4)
             if land.free(x, y, 1.0): tree("cypress", x, y, check=False)
+        from . import acropolis
+        ga = random.Random(77)
+        for x, y, z_, kind, sc in acropolis.GROVE:
+            inst(ga.choice(TREE[kind]), x, y, z_ - .05, ga.uniform(0, 6.283), (sc * ga.uniform(.92, 1.08), sc * ga.uniform(.92, 1.08), sc))
+            land.paint_disc("lush", x, y, 2.6, .55, 2.8)
+            for _ in range(5):
+                sx = x + ga.uniform(-3.2, 3.2); sy = y + ga.uniform(-2.6, 2.6)
+                strew(ga.choice((LENT, KERM, BROOM, TUFT)), sx, sy, z_, ga, scale=ga.uniform(.65, 1.25))
     # --- the shore: rocks where the coast turns stony, a rubble skirt along the mole
     for _ in range(360):
         x = g.uniform(-235, 120); y = land.shore_y(x) + g.uniform(-5, 7)
