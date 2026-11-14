@@ -21,7 +21,7 @@ function indexHTML(it, land) {
     const scenes = open ? `<ul class="scl">${p.scenes.map(s => { const x = byKey(`${p.id}-${s.id}`); return `<li><button type="button" class="sl" data-key="${x.key}" aria-pressed="${!land && x === it}"><span>${esc(nameOf(x))}</span>${ocMark(x.oc)}</button></li>`; }).join("")}</ul>` : "";
     return `<div class="pg${matches(p) ? "" : " off"}${open ? " open" : ""}"><div class="prow"><button type="button" class="pl" data-key="${p.id}" aria-pressed="${here}"${inside ? ` aria-current="true"` : ""}><span>${esc(paperName(p))}</span><small>${esc(p.year)}</small></button><button type="button" class="chev" data-tog="${p.id}" aria-expanded="${open}" aria-label="Scenes in ${esc(paperName(p))}">${chev}</button></div>${scenes}</div>`;
   };
-  return `<button type="button" class="pl map" data-key="map" aria-pressed="${!it}"><span>${U().map}</span></button>`
+  return `<button type="button" class="pl map" data-key="map" aria-pressed="${!it && !isVs(sel)}"><span>${U().map}</span></button><button type="button" class="pl map" data-key="${isVs(sel) ? sel : "cmp"}" aria-pressed="${isVs(sel)}"><span>Compare</span></button>`
     + CHAPTERS.map(([name, ids]) => {
       const ps = ids.map(id => PAPERS.find(x => x.id === id)).filter(p => matches(p) || p === cur);
       if (!ps.length) return "";
@@ -29,9 +29,14 @@ function indexHTML(it, land) {
     }).join("");
 }
 // A result's own page: the shared header, then the way in.
+function withHTML(p) {      // a way into a comparison: the results the map links to this one come first, with the arrow's words
+  const linked = MAP_EDGES.filter(([a, b]) => a === p.id || b === p.id).map(([a, b, l]) => [a === p.id ? b : a, l]), ids = linked.map(x => x[0]);
+  const opt = (id, l) => `<option value="${id}">${esc(paperName(pById(id)))}${l ? " · " + esc(l) : ""}</option>`;
+  return `<select class="pick" data-vs="with" data-a="${p.id}" aria-label="Compare ${esc(paperName(p))} with another"><option value="" selected>Compare with…</option>${linked.length ? `<optgroup label="Linked on the map">${linked.map(([id, l]) => opt(id, l)).join("")}</optgroup>` : ""}<optgroup label="Any other">${PAPERS.filter(x => x !== p && !ids.includes(x.id)).map(x => opt(x.id)).join("")}</optgroup></select>`;
+}
 function landHTML(it) {
   const xs = it.p.scenes.map(s => byKey(`${it.p.id}-${s.id}`));
-  return `<div class="start"><button type="button" class="btn go-out" data-key="${it.key}">Start with the first scene</button>
+  return `<div class="start"><div class="ctl"><button type="button" class="btn go-out" data-key="${it.key}">Start with the first scene</button>${withHTML(it.p)}</div>
     <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol>${sumHTML(it.p, true)}</div>`;
 }
 // A result's header: its name and sources, the idea, three facts, then the words the telling uses.
@@ -89,7 +94,7 @@ function ctlHTML(it) {     // one circle per step
 const EYE = `<svg class="eye" width="17" height="12" viewBox="0 0 17 12" aria-hidden="true"><path d="M1 6c2.1-3.3 4.6-5 7.5-5s5.4 1.7 7.5 5c-2.1 3.3-4.6 5-7.5 5S3.1 9.3 1 6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8.5" cy="6" r="2.3" fill="currentColor"/></svg>`;
 const sysHTML = (it, body, cls = "") => `<div class="sys${cls ? " " + cls : ""}"><p class="sys-h">${EYE}<b>${U().seen}</b><span>${U().unseen(isleOf(it.p) ? whoOf(it) : "node " + whoOf(it))}</span></p>${body}</div>`;
 const whoOf = it => { const I = isleOf(it.p), n = nmOf(I, it.s.who); return n ? "the " + esc(n) : (I ? esc(roleOf(I, it.s.who)) + " " : "") + ND(esc(it.s.who)); };
-function timelineHTML(it, col, dv, only) {      // only: one step's number, or "end"; the panel under the picture shows just that
+function timelineHTML(it, col, dv, only, bare) {      // only: one step's number, or "end"; the panel under the picture shows just that
   const s = it.s, I = isleOf(it.p), { rows, phases } = tellOf(it), seen = new Map(), me = whoOf(it);
   const tw = twinOf(it), same = tw ? sameRows(s, tw.s) : 0, whole = tw && same === Math.max(s.rows.length, tw.s.rows.length);
   const phaseAt = new Map(phases.map(([from, name, why]) => [from, [name, why]]));
@@ -108,7 +113,7 @@ function timelineHTML(it, col, dv, only) {      // only: one step's number, or "
   if (!solo || only === "end") tl += `<div class="band end"><span class="tm" aria-hidden="true"></span>
       <p>That is everything ${I ? me : "node " + me} can know.${tw ? " At least two different worlds look exactly like this from in here." : ""}</p>
       ${sysHTML(it, `<p class="verdict">${ocMark(it.oc)}${VERDICT[it.oc]}</p><p>${esc(TAKE[it.key])}${tw ? " " + twinLine : ""}</p>`)}
-      ${solo && s === it.p.scenes[it.p.scenes.length - 1] ? sumHTML(it.p) : ""}
+      ${solo && !bare && s === it.p.scenes[it.p.scenes.length - 1] ? sumHTML(it.p) : ""}
     </div>`;
   return `<div class="tlw"><div class="tl">${tl}</div></div>`;
 }
@@ -178,23 +183,24 @@ function sceneHTML(it) {
 }
 
 // The map: which result answers a problem another one raises.
+const MAP_EDGES = [["clocks", "snapshot", "a state that could have been"], ["clocks", "cops", "causes before effects"], ["flp", "benor", "or flip a coin"], ["flp", "suspect", "so guess, and allow mistakes"],
+    ["suspect", "paxos", "stay safe whatever the timing"], ["paxos", "vr", "one value becomes a stream"], ["commit", "paxos", "a majority, not all"], ["flp", "cap", "the same blindness, for reads"],
+    ["linear", "cap", "what lost messages take away"], ["cap", "quorum", "wait for some copies, not all"], ["quorum", "merge", "or never wait, and merge"], ["merge", "bayou", "when merging needs one order"],
+    ["liars", "pbft", "the same, for a stream"], ["vr", "pbft", "the same, among liars"]];
 function mapHTML() {
   const X = [20, 260, 500, 740], Y = [30, 150, 270, 390, 510], W = 170, H = 58, isle = reg === "isle";
   const at = { snapshot: [0, 0], clocks: [0, 1], cops: [0, 2], commit: [0, 3], benor: [1, 0], flp: [1, 1], suspect: [1, 2], paxos: [1, 3], vr: [1, 4],
     liars: [2, 3], pbft: [2, 4], linear: [3, 0], cap: [3, 1], quorum: [3, 2], merge: [3, 3], bayou: [3, 4] };
-  const edges = [["clocks", "snapshot", "a state that could have been"], ["clocks", "cops", "causes before effects"], ["flp", "benor", "or flip a coin"], ["flp", "suspect", "so guess, and allow mistakes"],
-    ["suspect", "paxos", "stay safe whatever the timing"], ["paxos", "vr", "one value becomes a stream"], ["commit", "paxos", "a majority, not all"], ["flp", "cap", "the same blindness, for reads"],
-    ["linear", "cap", "what lost messages take away"], ["cap", "quorum", "wait for some copies, not all"], ["quorum", "merge", "or never wait, and merge"], ["merge", "bayou", "when merging needs one order"],
-    ["liars", "pbft", "the same, for a stream"], ["vr", "pbft", "the same, among liars"]];
   let g = "";
-  edges.forEach(([a, b, label]) => {
+  MAP_EDGES.forEach(([a, b, label]) => {
     const [ca, ra] = at[a], [cb, rb] = at[b];
+    g += `<g class="mx" role="button" tabindex="0" data-key="cmp=${a}~${b}" aria-label="Compare ${esc(paperName(pById(a)))} with ${esc(paperName(pById(b)))}: ${esc(label)}"><title>Compare the two</title>`;
     if (ca === cb) {
       const x = X[ca] + 26, down = rb > ra, y1 = down ? Y[ra] + H : Y[ra], y2 = down ? Y[rb] : Y[rb] + H, k = down ? -8 : 8;
-      g += `<path class="me" d="M${x} ${y1}V${y2 + k}"/><path class="mh" d="M${x - 5} ${y2 + k}L${x} ${y2}L${x + 5} ${y2 + k}z"/><text class="ml" x="${x + 12}" y="${(y1 + y2) / 2 + 4}">${esc(label)}</text>`;
+      g += `<path class="me" d="M${x} ${y1}V${y2 + k}"/><path class="mh" d="M${x - 5} ${y2 + k}L${x} ${y2}L${x + 5} ${y2 + k}z"/><text class="ml" x="${x + 12}" y="${(y1 + y2) / 2 + 4}">${esc(label)}</text><path class="mhit" d="M${x} ${y1}V${y2}"/></g>`;
     } else {
       const y = Y[ra] + H / 2, x1 = X[ca] + W, x2 = X[cb], far = cb - ca > 1;
-      g += `<path class="me" d="M${x1} ${y}H${x2 - 8}"/><path class="mh" d="M${x2 - 8} ${y - 5}L${x2} ${y}L${x2 - 8} ${y + 5}z"/><text class="ml" text-anchor="middle" x="${(x1 + x2) / 2}" y="${far ? y - 9 : Y[ra] + H + 18}">${esc(label)}</text>`;
+      g += `<path class="me" d="M${x1} ${y}H${x2 - 8}"/><path class="mh" d="M${x2 - 8} ${y - 5}L${x2} ${y}L${x2 - 8} ${y + 5}z"/><text class="ml" text-anchor="middle" x="${(x1 + x2) / 2}" y="${far ? y - 9 : Y[ra] + H + 18}">${esc(label)}</text><path class="mhit" d="M${x1} ${y}H${x2}"/></g>`;
     }
   });
   PAPERS.forEach(p => {
@@ -212,7 +218,7 @@ function mapHTML() {
       <p class="idea">Paxos has no assembly hall. Its people work from their own places, legislating part-time between other duties, and everything one of them knows about another arrived by courier. Sixteen results from distributed computing are told here as scenes from that island, each from inside one person's view.</p>
       ${start}</div>
     ${sect("Four kinds of work, four kinds of problem", items(Object.values(HAT)))}
-    ${sect("How the sixteen lead to one another", svg)}
+    ${sect("How the sixteen lead to one another. Pick an arrow to compare the two it joins", svg)}
     ${sect("Six words used everywhere", items(words))}
     ${sect("About the telling", `<p class="fine">The part-time legislators are Leslie Lamport's, from The Part-Time Parliament, and the commander and lieutenants are the generals of Lamport, Shostak and Pease. People have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same. Switch to Abstraction at any point to drop the island.</p>`)}
   </div>`;
@@ -220,6 +226,6 @@ function mapHTML() {
     <div class="intro"><h1>${U().title}</h1>
       <p class="idea">Each result is told as a few short scenes from inside one node. You see what it holds, what arrives and what it sends. What it could not see is set beside each step, in a dashed frame.</p>
       ${start}</div>
-    ${sect("An arrow leads to a result that answers the problem, or builds on it", svg)}
+    ${sect("An arrow leads to a result that answers the problem, or builds on it. Pick an arrow to compare the two", svg)}
   </div>`;
 }
