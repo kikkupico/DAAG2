@@ -232,9 +232,10 @@ def agora(g):
     land.paint("earth", sq, 1.0, 1.5); land.take(sq)
     stoa(-35.5, -35.5, -5.2, -29.0, "n", 3.9, va=.35); stoa(5.2, -35.5, 35.5, -29.0, "n", 3.9, va=.5)
     stoa(-35.5, -28.4, -29.3, -5.0, "e", 3.9, va=.6); stoa(29.3, -28.4, 35.5, -5.0, "w", 3.9, va=.25)
-    for r in (box(-29.3, -29.0, -5.2, -26.2), box(5.2, -29.0, 29.3, -26.2), box(-29.3, -28.4, -26.4, -5.0), box(26.4, -28.4, 29.3, -5.0)): land.paint("pave", r, 1.0, .8)
+    land.paint("pave", box(-29.3, -29.0, 29.3, -4.0), 1.0, .25)
     stoa(-35.5, 5.4, -5.2, 16.2, "s", 4.8, aisles=2, rooms=3.6, va=.3); stoa(5.2, 5.4, 35.5, 16.2, "s", 4.8, aisles=2, rooms=3.6, va=.45)
     land.paint("pave", box(-35.5, 4.0, 35.5, 5.6), 1.0, .5)
+    land.paint("pave", box(-5.5, 35.5, 5.5, 40.5), 1.0, .25)
     z = land.zt
     inst(props.ALTAR, -17, -17, z(-17, -17), 0, .62); land.paint("pave", rect(-17, -17, 8, 6), 1.0, 1.0)
     for i in range(9):                                                                    # honours along the street: bronzes of benefactors on their bases
@@ -311,6 +312,26 @@ def gymnasium(g):
     for y in (-53.0, -55.8): inst(props.BASIN, court[0] + 1.2, y, z0 + .02)
     for k in range(4): inst(props.HERM, 15.0 + k * 2.6, court[3] - 1.7, z0 + .02)
 
+def avenue_curbs():
+    """Dressed stone curbs (18 cm high) and stone-lined open drainage gutters along the main paved avenues."""
+    def strip(axis, pos, t0, t1, w, z_lo, z_hi, mat):
+        n = max(1, round((t1 - t0) / 2.5))
+        for i in range(n):
+            a, b = lerp(t0, t1, i / n), lerp(t0, t1, (i + 1) / n)
+            cx, cy = ((a + b) / 2, pos) if axis == "x" else (pos, (a + b) / 2)
+            z = land.zroute(cx, cy)[0]
+            if z is None: z = land.zt(cx, cy)
+            r = box(a, pos - w / 2, b, pos + w / 2) if axis == "x" else box(pos - w / 2, a, pos + w / 2, b)
+            prism(mat, mat, r, z + z_lo, z + z_hi, zb=z)
+    ew_segs = ((-74.0, -41.0), (-35.0, -4.5), (4.5, 35.0), (41.0, 74.0))
+    ns_segs = ((-74.0, -41.0), (-35.0, -4.5), (4.5, 35.0))
+    for axis, segs in (("x", ew_segs), ("y", ns_segs)):
+        for sgn in (-1, 1):
+            for t0, t1 in segs:
+                strip(axis, sgn * 4.05, t0, t1, .36, -.15, .18, STONE)          # raised dressed stone curb
+                strip(axis, sgn * 3.70, t0, t1, .24, -.04, .055, "dark:#4a4337") # stone-lined open drainage channel
+                strip(axis, sgn * 3.53, t0, t1, .11, -.04, .085, STONE)          # inner gutter lip
+
 def build(g):
     if land.HILL: theatre(g)
-    agora(g); north_quarter(g); gymnasium(g)
+    agora(g); avenue_curbs(); north_quarter(g); gymnasium(g)

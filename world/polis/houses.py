@@ -56,8 +56,8 @@ def house(x0, y0, x1, y1, g, streets=(), shops=(), z=None, door_side=None, door_
     """One courtyard house filling its lot. `streets` names the sides that face a street; `shops` those on an avenue."""
     lot = box(x0, y0, x1, y1); W, D = x1 - x0, y1 - y0; zlo = land.zmin(lot); z0 = land.pad(lot, z, blend=0, grow_by=.1); land.take(lot, .3)
     va = g.random(); decay = g.random() ** 2.4; wk = g.choice(PLASTER); tk = g.choice(TILE); tva = g.random(); kw = dict(va=va, vb=decay)
-    if z0 - zlo > .2: walls("rubble", grow(lot, .06), zlo - .6, z0 + .08)
-    cap(g.choice(("earth", "earth", "earth:#c9b592", "paving:#c4b89e")), lot, z0 + .03)
+    walls("rubble", grow(lot, .04), min(zlo, z0 - .25) - .35, z0 + .05)
+    cap(g.choice(("earth", "earth", "earth:#c9b592", "earth:#b6a68a")), lot, z0 + .03)
     h1 = g.uniform(2.9, 3.3); h2 = h1 + g.uniform(2.5, 2.9)
     if min(W, D) < 7.5 or W * D < 75:                                                    # a small house: one block of rooms and a yard
         if D >= W: bx = (x0, y1 - min(D * .55, 5.5), x1, y1); yard = (x0, y0, x1, bx[1])
@@ -128,7 +128,7 @@ def peristyle_house(x0, y0, x1, y1, g, door_side, z=None):
     """A rich man's house, as on Delos: two storeys round a colonnaded court paved in pebble mosaic."""
     lot = box(x0, y0, x1, y1); zlo = land.zmin(lot); z0 = land.pad(lot, z, blend=0, grow_by=.1); land.take(lot, .3)
     va = g.random(); wk = "plaster:#efe8d9"; tk = "tile:#b46c48"; tva = .15; kw = dict(va=va, vb=.03); h1, h2 = 3.5, 6.6; d = 4.0
-    if z0 - zlo > .2: walls("rubble", grow(lot, .06), zlo - .6, z0 + .08)
+    walls("rubble", grow(lot, .04), min(zlo, z0 - .25) - .35, z0 + .05)
     cap("paving:#d6cdb8", lot, z0 + .03)
     cx0, cy0, cx1, cy1 = x0 + d, y0 + d, x1 - d, y1 - d
     for bx, low, hh in (((x0, y1 - d, x1, y1), "s", h2), ((x0, y0, x0 + d, y1 - d), "e", h2), ((x1 - d, y0, x1, y1 - d), "w", h1), ((x0 + d, y0, x1 - d, y0 + d), "n", h1)):

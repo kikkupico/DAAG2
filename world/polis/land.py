@@ -399,39 +399,62 @@ def shore_material():
     return _finish(s, col, s.rng(s.madd(s.sub(fine, .5), .4, c1[0]), .4, .75), bump=.3)
 
 def road_material():
-    """Roads and paving: natural mud tracks with wandering grassy edges and ruts, packed earth in the streets, slabs on the avenues."""
+    """Roads and paving: mud tracks with wandering edges and ruts; rammed-earth/gravel secondary streets; dressed rectangular ashlar flagstones on main avenues and the agora."""
     s = Sh("roads"); M = s.mix; m = _maps(s); rd, c2 = m["road"], m["c2"]; fine = s.noise(.9, 4, .7)
     trod = s.tint(s.tex("dirt_aerial_03", 11), "dirt_aerial_03", lin("#bfa278"), raw=.2)
+
+    # Dressed rectangular limestone/marble flagstones in running-bond courses (for main avenues & agora plaza)
+    pw_f = s.mixv(.025, s.pos, s.noise(3.2, 3, .6, out="Color"))
+    bc, bf = s.brick(pw_f, 1.8, 1.1, .022, lin("#ded5c2"), lin("#c6bca6"), lin("#7b715f"), offset=.5, bias=.05, smooth=.12)
+    grain = s.tint(s.tex2("large_floor_tiles_02", 6.8), "large_floor_tiles_02", lin("#d5ccb8"), raw=.22, gain=1.35)
+    flag = M(.38, bc, s.mix(1.0, bc, grain, "MULTIPLY", clamp=False))
+    # Subtle weathering/dust in occasional patches so it looks lived-in, not sterile
+    flag_dust = s.tint(s.tex("dry_ground_rocks", 7.5), "dry_ground_rocks", lin("#c4b79b"), raw=.3)
+    flag = M(s.rng(s.noise(.22, 3, .65, w=5.8), .58, .78, 0, .28), flag, flag_dust)
+    h_flag = s.add(s.mul(s.sub(1.0, bf), .75), s.mul(s.lum(grain), .25))
+
+    # Rammed-earth & crushed-gravel for residential side streets and alleys
+    gravel_tex = s.tint(s.tex("gravelly_sand", 3.5), "gravelly_sand", lin("#b5a589"), raw=.25)
+    earth_tex = s.tint(s.tex("dry_ground_rocks", 7.5), "dry_ground_rocks", lin("#baa98b"), raw=.3)
+    pebble_tex = s.tint(s.tex("stony_dirt_path", 4.5), "stony_dirt_path", lin("#a99a7f"), raw=.22)
+    street = M(s.rng(s.noise(.32, 3, .65, w=4.4), .38, .66), earth_tex, gravel_tex)
+    street = M(s.rng(s.noise(.48, 3, .7, w=2.9), .46, .72, 0, .48), street, pebble_tex)
+    # Faint parallel wheel-rut tracks worn into wider secondary lanes
+    rut_st = s.rng(s.math("ABSOLUTE", s.sub(s.madd(s.sub(s.noise(1.6, 3, .6, w=5.1), .5), .12, rd[1]), .34)), .14, .02, 0, .28)
+    street = M(rut_st, street, s.mix(1.0, street, (.78, .73, .66), "MULTIPLY"))
+    # Slight damp/organic edge darkening along street margins
+    street = M(s.mul(s.rng(rd[1], .74, .98), s.rng(s.noise(1.6, 3, .7, w=6.1), .48, .72, 0, .35)), street, lin("#8f8864"))
+    h_street = s.add(s.add(s.mul(s.lum(gravel_tex), .45), s.mul(s.noise(4.5, 4, .75), .35)), s.mul(s.sub(1.0, rut_st), .2))
+
+    # Edge profiles: mud tracks wander widely; secondary dirt streets have soft natural edges; paved avenues stay crisp at their curbs
     wig = s.add(s.mul(s.sub(s.noise(.12, 3, .6, w=1.3), .5), 5.0), s.add(s.mul(s.sub(s.noise(.45, 4, .65, w=2.7), .5), 3.2), s.mul(s.sub(s.noise(1.9, 4, .7, w=4.1), .5), 1.4)))
-    soft = s.rng(rd[2], 0, .45, 1.0, .06)                                                 # mud road edges wander; streets & paving stay straight
+    soft = s.mixf(s.rng(rd[2], .75, .9), s.rng(rd[2], 0, .45, 1.0, .28), .04)
     e = s.madd(wig, soft, rd[0])
     is_mud = s.rng(rd[2], .05, .35, 1.0, 0.0)
+    is_av = s.rng(rd[2], .75, .92, 0.0, 1.0)
     e_mud = s.madd(s.mul(s.sub(s.noise(.75, 3, .7, w=9.2), .48), 2.2), is_mud, e)
-    on = s.mixf(is_mud, s.rng(e, .3, -.3), s.rng(e_mud, 1.1, -.7))
-    verge = s.mul(s.mul(s.rng(e_mud, 2.8, .1, 0, .55), s.rng(s.noise(.35, 3, .6, w=6.3), .35, .68)), s.rng(rd[2], 0, .5, 1.0, .2))
+    e_st = s.madd(s.mul(s.sub(s.noise(1.2, 3, .7, w=5.4), .5), .9), 1.0, e)
+    on_town = s.mixf(is_av, s.rng(e_st, .55, -.35), s.rng(e, .18, -.18))
+    on = s.mixf(is_mud, on_town, s.rng(e_mud, 1.1, -.7))
+    verge = s.mul(s.mul(s.rng(e_st, 2.0, .05, 0, .55), s.rng(s.noise(.35, 3, .6, w=6.3), .35, .68)), s.mul(s.sub(1.0, is_av), s.rng(rd[2], 0, .5, 1.0, .42)))
+
     mud_a = s.tint(s.tex("dirt_aerial_02", 8), "dirt_aerial_02", lin("#bfa277"), raw=.2)
     dirt = M(s.rng(s.noise(.25, 3, .65, w=2.1), .38, .65), mud_a, trod)
     gravel = s.tint(s.tex("stony_dirt_path", 5), "stony_dirt_path", lin("#bda47d"), raw=.2)
     dirt = M(s.rng(s.noise(.22, 3, .65, w=3.7), .48, .66, 0, .48), dirt, gravel)
     rut = s.rng(s.math("ABSOLUTE", s.sub(s.madd(s.sub(s.noise(1.8, 3, .6, w=5.1), .5), .22, rd[1]), .4)), .20, .03, 0, .38)
     dirt = M(rut, dirt, s.mix(1.0, dirt, (.68, .60, .52), "MULTIPLY"))
-    st_earth = s.tint(s.tex("dry_ground_rocks", 7.5), "dry_ground_rocks", lin("#c5ad84"), raw=.35)
-    st_cob = s.tint(s.tex("cobblestone_large_01", 7.0), "cobblestone_large_01", lin("#c4b79d"), raw=.45, gain=1.4)
-    street = M(s.rng(s.noise(.38, 3, .7, w=4.4), .46, .66, 0, .65), st_earth, st_cob)
-    drain_d = s.madd(s.sub(s.noise(1.5, 3, .6, w=3.1), .5), .12, rd[1])
-    street = M(s.mul(s.rng(drain_d, .14, .03, 0, .42), s.rng(s.noise(.35, 3, .6, w=1.7), .35, .65)), street, s.mix(1.0, street, (.62, .57, .5), "MULTIPLY"))
-    street = M(s.mul(s.rng(rd[1], .72, .98), s.rng(s.noise(1.6, 3, .7, w=6.1), .48, .72, 0, .38)), street, lin("#8d885f"))
-    slabs = s.tint(s.tex("stone_tiles_02", 7.2), "stone_tiles_02", lin("#cfc4ab"), raw=.35, gain=1.9)
-    slabs = M(s.rng(s.noise(.28, 3, .6, w=5.8), .4, .68, 0, .55), slabs, st_cob)
-    pav = M(s.rng(s.noise(.24, 3, .65, w=3.4), .46, .72, 0, .52), slabs, st_earth)
-    slabs = M(s.rng(s.noise(.35, 3, .7, w=8.8), .48, .72, 0, .58), slabs, street)         # earth trodden over the slabs in patches
-    rc = M(s.rng(rd[2], .2, .35), dirt, street); rc = M(s.rng(rd[2], .7, .85), rc, slabs)
-    paved = s.rng(s.madd(fine, .2, c2[0]), .45, .65)                                       # paving laid by builders: courts, the agora's margins, the sanctuary
-    col = M(on, trod, rc); col = M(s.mul(paved, s.sub(1.0, on)), col, pav)
-    crown = s.mul(s.rng(s.madd(s.sub(s.noise(1.2, 3, .65, w=7.7), .5), 1.1, rd[1]), .18, -.04, 0, .55), s.rng(rd[2], .1, .3, 1.0, 0.0))   # grass down the middle of a cart road
+
+    rc = M(s.rng(rd[2], .2, .35), dirt, street); rc = M(s.rng(rd[2], .75, .9), rc, flag)
+    paved = s.rng(s.madd(fine, .12, c2[0]), .45, .65)                                       # paving laid by builders: agora plaza, stoa aprons, sanctuary
+    col = M(on, trod, rc); col = M(s.mul(paved, s.sub(1.0, on)), col, flag)
+    crown = s.mul(s.rng(s.madd(s.sub(s.noise(1.2, 3, .65, w=7.7), .5), 1.1, rd[1]), .18, -.04, 0, .55), s.rng(rd[2], .1, .3, 1.0, 0.0))
     a = s.maxf(s.maxf(s.mul(on, s.sub(1.0, crown)), verge), paved)
-    hgt = s.add(s.mul(s.noise(.48, 4, .75), .55), s.mul(s.noise(1.5, 4, .7), .45))
-    return _finish(s, col, a, rough=.93, bump=.95, height=hgt)
+    h_town = s.mixf(s.maxf(is_av, paved), h_street, h_flag)
+    hgt = s.add(s.mul(s.noise(.48, 4, .75), .35), s.mul(s.noise(1.5, 4, .7), .25))
+    hgt = s.mixf(s.maxf(s.sub(1.0, is_mud), paved), hgt, s.add(s.mul(hgt, .2), s.mul(h_town, .8)))
+    rough = s.rng(s.add(s.mul(s.noise(2.8, 3, .6), .5), s.mul(s.lum(gravel_tex), .5)), .2, .8, .85, .96)
+    return _finish(s, col, a, rough=rough, bump=.95, height=hgt)
 
 def sea_material():
     s = Sh("sea")

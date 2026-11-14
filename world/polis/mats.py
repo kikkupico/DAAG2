@@ -78,22 +78,18 @@ def m_marble(key, par):
     return s.surface(s.bsdf(col, .5, s.bump(s.noise(22, 3, .6), .08, .02)))
 
 def m_paving(key, par):
-    """Weathered stone flags: uneven joints, swept dust, lichen, and worn relief across courts and stylobates."""
-    s = Sh(key); base = col_of(par, "#cdc3ac")
-    tx = s.tex2("stone_tiles_02", 7.0); tx2 = s.tex2("large_floor_tiles_02", 6.8)
-    c_poly = s.tint(tx, "stone_tiles_02", base, raw=.3, gain=1.7)
-    c_slab = s.tint(tx2, "large_floor_tiles_02", base, raw=.25, gain=1.45)
-    col = s.mix(s.rng(s.noise(.22, 3, .6, w=2.3), .35, .65), c_poly, c_slab)
-    p_warp = s.mixv(.12, s.pos, s.noise(1.1, 3, .6, out="Color"))
-    bc, bf = s.brick(p_warp, 2.4, 1.8, .065, tuple(min(1, c * 1.08) for c in base), tuple(c * .84 for c in base), tuple(c * .58 for c in base), smooth=.35)
-    col = s.mix(.48, col, s.mix(1.0, col, bc, "MULTIPLY", clamp=False))
-    dust = s.tint(s.tex2("dry_ground_rocks", 7.5), "dry_ground_rocks", tuple(c * .86 for c in base), raw=.4)
-    col = s.mix(s.rng(s.noise(.18, 4, .65, w=3.1), .45, .72, 0, .55), col, dust)
-    col = s.mix(s.rng(s.noise(.25, 4, .6), .42, .74, 0, .35), col, s.mix(1.0, col, (.76, .7, .58), "MULTIPLY"))
-    moss = s.rng(s.noise(1.2, 4, .7, w=7.2), .60, .78, 0, .35)
-    col = s.mix(moss, col, lin("#878664"))
-    h = s.add(s.add(s.mul(s.lum(tx), .45), s.mul(s.lum(tx2), .35)), s.add(s.mul(bf, -.6), s.add(s.mul(s.noise(.55, 4, .7), .45), s.mul(s.noise(1.8, 4, .75), .35))))
-    return s.surface(s.bsdf(col, .9, s.bump(h, .95, .24)))
+    """Dressed rectangular limestone/marble flagstones: running-bond courses, tight thin joints, subtle edge chipping and dust."""
+    s = Sh(key); base = col_of(par, "#d4cbb6")
+    tx2 = s.tex2("large_floor_tiles_02", 6.8)
+    c_slab = s.tint(tx2, "large_floor_tiles_02", base, raw=.22, gain=1.35)
+    p_warp = s.mixv(.025, s.pos, s.noise(3.2, 3, .6, out="Color"))
+    bc, bf = s.brick(p_warp, 1.8, 1.1, .024, tuple(min(1, c * 1.07) for c in base), tuple(c * .88 for c in base), tuple(c * .58 for c in base), offset=.5, bias=.05, smooth=.14)
+    col = s.mix(.42, c_slab, s.mix(1.0, c_slab, bc, "MULTIPLY", clamp=False))
+    dust = s.tint(s.tex2("dry_ground_rocks", 7.5), "dry_ground_rocks", tuple(c * .88 for c in base), raw=.32)
+    col = s.mix(s.rng(s.noise(.2, 4, .65, w=3.1), .52, .76, 0, .35), col, dust)
+    col = s.mix(s.rng(s.noise(.25, 4, .6), .45, .75, 0, .28), col, s.mix(1.0, col, (.80, .74, .64), "MULTIPLY"))
+    h = s.add(s.mul(s.lum(tx2), .4), s.add(s.mul(s.sub(1.0, bf), .65), s.mul(s.noise(1.8, 4, .75), .2)))
+    return s.surface(s.bsdf(col, .88, s.bump(h, .9, .2)))
 
 def m_tile(key, par):
     """Fired clay roof tiles: every tile its own colour from the kiln, courses lapping, older roofs paler and greyer,
