@@ -116,7 +116,11 @@ button.sd:hover { outline: 2px solid var(--node); outline-offset: 2px; }
 .about .guide { margin: 0; padding-left: 1.4em; display: grid; gap: var(--s3); }
 .about .guide b { font-weight: 500; }
 .about .sys { max-width: var(--measure); }
-.about .fork { display: grid; gap: var(--s2); padding: var(--s5); border: 1.5px dashed var(--line); border-radius: 12px; }
+.about .fork { display: grid; gap: var(--s3); padding: var(--s5); border: 1.5px dashed var(--line); border-radius: 12px; }
+.about .skins { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--s3); margin-block: var(--s2); }
+.about .skins figure { margin: 0; display: grid; gap: var(--s1); align-content: start; }
+.about .skins img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; background: var(--room); }
+.about .skins figcaption { font: var(--t-sm)/1.4 var(--sans); color: var(--soft); }
 /* the drawer's last entry: the tool that works across results */
 .more { display: grid; gap: 1px; }
 .more > .label { padding: 0 var(--s2) var(--s2); }

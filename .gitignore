@@ -132,3 +132,6 @@ env/
 
 # the Blender build of the city and siege: dumped scenes, renders, logs (world/build_city3d.py)
 world/build3d/
+# the reskin kit's guide images (world/reskin/reskin.py build), small and wanted alongside its README
+!world/reskin/*.png
+!world/reskin/examples/*.jpg
