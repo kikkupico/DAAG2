@@ -1,9 +1,9 @@
-/* the theater button: on the picture's top corner, with the replay button beside it */
-.stage .thb { position: absolute; right: 10px; top: 10px; z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--room); color: var(--ink); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+/* the theater button: on the picture's right edge, at mid-height, with the replay button above it (that edge is usually empty; the corner collided with labels) */
+.stage .thb { position: absolute; right: 10px; top: calc(50% + 4px); z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--room); color: var(--ink); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .stage .thb:hover { background: var(--line); }
 .stage .thb svg, .stage.city .thb svg { position: static; display: block; width: 13px; height: 13px; cursor: inherit; }
 .stage .thb[aria-pressed="false"] .ti-out, .stage .thb[aria-pressed="true"] .ti-in { display: none; }
-.stage .replay { right: 46px; }
+.stage .replay { right: 10px; top: calc(50% - 32px); }
 /* a phone held upright is asked to turn: theater mode starts once it is on its side */
 .turn { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: var(--s5); background: rgba(4, 12, 18, .72); }
 .turn-c { display: grid; justify-items: center; gap: var(--s4); max-width: 280px; padding: var(--s5); border-radius: 12px; background: var(--room); border: 1px solid var(--line); text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
@@ -42,10 +42,6 @@
 .thead .tnav { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: var(--soft); }
 .thead .tnav:hover { background: var(--ground); color: var(--ink); }
 .thead .tnav[disabled] { opacity: .3; pointer-events: none; }
-/* under the picture the names go on one line, to leave the height to the step's panel */
-:root[data-theater="stack"] #thead { padding-block: 4px; }
-:root[data-theater="stack"] #thead .tt { display: flex; justify-content: center; align-items: baseline; gap: var(--s3); }
-:root[data-theater="stack"] #thead .tp { flex: 0 1 auto; }
 /* a result's own page in theater mode: the page fills the window and scrolls, under the same head */
 :root[data-theater="intro"] main { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain; background: var(--ground); padding: 80px max(var(--s5), calc((100vw - 920px) / 2)) var(--s7); }
 :root[data-theater="intro"] #thead { position: fixed; top: 0; left: 0; right: 0; z-index: 51; background: var(--room); }
@@ -53,13 +49,8 @@
 /* a short window, such as a phone on its side: tighter, so more of the step's text shows without scrolling */
 @media (max-height: 520px) {
   :root[data-theater] #thead { padding: 3px 8px; }
-  :root[data-theater] #thead .tt { display: flex; justify-content: center; align-items: baseline; gap: var(--s2); }
-  :root[data-theater] #thead .tp { flex: 0 1 auto; }
-  :root[data-theater] #thead .tp i { display: none; }
   :root[data-theater] #thead .ts { font-size: var(--t-md); }
   :root[data-theater="intro"] main { padding-top: 56px; }
-  :root[data-theater] #sctl .sfoot, :root[data-theater] #sctl .sg > .label { display: none; }      /* as on a phone held upright: the dots carry the key's marks, and the panel names the phase */
-  :root[data-theater] #panel .sp-ph:not(:has(i)) { display: block; }
   :root[data-theater] #sctl { padding: 6px 8px; gap: 6px; }
   :root[data-theater] #sctl .arrow { width: 30px; height: 30px; }
   :root[data-theater] #sctl .sd { width: 24px; height: 24px; }
@@ -70,3 +61,12 @@
   :root[data-theater] #panel .say { font-size: var(--t-md); }
   :root[data-theater] #panel .fcol { padding: 8px 12px 10px; gap: 6px; }
 }
+/* theater mode keeps the step groups' names and the key at any size, as on a desktop; the panel then need not repeat the phase */
+:root[data-theater] .stepbar .sfoot { display: flex; }
+:root[data-theater] #panel .sp-ph:not(:has(i)) { display: none; }
+/* the key scrolls sideways, in one row, rather than wrapping to several lines; its dots keep their own small size */
+:root[data-theater] .stepbar .sfoot { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; justify-content: safe center; padding-inline: 8px; }
+:root[data-theater] .stepbar .sfoot::-webkit-scrollbar { display: none; }
+:root[data-theater] .stepbar .skey { flex-wrap: nowrap; justify-content: safe center; }
+:root[data-theater] .stepbar .skey > span { flex: none; white-space: nowrap; }
+:root[data-theater] #sctl .skey .sd { width: 12px; height: 12px; }
