@@ -30,25 +30,34 @@
 :root[data-theater] #panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 14px 24px; }
 :root[data-theater="side"] #sctl .sfoot { padding-inline: 0; }
 :root[data-theater="side"] #panel .sp { padding-inline: 0; }
-/* the scene's name between the ways to the scenes before and after it */
+/* the head: the result's name over the scene's, between the ways to the pages before and after */
 .thead { display: none; }
 .thead .tt { flex: 1; min-width: 0; display: grid; gap: 1px; text-align: center; }
 .thead .tt > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.thead .tt b { font: 500 var(--t-lg)/1.25 var(--serif); }
-:root[data-reg="isle"] .thead .tt b { font-weight: 400; }
+.thead .tp { font: var(--t-sm)/1.35 var(--sans); color: var(--soft); }
+.thead .tp b { font-weight: 600; color: var(--ink); }
+.thead .tp i { font-style: normal; }
+.thead .ts { font: 500 var(--t-lg)/1.25 var(--serif); }
+:root[data-reg="isle"] .thead .ts { font-weight: 400; }
 .thead .tnav { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: var(--soft); }
 .thead .tnav:hover { background: var(--ground); color: var(--ink); }
 .thead .tnav[disabled] { opacity: .3; pointer-events: none; }
-/* under the picture the name goes on one line, to leave the height to the step's panel */
+/* under the picture the names go on one line, to leave the height to the step's panel */
 :root[data-theater="stack"] #thead { padding-block: 4px; }
 :root[data-theater="stack"] #thead .tt { display: flex; justify-content: center; align-items: baseline; gap: var(--s3); }
-:root[data-theater="stack"] #thead .tt .label { flex: 0 1 auto; }
+:root[data-theater="stack"] #thead .tp { flex: 0 1 auto; }
+/* a result's own page in theater mode: the page fills the window and scrolls, under the same head */
+:root[data-theater="intro"] main { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain; background: var(--ground); padding: 80px max(var(--s5), calc((100vw - 920px) / 2)) var(--s7); }
+:root[data-theater="intro"] #thead { position: fixed; top: 0; left: 0; right: 0; z-index: 51; background: var(--room); }
 :root[data-theater="stack"] #sctl { padding-block: 6px; }
 /* a short window, such as a phone on its side: tighter, so more of the step's text shows without scrolling */
 @media (max-height: 520px) {
   :root[data-theater] #thead { padding: 3px 8px; }
-  :root[data-theater] #thead .label { display: none; }
-  :root[data-theater] #thead .tt b { font-size: var(--t-md); }
+  :root[data-theater] #thead .tt { display: flex; justify-content: center; align-items: baseline; gap: var(--s2); }
+  :root[data-theater] #thead .tp { flex: 0 1 auto; }
+  :root[data-theater] #thead .tp i { display: none; }
+  :root[data-theater] #thead .ts { font-size: var(--t-md); }
+  :root[data-theater="intro"] main { padding-top: 56px; }
   :root[data-theater] #sctl .sfoot, :root[data-theater] #sctl .sg > .label { display: none; }      /* as on a phone held upright: the dots carry the key's marks, and the panel names the phase */
   :root[data-theater] #panel .sp-ph:not(:has(i)) { display: block; }
   :root[data-theater] #sctl { padding: 6px 8px; gap: 6px; }

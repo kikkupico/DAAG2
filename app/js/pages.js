@@ -37,7 +37,15 @@ function withHTML(p) {      // a way into a comparison: the results the map link
 function landHTML(it) {
   const xs = it.p.scenes.map(s => byKey(`${it.p.id}-${s.id}`));
   return `<div class="start"><div class="ctl"><button type="button" class="btn go-out" data-key="${it.key}">Start with the first scene</button>${withHTML(it.p)}</div>
-    <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol>${sumHTML(it.p, true)}</div>`;
+    <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol>${sumHTML(it.p, true)}</div>${theaterHead(it.p.id)}${pagerHTML(it.p.id)}`;
+}
+// The reading order: each result's own page, then its scenes. The pager under a page, and theater mode's arrows, walk it.
+const ORDER = ALL.flatMap((x, i) => i && ALL[i - 1].p === x.p ? [x.key] : [x.p.id, x.key]);
+function pagerHTML(key) {
+  const i = ORDER.indexOf(key), cur = resolve(key).p;
+  const pg = (k, word) => { if (!k) return ""; const p = resolve(k).p, intro = isPaper(k);
+    return `<button type="button" data-key="${k}"><span class="label">${word}${intro ? (p !== cur ? " · the next result" : " · about this result") : p !== cur ? " · " + esc(paperName(p)) : ""}</span><span>${esc(intro ? paperName(p) : nameOf(byKey(k)))}</span></button>`; };
+  return `<nav class="pager" aria-label="Reading order">${i > 0 ? pg(ORDER[i - 1], "Before") : `<button type="button" data-key="map"><span class="label">Before</span><span>${U().map}</span></button>`}${pg(ORDER[i + 1], "Next")}</nav>`;
 }
 // A result's header: its name and sources, the idea, three facts, then the words the telling uses.
 function paperHTML(it) {
@@ -73,7 +81,7 @@ function tellOf(it) {
 // The stepper box, the scene's main view: the controls, then the picture, which folds away, then what happens in the chosen step.
 function stripHTML(it) {
   const pic = stageHTML(it);
-  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${pic ? `<div class="pict" id="pict">${pic}</div>${theaterHead(it)}` : ""}${ctlHTML(it)}${panelHTML(it)}</div>`;
+  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${pic ? `<div class="pict" id="pict">${pic}</div>${theaterHead(it.key)}` : ""}${ctlHTML(it)}${panelHTML(it)}</div>`;
 }
 function ctlHTML(it) {     // one circle per step
   const { rows, phases } = tellOf(it), atEnd = stageStep >= rows.length, n = atEnd ? -1 : stageStep;
@@ -163,8 +171,6 @@ function sceneHTML(it) {
   const { p, s } = it, I = isleOf(p);
   const other = byKey(PAIR[it.key]), both = cmp && other;
   const cmpBtn = other ? `<button type="button" class="btn sm" data-cmp="1" aria-pressed="${!!both}">${both ? "Close comparison" : `Compare with “${esc(nameOf(other))}”`}</button>` : "";
-  const i = ALL.indexOf(it), prev = ALL[i - 1], next = ALL[i + 1];
-  const pg = (x, word) => x ? `<button type="button" data-key="${x.key}"><span class="label">${word}${x.p !== p ? " · " + esc(paperName(x.p)) : ""}</span><span>${esc(nameOf(x))}</span></button>` : "";
   let body;
   if (both) {
     const d = firstDiff(s, other.s);
@@ -179,7 +185,7 @@ function sceneHTML(it) {
       ${noteOf(it) && !both ? `<p class="rule">${noteOf(it)}</p>` : ""}
     </div>
     ${body}
-    <nav class="pager" aria-label="Reading order">${prev ? pg(prev, "Before") : `<button type="button" data-key="map"><span class="label">Before</span><span>${U().map}</span></button>`}${pg(next, "Next")}</nav>`;
+    ${pagerHTML(it.key)}`;
 }
 
 // The map: which result answers a problem another one raises.

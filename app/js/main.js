@@ -23,6 +23,7 @@ function render() {
   $("paper").innerHTML = land ? paperHTML(it) : "";
   $("scene").innerHTML = vs ? vsHTML(sel) : land ? landHTML(it) : it ? sceneHTML(it) : mapHTML();
   layTheater();
+  if (theater) $("main").scrollTop = 0;      // in theater mode a result's own page scrolls inside the window-filling frame
   centreStage();
   try { if (location.hash.slice(1) !== sel) history.replaceState(null, "", "#" + sel); } catch (e) {}
 }
@@ -42,7 +43,7 @@ function go(key, keep, to) {
   render();
   if (!WIDE.matches) setDrawer(false, true);
   if (keep) return;
-  if (to === "top" || (to === "scene" && key === "map") || isVs(key)) window.scrollTo(0, 0);
+  if (to === "top" || (to === "scene" && (key === "map" || isPaper(key))) || isVs(key)) window.scrollTo(0, 0);
   else if (to === "scene") $("scene").scrollIntoView({ block: "start" });
   else if (!it || !was || was.p !== it.p || isPaper(key)) $("main").scrollIntoView({ block: "start" });
   else if ($("scene").getBoundingClientRect().top < 0) $("scene").scrollIntoView({ block: "start" });
