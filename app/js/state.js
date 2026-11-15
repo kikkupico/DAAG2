@@ -1,5 +1,6 @@
 // ---------- state, and the two registers ----------
-let sel = "map", cmp = false, reg = "isle";
+const isTop = k => k === "map" || k === "intro";      // the two pages that belong to no result
+let sel = "intro", cmp = false, reg = "isle";
 const haz = new Set();
 let bg = "rendered";            // the Allegory's background: the frame rendered in Blender (or ?bg=drawn for the drawn city)
 try { if (localStorage.getItem("reg") === "plain") reg = "plain"; } catch (e) {}

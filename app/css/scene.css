@@ -100,3 +100,23 @@ button.sd:hover { outline: 2px solid var(--node); outline-offset: 2px; }
 .mn .n1 { font: 600 15px var(--serif); fill: var(--ink); } .mn .n2 { font: 11px var(--mono); fill: var(--soft); }
 .me { stroke: var(--soft); stroke-width: 1.5; fill: none; } .mh { fill: var(--soft); }
 .ml { font: 12px var(--sans); fill: var(--soft); }
+
+/* the introduction: running text in the narrating serif, under the map's own section frame */
+.about .sect { gap: var(--s3); }
+.about .sect h2 { font: 500 var(--t-h2)/1.2 var(--serif); letter-spacing: -.01em; text-wrap: balance; }
+.about .sect > p:not(.label), .about .guide, .about .fork p:not(.label) { font: var(--t-lg)/1.6 var(--serif); max-width: var(--measure); text-wrap: pretty; }
+.about .customs { margin-block: var(--s2); padding: var(--s4); background: var(--room); border-radius: 12px; }
+.about .ctl { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.about a { color: var(--node); text-decoration: underline; text-underline-offset: 3px; }
+.about a:hover { color: var(--ink); }
+.about cite { font-style: italic; }
+.about .hero { width: 100%; display: grid; gap: var(--s2); }
+.about .hero img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; background: var(--room); }
+.about .hero figcaption { font: var(--t-sm)/1.5 var(--sans); color: var(--soft); }
+.about .guide { margin: 0; padding-left: 1.4em; display: grid; gap: var(--s3); }
+.about .guide b { font-weight: 500; }
+.about .sys { max-width: var(--measure); }
+.about .fork { display: grid; gap: var(--s2); padding: var(--s5); border: 1.5px dashed var(--line); border-radius: 12px; }
+/* the drawer's last entry: the tool that works across results */
+.more { display: grid; gap: 1px; }
+.more > .label { padding: 0 var(--s2) var(--s2); }

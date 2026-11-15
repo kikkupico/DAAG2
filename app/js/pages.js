@@ -13,6 +13,8 @@ function facetsHTML() {
     <p class="fnote" aria-live="polite">${haz.size ? (hit ? `<b>${hit}</b> of ${PAPERS.length} ${hit === 1 ? one : many} have ${haz.size > 1 ? "all of these" : "this"} in play.` : `No ${one} has all of these in play.`) : ""}</p>`;
 }
 const isle_ = (plain, isle) => reg === "isle" ? isle : plain;
+// Under the list of results and the filter: the tool that works across results.
+const moreHTML = () => `<span class="label">Across results</span><button type="button" class="pl map" data-key="${isVs(sel) ? sel : "cmp"}" aria-pressed="${isVs(sel)}"><span>Compare two results</span></button>`;
 function indexHTML(it, land) {
   const cur = it ? it.p : null;
   const chev = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5L7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -21,7 +23,7 @@ function indexHTML(it, land) {
     const scenes = open ? `<ul class="scl">${p.scenes.map(s => { const x = byKey(`${p.id}-${s.id}`); return `<li><button type="button" class="sl" data-key="${x.key}" aria-pressed="${!land && x === it}"><span>${esc(nameOf(x))}</span>${ocMark(x.oc)}</button></li>`; }).join("")}</ul>` : "";
     return `<div class="pg${matches(p) ? "" : " off"}${open ? " open" : ""}"><div class="prow"><button type="button" class="pl" data-key="${p.id}" aria-pressed="${here}"${inside ? ` aria-current="true"` : ""}><span>${esc(paperName(p))}</span><small>${esc(p.year)}</small></button><button type="button" class="chev" data-tog="${p.id}" aria-expanded="${open}" aria-label="Scenes in ${esc(paperName(p))}">${chev}</button></div>${scenes}</div>`;
   };
-  return `<button type="button" class="pl map" data-key="map" aria-pressed="${!it && !isVs(sel)}"><span>${U().map}</span></button><button type="button" class="pl map" data-key="${isVs(sel) ? sel : "cmp"}" aria-pressed="${isVs(sel)}"><span>Compare</span></button>`
+  return `<div class="chap"><button type="button" class="pl map" data-key="intro" aria-pressed="${sel === "intro"}"><span>Introduction</span></button><button type="button" class="pl map" data-key="map" aria-pressed="${sel === "map"}"><span>${U().map}</span></button></div>`
     + CHAPTERS.map(([name, ids]) => {
       const ps = ids.map(id => PAPERS.find(x => x.id === id)).filter(p => matches(p) || p === cur);
       if (!ps.length) return "";
@@ -214,24 +216,21 @@ function mapHTML() {
     g += `<g class="mn" role="button" tabindex="0" data-key="${p.id}" aria-label="${esc(paperName(p))}: ${esc(p.name)}"><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="5"/><text class="n1" x="${x + 13}" y="${y + 25}">${esc(paperName(p))}</text><text class="n2" x="${x + 13}" y="${y + 44}">${esc(isle ? HAT[TELL[p.id].hat][0] : `${p.year} · ${n} ${n === 1 ? "scene" : "scenes"}`)}</text></g>`;
   });
   const svg = `<div class="mapbox"><svg viewBox="0 0 980 610" role="group" aria-label="How the sixteen lead to one another">${g}</svg></div>`;
-  const start = `<button type="button" class="btn go-out" data-key="${ALL[0].key}">Start with ${esc(paperName(ALL[0].p))}</button>`;
   const words = [["Courier", "A message. It may be slow, lost, or overtaken by a later one."], ["Ledger", "Permanent state. It passes to whoever takes over."], ["Slate", "Temporary state. It is wiped when its owner goes."],
     ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody on the island has it. Here it is set beside the telling, in a dashed frame."]];
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
   const sect = (label, body) => `<section class="sect"><p class="label">${label}</p>${body}</section>`;
   if (isle) return `<div class="map">
-    <div class="intro"><h1>${U().title}</h1>
-      <p class="idea">Paxos has no assembly hall. Its people work from their own places, legislating part-time between other duties, and everything one of them knows about another arrived by courier. Sixteen results from distributed computing are told here as scenes from that island, each from inside one person's view.</p>
-      ${start}</div>
+    <div class="intro"><h1>${U().map}</h1>
+      <p class="idea">The sixteen results, each marked with who tells it. An arrow leads from one result to another that answers the problem it raises, or builds on it. Pick a result to open it, or an arrow to set the two side by side.</p></div>
+    ${sect("How the sixteen lead to one another", svg)}
     ${sect("Four kinds of work, four kinds of problem", items(Object.values(HAT)))}
-    ${sect("How the sixteen lead to one another. Pick an arrow to compare the two it joins", svg)}
     ${sect("Six words used everywhere", items(words))}
-    ${sect("About the telling", `<p class="fine">The part-time legislators are Leslie Lamport's, from The Part-Time Parliament, and the commander and lieutenants are the generals of Lamport, Shostak and Pease. People have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same. Switch to Abstraction at any point to drop the island.</p>`)}
+    ${sect("About the telling", `<p class="fine">People have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same.</p>`)}
   </div>`;
   return `<div class="map">
-    <div class="intro"><h1>${U().title}</h1>
-      <p class="idea">Each result is told as a few short scenes from inside one node. You see what it holds, what arrives and what it sends. What it could not see is set beside each step, in a dashed frame.</p>
-      ${start}</div>
-    ${sect("An arrow leads to a result that answers the problem, or builds on it. Pick an arrow to compare the two", svg)}
+    <div class="intro"><h1>${U().map}</h1>
+      <p class="idea">The sixteen results and how they connect. An arrow leads from one result to another that answers the problem it raises, or builds on it. Pick a result to open it, or an arrow to compare the two.</p></div>
+    ${sect("How the sixteen lead to one another", svg)}
   </div>`;
 }

@@ -1,5 +1,5 @@
 // ---------- wiring ----------
-// A key is "map", a result's id (its own page), or a scene.
+// A key is "intro" (the landing page), "map", a result's id (its own page), or a scene.
 const isPaper = k => PAPERS.some(x => x.id === k);
 const resolve = k => { const p = PAPERS.find(x => x.id === k); return p ? byKey(`${p.id}-${p.scenes[0].id}`) : byKey(k); };
 function renderDrawer() {
@@ -8,6 +8,7 @@ function renderDrawer() {
   if (it) expanded.add(it.p.id);
   $("facets").innerHTML = facetsHTML();
   $("index").innerHTML = indexHTML(it, land);
+  $("more").innerHTML = moreHTML();
   if (f) { const el = $("drawer").querySelector(f); if (el) el.focus(); }
 }
 function render() {
@@ -18,10 +19,10 @@ function render() {
   renderDrawer();
   // a scene's page is the scene alone: the bar names its result, and leads back to the result's own page
   const vs = isVs(sel);
-  $("where").innerHTML = vs ? "Compare" : !it ? esc(U().map) : land ? esc(paperName(it.p)) : `<button type="button" data-key="${it.p.id}">${esc(paperName(it.p))}</button><span class="sep" aria-hidden="true">/</span>${esc(nameOf(it))}`;
+  $("where").innerHTML = vs ? "Compare" : sel === "intro" ? "Introduction" : !it ? esc(U().map) : land ? esc(paperName(it.p)) : `<button type="button" data-key="${it.p.id}">${esc(paperName(it.p))}</button><span class="sep" aria-hidden="true">/</span>${esc(nameOf(it))}`;
   $("paper").hidden = !land;
   $("paper").innerHTML = land ? paperHTML(it) : "";
-  $("scene").innerHTML = vs ? vsHTML(sel) : land ? landHTML(it) : it ? sceneHTML(it) : mapHTML();
+  $("scene").innerHTML = vs ? vsHTML(sel) : land ? landHTML(it) : it ? sceneHTML(it) : sel === "intro" ? introHTML() : mapHTML();
   layTheater();
   if (theater) $("main").scrollTop = 0;      // in theater mode a result's own page scrolls inside the window-filling frame
   centreStage();
@@ -36,14 +37,17 @@ function setDrawer(open, keep) {
 // to: where the page lands. "top" (from the side menu) shows the top of the page; "scene" (from the pager) puts the scene's title under the bar.
 function go(key, keep, to) {
   const was = resolve(sel), it = resolve(key);
-  if (!it && key !== "map" && !vsValid(key)) return;
-  if (key !== sel) stageStep = 0;
+  if (!it && !isTop(key) && !vsValid(key)) return;
+  if (key !== sel) {
+    stageStep = 0;
+    try { history.pushState(null, "", "#" + key); } catch (e) {}   // a new history entry, so Back returns here
+  }
   sel = key;
   if (!keep) cmp = false;
   render();
   if (!WIDE.matches) setDrawer(false, true);
   if (keep) return;
-  if (to === "top" || (to === "scene" && (key === "map" || isPaper(key))) || isVs(key)) window.scrollTo(0, 0);
+  if (to === "top" || (to === "scene" && (isTop(key) || isPaper(key))) || isVs(key) || isTop(key)) window.scrollTo(0, 0);
   else if (to === "scene") $("scene").scrollIntoView({ block: "start" });
   else if (!it || !was || was.p !== it.p || isPaper(key)) $("main").scrollIntoView({ block: "start" });
   else if ($("scene").getBoundingClientRect().top < 0) $("scene").scrollIntoView({ block: "start" });
@@ -79,8 +83,15 @@ document.addEventListener("change", e => {
   else go(d.vs === "a" ? vsKey(s.value, b) : vsKey(a, s.value), true);
   const el = document.querySelector(d.vs === "pair" ? `select[data-vs="pair"][data-a="${d.a}"]` : `select[data-vs="${d.vs}"]`); if (el) el.focus();
 });
-const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); if (k === "map" || resolve(k) || vsValid(k)) sel = k; };
-window.addEventListener("hashchange", () => { fromHash(); render(); });
+const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); if (isTop(k) || resolve(k) || vsValid(k)) sel = k; };
+// Back/Forward (and hand-edited hashes): follow the address, as a fresh page
+window.addEventListener("hashchange", () => {
+  const was = sel; fromHash();
+  if (sel !== was) { stageStep = 0; cmp = false; }
+  render();
+  window.scrollTo(0, 0);
+});
+try { history.scrollRestoration = "manual"; } catch (e) {}
 let stored = null; try { stored = localStorage.getItem("drawer"); } catch (e) {}
 setDrawer(WIDE.matches && stored !== "closed", true);
 WIDE.addEventListener("change", () => setDrawer(WIDE.matches && stored !== "closed", true));
