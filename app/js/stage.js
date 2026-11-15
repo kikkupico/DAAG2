@@ -69,7 +69,7 @@ function sizeLabel(lb, E) {      // a place's plate: the node's chip, the place'
 }
 function layPlaces(fig, E) {     // puts each place's plate beside its mark, inside the frame and clear of the others; returns everything a tag must keep off
   const svg = fig.querySelector(".stg > svg"), o = svg.getBoundingClientRect(), k = GEO.w / (o.width || GEO.w), plain = fig.classList.contains("abs"), g = .3 * E;
-  const blocks = [...fig.querySelectorAll(".replay")].map(b => { const q = b.getBoundingClientRect(); return [[(q.left - o.left) * k - g, (q.top - o.top) * k - g, (q.right - o.left) * k + g, (q.bottom - o.top) * k + g], 60]; });
+  const blocks = [...fig.querySelectorAll(".replay, .thb")].filter(b => b.offsetWidth).map(b => { const q = b.getBoundingClientRect(); return [[(q.left - o.left) * k - g, (q.top - o.top) * k - g, (q.right - o.left) * k + g, (q.bottom - o.top) * k + g], 60]; });
   const gs = [...fig.querySelectorAll(".cpl")], { e, n, u } = GEO.iso, hw = (e[0] + n[0]) * 7.6, dn = (e[1] - n[1]) * 7.6, up = dn - u[1] * 9;      // in the Abstraction register the mark is a block
   const marks = gs.map(c => { const x = +c.dataset.x, y = +c.dataset.y; return plain ? [x - hw, y - up, x + hw, y + dn] : [x - .55 * E, y - .55 * E, x + .55 * E, y + .55 * E]; });
   marks.forEach(m => blocks.push([m, 25]));
@@ -148,7 +148,7 @@ function cityHTML(it, S) {
     + (baked ? `<img class="wld" src="${Object.values(pic)[0]}" srcset="${Object.entries(pic).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="${GEO.w}" height="${GEO.h}" alt="" decoding="async">` : "")
     + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
     + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g><g class="tags"></g></svg></div></div>`
-    + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></figure>`;
+    + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's messengers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>${theaterBtn()}</div></figure>`;
 }
 let cityAnim = 0;
 function playCity() {

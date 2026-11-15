@@ -73,7 +73,7 @@ function tellOf(it) {
 // The stepper box, the scene's main view: the controls, then the picture, which folds away, then what happens in the chosen step.
 function stripHTML(it) {
   const pic = stageHTML(it);
-  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${pic ? `<div class="pict" id="pict">${pic}</div>` : ""}${ctlHTML(it)}${panelHTML(it)}</div>`;
+  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${pic ? `<div class="pict" id="pict">${pic}</div>${theaterHead(it)}` : ""}${ctlHTML(it)}${panelHTML(it)}</div>`;
 }
 function ctlHTML(it) {     // one circle per step
   const { rows, phases } = tellOf(it), atEnd = stageStep >= rows.length, n = atEnd ? -1 : stageStep;

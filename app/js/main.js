@@ -22,6 +22,7 @@ function render() {
   $("paper").hidden = !land;
   $("paper").innerHTML = land ? paperHTML(it) : "";
   $("scene").innerHTML = vs ? vsHTML(sel) : land ? landHTML(it) : it ? sceneHTML(it) : mapHTML();
+  layTheater();
   centreStage();
   try { if (location.hash.slice(1) !== sel) history.replaceState(null, "", "#" + sel); } catch (e) {}
 }
