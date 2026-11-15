@@ -1,0 +1,8 @@
+# Words from the Allegory's vocabulary that are ordinary English in the plain text too.
+# One per line; check-leaks.js ignores them.
+list
+done
+proposer
+v1.3
+a view
+a reader
