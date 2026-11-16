@@ -29,7 +29,7 @@ MODELS = ["tree_small_02", "island_tree_02", "searsia_burchellii", "searsia_luci
           "rock_face_02", "coastal_cliff_02", "coast_rocks_05", "rock_moss_set_01", "rock_moss_set_02", "island_tree_01", "island_tree_03",
           "jacaranda_tree", "pine_tree_01", "marble_bust_01", "horse_statue_01"]
 MODEL_RES = "1k"
-# Skies with no sun in them (the sun is a lamp, set to the drawing's shadows), for world/build_world3d.py.
+# Skies with no sun in them (the sun is a lamp, set to the drawing's shadows), for world/build_polis.py.
 HDRIS = ["kloofendal_48d_partly_cloudy_puresky", "qwantani_puresky"]
 
 

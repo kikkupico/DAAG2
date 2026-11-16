@@ -7,11 +7,12 @@ each landmark actually is) is left to the generator, as long as each landmark pl
 
 It works in two passes, because one pass cannot hold both the routes and a free hand:
 
-| The town as a research colony on Mars | The town on Arctic sea ice | The siege as the Mongol siege of Xiangyang, 1268 |
+| The town as a research colony on Mars | The town as an ancient Chinese city | The siege as the Siege of Pskov, 1581 |
 |---|---|---|
-| ![](examples/city-mars.jpg) | ![](examples/city-arctic.jpg) | ![](examples/siege-xiangyang.jpg) |
+| ![](examples/city-mars.jpg) | ![](../../app/img/reskin-city-china-960.webp) | ![](examples/siege-pskov.jpg) |
 
-Each of these is one run of `generate`, untouched; `examples/*-overlay.jpg` shows the routes drawn over it.
+These are the three shown on the app's landing page. The Mars one is one run of `generate`, untouched.
+`examples/*-overlay.jpg` shows the routes drawn over the Mars and Pskov pictures.
 
 1. **Ground.** `plate.png` (the routes as dark bands, nothing else) is repainted as the bare landscape of the setting. With
    no buildings to place, the generator keeps the bands almost pixel for pixel.
@@ -76,7 +77,7 @@ names for the new setting.
 | `plate.png`, `siege-plate.png` | the input of pass 1: the routes as dark bands on blank ground |
 | `guide.png`, `siege-guide.png` | the plate with the numbered discs, for reference: which number is where |
 | `inpaint-mask-*.png`, `siege-inpaint-mask-*.png` | every route widened to ~44 px, for an inpainting pass (1600 and 1024 px wide) |
-| `examples/` | the three results shown above, with their overlays |
+| `examples/` | results with their overlays: Mars and Pskov, shown above, and two earlier ones (Arctic sea ice, the Mongol siege of Xiangyang). The Chinese city above is the landing page's own copy in `app/img/` |
 | `reskin.py` | `build` remakes the images above from the current routes (run it after any change to them); `generate`, `prompts`, `mark` and `check` as above. The two prompts live in it, as `GROUND` and `BUILD`, with each stage's landmarks in `STAGES`. |
 
 ## Landmarks

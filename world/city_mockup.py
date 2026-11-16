@@ -9,7 +9,7 @@ inside the double wall, so every message goes the long way round, out of bowshot
 With --app it also writes the page's city stage: the southeast picture alone (baked to app/img/<view>-<width>.webp, which needs
 Google Chrome and cwebp), where each place is in it, and the road route between every pair of places, lifted onto the stairs and
 terraces, all in the picture's own pixels. The page's city is made with --detail; the siege with --siege --night --detail.
---dump scene.json writes the same world as data for world/build_world3d.py, which builds a richer world on it in Blender, in exactly this frame;
+--dump scene.json writes the same world as data for world/build_polis.py, which builds a richer world on it in Blender, in exactly this frame;
 --bg3d render.png then bakes that render beside the drawing (app/img/<view>-3d-<width>.webp), and the page can show either."""
 import math, sys, heapq, random
 
@@ -782,13 +782,11 @@ def app_js():
     import json
     name, view = ("SIEGE", "siege") if SIEGE else ("CITY", "city")
     img = bake(body, AW, AH, view)                                                 # the picture itself goes to the page as an image, not as markup
-    img3d = bake_png(BG3D, view + "-3d") if BG3D else None                         # the same frame rendered in Blender (world/build_city3d.py), if given
+    img3d = bake_png(BG3D, view + "-3d") if BG3D else None                         # the same frame rendered in Blender (world/build_polis.py), if given
     city = dict(w=AW, h=AH, night=NIGHT, img=img, **({"img3d": img3d} if img3d else {}), plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
-    frac = {n: [round(p[0] / AW, 4), round(p[1] / AH, 4)] for n, p in places.items()}
     head = "// The %s stage, written by world/city_mockup.py%s --app: the southeast picture, its places and the road routes between them.\n" % (view, " --siege" if SIEGE else "")
     data = "const %s = %s;\n" % (name, json.dumps(city, separators=(",", ":")))
-    diag = "STAGES.%s = { w: %s.w, h: %s.h, places: %s, roads: {}, label: {}, inset: {}, img: null };   // for the Abstraction register\n" % (view, name, name, json.dumps(frac))
-    return head + data + diag
+    return head + data
 
 BAKE_WIDTHS = (800, 1200, 1800)           # the stage is about 360 css px on a phone (720 px at 2x, 1080 at 3x) and at most about 900 on a desktop (1800 at 2x)
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -833,7 +831,7 @@ def crop_svg(x0, x1, y0, y1):
     return '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="%.1f %.1f %.1f %.1f">%s</svg>' % ((bx1 - bx0) * 1.6, (by1 - by0) * 1.6, bx0, by0, bx1 - bx0, by1 - by0, body)
 
 def dump():
-    """Everything the Blender build (world/build_city3d.py) needs to model this same world in the same frame, as JSON."""
+    """Everything the Blender build (world/build_polis.py) needs to model this same world in the same frame, as JSON."""
     import json
     AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
     probes = [(x, y, z) for x, y, z in ((0, 0, 0), (150, 0, 0), (-148, 0, 0), (0, -114, 0), (0, 114, TOP), (0, 72, TOP * 32 / 64), (-200, 150, 0), (200, -150, 0))]

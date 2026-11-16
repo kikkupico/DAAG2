@@ -8,7 +8,6 @@ try { if (localStorage.getItem("reg") === "plain") reg = "plain"; } catch (e) {}
 
 const UI = {
   plain: {
-    thesis: "Sixteen results from distributed computing, each told from inside a single node. A node knows what it holds and what arrives. Everything else is a guess.",
     title: "Distributed Algorithms, One Node at a Time",
     map: "Overview", arrives: "Arrives", leaves: "Leaves", perm: "permanent", temp: "temporary",
     permL: "permanent: handed to a replacement", tempL: "temporary: ends with the node",
@@ -21,7 +20,6 @@ const UI = {
     differ0: "The two scenes differ from the start: the node keeps different things.", until: d => `The two scenes are identical from inside until step ${d}.`,
   },
   isle: {
-    thesis: "Paxos has no assembly hall. Its merchants, part-time legislators, soldiers and scholars each work from their own place, and all they know of one another comes by courier.",
     title: "Distributed Algorithms of Ancient Greece",
     map: "Bird's Eye View", arrives: "Arrives", leaves: "Leaves", perm: "in the ledger", temp: "on the slate",
     permL: "ledger: passes to a successor", tempL: "slate: wiped when its owner goes",

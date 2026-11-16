@@ -1,46 +1,6 @@
-// ---------- this page's own scenes ----------
-// Snapshots are told with three nodes here, so that each incoming stream is seen to close on its own.
-SCENES.snapshot.splice(0, SCENES.snapshot.length,
-  { id: "markers", name: "With markers", who: "A", peers: "B, C", note: "A's share of a snapshot.",
-    init: { perm: { units: "10" } },
-    phases: [[0, "Before the snapshot", "Units move freely; nothing is being recorded."], [2, "The snapshot", "The first marker says copy now. Each stream's marker says nothing more from that stream belongs to the snapshot."]],
-    prose: [
-      "A holds 10 units.",
-      "Told from outside to send 3 units to B, it does, keeping 7.",
-      "A snapshot starts. A reads its units, writes a copy (7), sends a marker to B and to C, and starts writing down whatever arrives from each.",
-      "2 units arrive from B, before B's marker. A adds them to its units and writes them down.",
-      "C's marker arrives: C has copied. A stops writing down what comes from C. Nothing had.",
-      "1 unit arrives from C, after C's marker. A adds it to its units and writes nothing down.",
-      "Then B's marker arrives, and A stops writing down. A's share of the snapshot is 7 held plus 2 in transit from B.",
-    ],
-    rows: [
-      { perm: { units: "7" }, recv: O("send 3 units to B"), sent: [["B", "3 units"]] },
-      { temp: { "units copy": "7", "copied from B": "nothing yet (copying)", "copied from C": "nothing yet (copying)" }, recv: O("start a snapshot"), sent: [["B", "marker"], ["C", "marker"]] },
-      { perm: { units: "9" }, temp: { "copied from B": "2 units (copying)" }, recv: [["B", "2 units"]], out: "B sent these before copying, so B's copy leaves them out" },
-      { temp: { "copied from C": "nothing (done)" }, recv: [["C", "marker"]] },
-      { perm: { units: "10" }, recv: [["C", "1 unit"]], out: "C copied before sending this, so C's copy includes it" },
-      { temp: { "copied from B": "2 units (done)" }, recv: [["B", "marker"]], out: "B's copy is 11 and C's is 10. With A's 7 and these 2, the snapshot comes to 30: every unit there is" },
-    ] },
-  { id: "naive", name: "Without markers", who: "A", peers: "B, C", note: "The same, but with no markers.",
-    init: { perm: { units: "10" } },
-    prose: [
-      "A holds 10 units.",
-      "It sends 3 units to B and keeps 7.",
-      "Told to copy its units, it writes a copy: 7.",
-      "2 units arrive from B after the copy. A adds them, but nothing tells it to write them down.",
-      "1 unit arrives from C. From inside it looks no different from the last arrival, and A adds it the same way.",
-    ],
-    rows: [
-      { perm: { units: "7" }, recv: O("send 3 units to B"), sent: [["B", "3 units"]] },
-      { temp: { "units copy": "7" }, recv: O("copy your units") },
-      { perm: { units: "9" }, recv: [["B", "2 units"]], out: "B copied after sending these, so the 2 units are in no copy at all" },
-      { perm: { units: "10" }, recv: [["C", "1 unit"]], out: "C copied before sending this, so C's copy includes it. The three copies come to 28, and there are 30 units" },
-    ] });
-
-// Sixteen results: the conceptual papers only. Raft gives way to viewstamped replication, Dynamo to Gifford and Parker,
-// COPS to causal delivery; a coin flip, atomic commit and linearizability are added. Each is written against its paper.
+// ---------- the results added to the first set ----------
+// Viewstamped replication, a coin flip, atomic commit and linearizability. Each is written against its paper.
 PSEUDO.add("coin");
-const paperOf = id => PAPERS.find(p => p.id === id);
 const both = (text, lost) => [["B", text, lost], ["C", text, lost]].map(m => lost ? m : m.slice(0, 2));
 
 SCENES.benor = [
@@ -212,49 +172,7 @@ SCENES.linear = [
     rows: linRows("another read was answered y before this one began, and this one is answered x. No single copy answers y and then x") },
 ];
 
-// Causes first, by the rule of Birman, Schiper and Stephenson: the stamp on a message counts the sender's earlier messages.
-const cReads = [
-  { recv: O("read album"), sent: [["outside", "answer(has photo)"]] },
-  { recv: O("read photo"), sent: [["outside", "answer(coast)"]] },
-];
-SCENES.cops.splice(0, SCENES.cops.length,
-  { id: "wait", name: "Wait for the cause", who: "A", peers: "B",
-    note: "A holds the copy at one site, and writes made at the other site reach it from B. Each is stamped with a list of counts: how many messages each site had sent when it was written.",
-    outside: "At B's site, Alice saved a photo, then added it to her album. The two writes travel separately, and the album's arrives first. Bob reads at A's site.",
-    init: { perm: { photo: "none", album: "empty", delivered: "A0 B0" } },
-    prose: [
-      "Node A has no photo, the album is empty, and it has delivered nothing from B.",
-      "A write arrives: the album should now show the photo. Its stamp says it is B's second message, and A has delivered none. One is missing, so A holds this one back.",
-      "A reader asks for the album. A answers that it is empty, which is true of a moment that really happened.",
-      "B's first message arrives, with the photo. A stores it, and now applies the album write it was holding.",
-      "A reader asks for the album again and sees the photo listed.",
-      "The reader asks for the photo, and it is there.",
-    ],
-    rows: [
-      { temp: { holding: "album: has photo @[0,2]" }, recv: [["B", "write(album: has photo) @[0,2]"]] },
-      { recv: O("read album"), sent: [["outside", "answer(album empty)"]] },
-      { perm: { photo: "coast", album: "has photo", delivered: "A0 B2" }, temp: { holding: "nothing" }, recv: [["B", "write(photo: coast) @[0,1]"]] },
-      ...cReads,
-    ] },
-  { id: "eager", name: "Apply on arrival", who: "A", peers: "B",
-    note: "A different rule: apply every write the moment it arrives, whatever its stamp.",
-    outside: "At B's site, Alice saved a photo, then added it to her album. The two writes travel separately, and the album's arrives first. Bob reads at A's site.",
-    init: { perm: { photo: "none", album: "empty" } },
-    prose: [
-      "Node A has no photo, and the album is empty.",
-      "A write arrives: the album should now show the photo. A applies it at once.",
-      "A reader asks for the album and sees the photo listed.",
-      "The reader asks for the photo. A has none, and says so.",
-      "The photo arrives, too late for that reader.",
-    ],
-    rows: [
-      { perm: { album: "has photo" }, recv: [["B", "write(album: has photo) @[0,2]"]] },
-      { recv: O("read album"), sent: [["outside", "answer(has photo)"]] },
-      { recv: O("read photo"), sent: [["outside", "answer(none)"]], out: "Bob, the reader, saw an effect without its cause: no moment ever looked like this" },
-      { perm: { photo: "coast" }, recv: [["B", "write(photo: coast) @[0,1]"]] },
-    ] });
-
-PAPERS.splice(PAPERS.indexOf(paperOf("raft")), 1, {
+PAPERS.splice(PAPERS.findIndex(p => p.id === "paxos") + 1, 0, {
   id: "vr", name: "Primary and backups", year: "1988 / 1990",
   cite: "Oki & Liskov 1988 · Viewstamped Replication: A New Primary Copy Method to Support Highly-Available Distributed Systems\nSchneider 1990 · Implementing Fault-Tolerant Services Using the State Machine Approach: A Tutorial\nRelated: Liskov & Cowling 2012 · Viewstamped Replication Revisited, and Ongaro & Ousterhout 2014 · Raft, later retellings of the same design",
   idea: "One node, the primary, does the work and sends a record of each event to the backups. An event is safe once a majority know it. When the primary is lost, the nodes still in touch form a new view, and the one that knows the most becomes its primary, so everything a majority knew is carried over.",
@@ -292,22 +210,3 @@ PAPERS.push({
     shared: "Nothing is prescribed. This is a test applied to what happened, not a way of making it happen.",
     assumes: "Every operation has a beginning and an end that an outside observer can put in order. The paper is about objects shared by processes on one machine; the same test is applied to copies on many nodes. It shows two properties: each object can be checked by itself, and no operation is ever forced to wait." },
   scenes: SCENES.linear });
-Object.assign(paperOf("cap"), {
-  cite: "Brewer 2000 · Towards Robust Distributed Systems\nGilbert & Lynch 2002 · Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services" });
-Object.assign(paperOf("quorum"), { year: "1979 / 1983",
-  cite: "Gifford 1979 · Weighted Voting for Replicated Data\nThomas 1979 · A Majority Consensus Approach to Concurrency Control for Multiple Copy Databases\nParker et al. 1983 · Detection of Mutual Inconsistency in Distributed Systems",
-  idea: "Keep N copies. A write waits for W of them, a read for R. If R + W is more than N, every read group shares a node with every write group, so a read finds the latest write. Smaller groups answer sooner but can miss it.",
-  names: "copies = representatives of a file suite (Gifford) · two for a write = a write quorum of w votes · two for a read = a read quorum of r votes · overlapping groups = r + w greater than the total number of votes · the list on each version = version vector (Parker et al.) · one count per node = the number of updates made at that site · two versions, neither newer = conflicting version vectors, a mutual inconsistency",
-  frame: {
-    goal: "Read and write a replicated value while some copies are out of reach. With overlapping groups, a read sees the latest finished write. Where copies have changed apart, detect it.",
-    shared: "Up front, the number of copies and the group sizes. Each node holds full versions, each carrying a list of counts, one per node.",
-    assumes: "Messages can be lost, delayed or reordered. Copies are stored durably, so a node can be replaced. Gifford gives each copy a number of votes; here each has one. His own scheme uses a single version number and locks, so versions never diverge; the lists of counts are Parker's, for copies that accept writes while apart. Nobody lies." } });
-Object.assign(paperOf("cops"), { year: "1991",
-  cite: "Birman, Schiper & Stephenson 1991 · Lightweight Causal and Atomic Group Multicast\nRelated: Lloyd et al. 2011 · COPS, which applies the same rule to a wide-area store",
-  idea: "Each message carries a list of counts saying how many messages each sender had sent when it was written. A receiver holds a message back until it has delivered all the earlier ones. Readers then never see an effect without its cause, and nobody waits for anything but the missing cause.",
-  names: "site = a process in a group · the list of counts on a message = its vector timestamp VT(m) · delivered = the receiver's own vector time · holding = the delay queue · write = a CBCAST multicast",
-  frame: {
-    goal: "Answer every read and write at the local site at once, and never show an effect before its cause.",
-    shared: "Each site holds a full copy, and a list of how many messages it has delivered from each sender.",
-    assumes: "Messages arrive in any order and after any delay, but do arrive. The paper deals with a stopped sender in a separate step, which these scenes leave out. Nobody lies." } });
-

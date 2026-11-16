@@ -50,16 +50,6 @@ const PAPERS = [
     assumes: "Nodes run at any speed and may end; a replacement starts from the old node's permanent state. Messages can be delayed, repeated or lost, but never altered. Nobody lies." },
   scenes: SCENES.paxos },
 {
-  id: "raft", name: "Raft", year: "2014",
-  cite: "Ongaro & Ousterhout 2014 · In Search of an Understandable Consensus Algorithm\nRelated: Oki & Liskov 1988, Liskov & Cowling 2012 · Viewstamped Replication, a close relative: rounds are views, and VR Revisited keeps nothing permanent, rebuilding state from peers instead",
-  idea: "One coordinator per round appends entries to every log, and an entry is agreed once a majority has it. Round, vote and log are permanent. Everything else can be rebuilt.",
-  names: "round = currentTerm · voted for = votedFor · agreed up to = commitIndex · applied up to = lastApplied · claim = RequestVote · append = AppendEntries",
-  frame: {
-    goal: "Keep the same log on every node, so all of them apply the same entries in the same order.",
-    shared: "The log up to the agreed position. Entries past it are not yet shared and can still be replaced. Up front, everyone knows the list of nodes.",
-    assumes: "Messages can be delayed, lost, repeated or reordered. A node may end and be replaced by one starting from its permanent state. Nobody lies. Correctness never depends on timing, but progress needs a reachable majority and messages that arrive before timers run out." },
-  scenes: SCENES.raft },
-{
   id: "liars", name: "Liars", year: "1980 / 1982",
   cite: "Pease, Shostak & Lamport 1980 · Reaching Agreement in the Presence of Faults\nLamport, Shostak & Pease 1982 · The Byzantine Generals Problem",
   idea: "Some nodes may lie, telling different nodes different things. Honest nodes pass on what they were told and take the majority. With three nodes and one liar no rule works: it takes 3m + 1 nodes to survive m liars.",
@@ -81,7 +71,7 @@ const PAPERS = [
   scenes: SCENES.pbft },
 {
   id: "cap", name: "CAP", year: "2000 / 2002",
-  cite: "Brewer 2000 · Towards Robust Distributed Systems\nGilbert & Lynch 2002 · Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services\nRelated: Herlihy & Wing 1990 · Linearizability, the precise meaning of “always the latest value”",
+  cite: "Brewer 2000 · Towards Robust Distributed Systems\nGilbert & Lynch 2002 · Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services",
   idea: "When every message between two groups of nodes may be lost, a node asked for the value must answer without hearing from the other group, perhaps with an old value, or not answer at all. It can't tell a write it missed from no write.",
   names: "always the latest value = atomic consistency, also called linearizability (Herlihy & Wing) · every request answered = availability · messages lost between groups = a partition · outside = a client",
   frame: {
@@ -90,14 +80,14 @@ const PAPERS = [
     assumes: "Any message can be lost, and a node can't tell lost from slow. The paper proves the result both without clocks and with timers. Nodes don't stop and nobody lies." },
   scenes: SCENES.cap },
 {
-  id: "quorum", name: "Quorums", year: "2007 / 2012",
-  cite: "DeCandia et al. 2007 · Dynamo: Amazon's Highly Available Key-value Store\nBailis et al. 2012 · Probabilistically Bounded Staleness for Practical Partial Quorums",
-  idea: "Keep N copies. A write waits for W of them, a read for R. If R + W is more than N, every read group shares a node with every write group, so a read finds the latest write. Smaller groups answer faster, and are only sometimes stale.",
-  names: "copies = N replicas · two for a write = W · two for a read = R · overlapping groups = R + W > N (strict quorum) · reading one copy = a partial quorum, measured by PBS · the list on each version = vector clock · catching up after a read = read repair · two versions returned = divergent versions, reconciled by the client · cart = Dynamo's shopping cart",
+  id: "quorum", name: "Quorums", year: "1979 / 1983",
+  cite: "Gifford 1979 · Weighted Voting for Replicated Data\nThomas 1979 · A Majority Consensus Approach to Concurrency Control for Multiple Copy Databases\nParker et al. 1983 · Detection of Mutual Inconsistency in Distributed Systems",
+  idea: "Keep N copies. A write waits for W of them, a read for R. If R + W is more than N, every read group shares a node with every write group, so a read finds the latest write. Smaller groups answer sooner but can miss it.",
+  names: "copies = representatives of a file suite (Gifford) · two for a write = a write quorum of w votes · two for a read = a read quorum of r votes · overlapping groups = r + w greater than the total number of votes · the list on each version = version vector (Parker et al.) · one count per node = the number of updates made at that site · two versions, neither newer = conflicting version vectors, a mutual inconsistency",
   frame: {
-    goal: "Always accept writes and answer reads quickly. With overlapping groups, a read sees the latest finished write. Concurrent writes are kept side by side for the client to combine.",
+    goal: "Read and write a replicated value while some copies are out of reach. With overlapping groups, a read sees the latest finished write. Where copies have changed apart, detect it.",
     shared: "Up front, the number of copies and the group sizes. Each node holds full versions, each carrying a list of counts, one per node.",
-    assumes: "Messages can be lost, delayed or reordered. Copies are stored durably, so a node can be replaced. Dynamo itself lets a stand-in node hold a copy while one is down, which can break the overlap. Nobody lies." },
+    assumes: "Messages can be lost, delayed or reordered. Copies are stored durably, so a node can be replaced. Gifford gives each copy a number of votes; here each has one. His own scheme uses a single version number and locks, so versions never diverge; the lists of counts are Parker's, for copies that accept writes while apart. Nobody lies." },
   scenes: SCENES.quorum },
 {
   id: "merge", name: "Merging copies", year: "1987 / 2011",
@@ -120,14 +110,14 @@ const PAPERS = [
     assumes: "Servers connect only now and then, so writes travel slowly and in any order, but each one eventually reaches every server. Logs are kept durably. Nobody lies." },
   scenes: SCENES.bayou },
 {
-  id: "cops", name: "Causes first", year: "2011",
-  cite: "Lloyd, Freedman, Kaminsky & Andersen 2011 · Don't Settle for Eventual: Scalable Causal Consistency for Wide-Area Storage with COPS",
-  idea: "Each write names the writes it depends on. A site holds back an arriving write until those are present. Readers at any site then never see an effect without its cause, while every site still answers at once.",
-  names: "site = cluster (datacenter) · after photo v1 = the write's nearest dependency · holding = waiting for dep_check to succeed · write(…, after …) = put_after · Alice and Bob = the paper's photo example",
+  id: "cops", name: "Causes first", year: "1991",
+  cite: "Birman, Schiper & Stephenson 1991 · Lightweight Causal and Atomic Group Multicast\nRelated: Lloyd et al. 2011 · COPS, which applies the same rule to a wide-area store",
+  idea: "Each message carries a list of counts saying how many messages each sender had sent when it was written. A receiver holds a message back until it has delivered all the earlier ones. Readers then never see an effect without its cause, and nobody waits for anything but the missing cause.",
+  names: "site = a process in a group · the list of counts on a message = its vector timestamp VT(m) · delivered = the receiver's own vector time · holding = the delay queue · write = a CBCAST multicast",
   frame: {
     goal: "Answer every read and write at the local site at once, and never show an effect before its cause.",
-    shared: "Each site holds a full copy. Each write carries the versions it depends on.",
-    assumes: "Sites copy writes to each other in the background, in any order and with any delay, but every write eventually arrives. Within a site, operations are quick and in order. Nobody lies." },
+    shared: "Each site holds a full copy, and a list of how many messages it has delivered from each sender.",
+    assumes: "Messages arrive in any order and after any delay, but do arrive. The paper deals with a stopped sender in a separate step, which these scenes leave out. Nobody lies." },
   scenes: SCENES.cops },
 ];
 

@@ -1,17 +1,6 @@
-// ---------- the stage: the island picture, with one step's couriers drawn on its roads ----------
+// ---------- the stage: the picture, with one step's couriers drawn on its roads ----------
 let stageStep = 0;
-const stageOf = it => { const T = TELL[it.p.id]; return T && T.stage && typeof STAGES !== "undefined" && STAGES[T.stage.view] ? T.stage : null; };
-function routePts(G, a, b) {   // the shortest way by road from one place to another, as fractions of the picture
-  const len = pts => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0), next = {};
-  Object.entries(G.roads).forEach(([k, pts]) => { const i = k.indexOf("-"), x = k.slice(0, i), y = k.slice(i + 1); (next[x] = next[x] || []).push([y, pts]); (next[y] = next[y] || []).push([x, [...pts].reverse()]); });
-  const direct = (next[a] || []).find(([v]) => v === b); if (direct) return direct[1];
-  const best = { [a]: [0, []] }, todo = new Set([a]);
-  while (todo.size) {
-    const u = [...todo].sort((p, q) => best[p][0] - best[q][0])[0]; todo.delete(u);
-    (next[u] || []).forEach(([v, pts]) => { const d = best[u][0] + len(pts); if (!best[v] || d < best[v][0]) { best[v] = [d, [...best[u][1], ...pts]]; todo.add(v); } });
-  }
-  return best[b] && best[b][1].length ? best[b][1] : [G.places[a], G.places[b]];
-}
+const stageOf = it => { const T = TELL[it.p.id]; return T && T.stage ? T.stage : null; };
 function along(pts, t) {    // the point a fraction t of the way along a line of points
   const L = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1])); let d = t * L.reduce((a, b) => a + b, 0);
   for (let i = 0; i < L.length; i++) { if (d <= L[i] || i === L.length - 1) { const f = L[i] ? Math.min(1, d / L[i]) : 0; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f]; } d -= L[i]; }
@@ -20,24 +9,11 @@ function along(pts, t) {    // the point a fraction t of the way along a line of
 // ---------- the city stage: the isometric city from world/city_mockup.py, with messengers walking its roads ----------
 // A step plays as a short animation: timers ring at your place, messengers arriving walk in along the roads, the step happens
 // at your place (a ring), then messengers leaving walk out. Each leaves a trail; a lost one stops partway. Replay runs it again.
-// The geometry a stage plays on: the city from world/city_mockup.py, or, for scenes not yet moved to it (the army's), an older
-// island picture with its places and roads. Each entry point below sets GEO from its scene's stage before drawing.
-const GEOS = {};
-function geoFor(S) {
-  if (S.view === "city") return CITY;
-  if (S.view === "siege") return SIEGE;
-  if (GEOS[S.view]) return GEOS[S.view];
-  const G = STAGES[S.view], W = 1600, H = Math.round(W * G.h / G.w), px = p => [+(p[0] * W).toFixed(1), +(p[1] * H).toFixed(1)];
-  const places = Object.fromEntries(Object.entries(G.places).map(([k, p]) => [k, px(p)]));
-  return GEOS[S.view] = { w: W, h: H, places, doors: places, label: G.label || {}, route: (a, b) => routePts(G, a, b).map(px),
-    svg: `<image href="${PICTURES[G.img]}" width="${W}" height="${H}" preserveAspectRatio="none"/>`,
-    plain: { street: "", road: Object.values(G.roads).map(pts => "M" + pts.map(q => px(q).join(",")).join("L")).join("") },
-    iso: { e: [3.3, 1.65], n: [3.3, -1.65], u: [0, -2.9] } };      // the island renders' camera, near enough for the blocks
-}
+// The geometry a stage plays on: the city or the siege, both from world/city_mockup.py. Each entry point below sets GEO from its scene's stage before drawing.
+const geoFor = S => S.view === "siege" ? SIEGE : CITY;
 let GEO = typeof CITY !== "undefined" ? CITY : null;
 const useGeo = S => (GEO = geoFor(S));
 const cityRoute = (a, b) => {
-  if (GEO.route) return a === b ? [GEO.doors[a], GEO.doors[a]] : GEO.route(a, b);
   const r = a === b ? null : GEO.routes[a < b ? a + "|" + b : b + "|" + a];
   return r ? (a < b ? r : [...r].reverse()) : [GEO.doors[a], GEO.doors[b]];
 };
