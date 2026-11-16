@@ -226,7 +226,7 @@ function mapHTML() {
     ${sect("How the sixteen lead to one another", svg)}
     ${sect("Four kinds of work, four kinds of problem", items(Object.values(HAT)))}
     ${sect("Six words used everywhere", items(words))}
-    ${sect("About the telling", `<p class="fine">People have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same.</p>`)}
+    ${sect("About the telling", `<p class="fine">Those who do the work have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C, and a notary for K. A few of the people they serve are named, such as Ann and Bob, who book the reading room. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same.</p>`)}
   </div>`;
   return `<div class="map">
     <div class="intro"><h1>${U().map}</h1>

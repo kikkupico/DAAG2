@@ -1,6 +1,6 @@
 // ---------- the telling ----------
 // One island, Paxos, with no assembly hall: everyone works from their own place and hears from the rest by courier.
-// Four hats, one per chapter. People are anonymous: a role and the same letter the plain register uses.
+// Four hats. Most chapters belong to one, but causal delivery (scholars) and commit (merchants) sit in other chapters. People are anonymous: a role and the same letter the plain register uses.
 // The merchants are the exception: `names` gives A, B and C a business each, and the name replaces the letter.
 // The steps are the same in both registers. `lex` (and `msg`, which also knows the peer and the direction)
 // make what is asked, sent and held specific: a colour for the temple columns, an order for grain.

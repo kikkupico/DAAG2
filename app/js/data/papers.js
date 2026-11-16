@@ -1,7 +1,7 @@
 const PAPERS = [
 {
   id: "clocks", name: "Logical clocks", year: "1978 / 1988",
-  cite: "Lamport 1978 · Time, Clocks, and the Ordering of Events in a Distributed System\nFidge 1988 · Timestamps in Message-Passing Systems That Preserve the Partial Ordering\nMattern 1988 · Virtual Time and Global States of Distributed Systems",
+  cite: "Lamport 1978 · Time, Clocks, and the Ordering of Events in a Distributed System\nFidge 1988 · Timestamps in Message-Passing Systems That Preserve the Partial Ordering\nMattern 1989 · Virtual Time and Global States of Distributed Systems",
   idea: "No shared clock, so count instead. Each event adds one, each message carries the count, and a receiver jumps past it. A cause always gets a smaller number than its effect. Keeping one count per node also shows when two events are unrelated.",
   names: "counter = clock C\u1d62 · @n = timestamp T\u2098 (Lamport) · seen = vector time (Mattern), timestamp array (Fidge)",
   frame: {

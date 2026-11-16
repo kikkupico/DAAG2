@@ -304,7 +304,7 @@ Object.assign(paperOf("quorum"), { year: "1979 / 1983",
     assumes: "Messages can be lost, delayed or reordered. Copies are stored durably, so a node can be replaced. Gifford gives each copy a number of votes; here each has one. His own scheme uses a single version number and locks, so versions never diverge; the lists of counts are Parker's, for copies that accept writes while apart. Nobody lies." } });
 Object.assign(paperOf("cops"), { year: "1991",
   cite: "Birman, Schiper & Stephenson 1991 · Lightweight Causal and Atomic Group Multicast\nRelated: Lloyd et al. 2011 · COPS, which applies the same rule to a wide-area store",
-  idea: "Each message carries a list of counts saying how many messages from each sender came before it. A receiver holds a message back until it has delivered all of those. Readers then never see an effect without its cause, and nobody waits for anything but the missing cause.",
+  idea: "Each message carries a list of counts saying how many messages each sender had sent when it was written. A receiver holds a message back until it has delivered all the earlier ones. Readers then never see an effect without its cause, and nobody waits for anything but the missing cause.",
   names: "site = a process in a group · the list of counts on a message = its vector timestamp VT(m) · delivered = the receiver's own vector time · holding = the delay queue · write = a CBCAST multicast",
   frame: {
     goal: "Answer every read and write at the local site at once, and never show an effect before its cause.",
