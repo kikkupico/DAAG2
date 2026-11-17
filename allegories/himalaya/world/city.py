@@ -289,6 +289,30 @@ for (hx, hy, hz, hr) in list(kit.ROOFS):
             rr = [(yx + 4 * math.cos(t) * g.uniform(.85, 1.1), yy + 3.4 * math.sin(t) * g.uniform(.85, 1.1)) for t in [math.radians(q) for q in range(0, 331, 30)]]
             stone_wall(rr + rr[:1], .95, .55); claim(yx, yy, 4.0, 1.2); paint_disc("bare", yx, yy, 3.2, .8, 1.5)
             if g.random() < .5: lathe("straw", yx, yy, [(1.3, zt(yx, yy) - .3), (1.45, zt(yx, yy) + .8), (.8, zt(yx, yy) + 1.9), (.08, zt(yx, yy) + 2.5)], 10, va=g.random())
+# a worn path from every house to the nearest lane
+for (hx, hy, hz, hr) in kit.ROOFS:
+    d_ = np.hypot(L.PS[:, 0] - hx, L.PS[:, 1] - hy); i = int(np.argmin(d_))
+    if d_[i] < 34: footpath((hx, hy), (float(L.PS[i, 0]), float(L.PS[i, 1])), .9, .75)
+# the gompa's kora: the path the pilgrims walk round it, a row of eight chortens beside the court, a mani wall on the way up
+(gx_, gy_), gz_ = AT["temple"], LEVEL["temple"]
+for k in range(8):
+    cx_, cy_ = loc(gx_, gy_, 40, -15.5 + k * 3.0, -19.0)
+    if path_dist(cx_, cy_) > 2.6: little_chorten(cx_, cy_, zt(cx_, cy_), .78)
+ring_ = [loc(gx_, gy_, 40, 25 * math.cos(math.radians(t)), 4 + 20.5 * math.sin(math.radians(t))) for t in range(0, 361, 15)]
+for a, b in zip(ring_, ring_[1:]): footpath(a, b, 1.1, .8)
+for k in range(10):      # prayer wheels along the kora's east side
+    wx, wy = loc(gx_, gy_, 40, 22.2, -6 + k * 2.0)
+    if path_dist(wx, wy) > 2.2: cyl("bronze", wx, wy, .45, zt(wx, wy) + 1.1, zt(wx, wy) + 2.5, 8); cyl("wood:#6b5846", wx, wy, .07, zt(wx, wy) - .2, zt(wx, wy) + 3.0, 4)
+ma, mb = ground_px(1215, 420), ground_px(1232, 362)
+if path_dist(*ma) > 2.4 and path_dist(*mb) > 2.4: mani_wall(ma[0], ma[1], mb[0], mb[1])
+# water-turned prayer wheels in little stone houses by the river, below each bridge
+for sp in L.SPANS:
+    ex, ey, ez = sp[0]; dx, dy = sp[-1][0] - ex, sp[-1][1] - ey; Lg = math.hypot(dx, dy); hx_, hy_ = ex - dx / Lg * 4.5 + dy / Lg * 7, ey - dy / Lg * 4.5 - dx / Lg * 7
+    if path_dist(hx_, hy_) > 3.5 and free(hx_, hy_, 3, .5) and not hides(hx_, hy_, 2.5, 4):
+        z_ = pad(hx_, hy_, 5, 5, 45, blend=2)
+        with placed_s(hx_, hy_, 45, z_): T = battered("rubble", 0, 0, 3.2, 3.2, -2, 2.6, 0, .04); cap("roof", grow(T, .3), 2.6); cyl("bronze", 0, -1.75, .5, .6, 1.9, 8)
+        claim(hx_, hy_, 3, 4)
+
 # strings of prayer flags from roof to roof across the lanes
 nf = 0
 for i, (ax, ay, az, ar) in enumerate(kit.ROOFS):

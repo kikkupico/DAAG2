@@ -135,6 +135,26 @@ def carve(roads, hw=1.5, shoulder=3.4, ease=16, skip=None):
                 if best is None or dd < best[0]: best = (dd, i)
             if best and best[0] < 1.6: P.insert(best[1] + 1, [e[0], e[1], round((P[best[1]][2] + P[best[1] + 1][2]) / 2, 2)])
     L.PS = np.array(ps, np.float32); return out
+def trail(pts, hw=1.3, shoulder=2.6, ease=8, cover="bare", v=.85, skip=None):
+    """A way that no courier walks (a stair up to a gate, a path to a door): the land is benched along it and its cover painted,
+    and it is left out of the network. Returns its points [(x, y, z)] every metre. Lay these before the network is carved."""
+    S_ = [(x, y) for x, y, *_ in along([(p[0], p[1]) for p in pts], 1.0)] + [tuple(pts[-1][:2])]
+    zs = np.array([zt(x, y) for x, y in S_]); k_ = min(ease, max(1, len(zs) // 2)); zz = np.convolve(np.pad(zs, k_, mode="edge"), np.ones(2 * k_ + 1) / (2 * k_ + 1), mode="valid"); R = hw + shoulder
+    for (x, y), z in zip(S_, zz):
+        if skip is not None and bil(skip, x, y) > .5: continue
+        sj, si = _win(x, y, R); d = np.hypot(X[sj, si] - x, Y[sj, si] - y); f = 1 - sstep(hw, R, d); L.Z[sj, si] = L.Z[sj, si] * (1 - f) + z * f
+        if cover: L.COV[cover][sj, si] = np.maximum(L.COV[cover][sj, si], v * (1 - sstep(hw * .7, hw + .8, d)))
+    return [(x, y, zt(x, y)) for x, y in S_]
+def steps(tr, w=2.2, key="ashlar", every=1.0, min_rise=.12):
+    """Stone treads across a trail wherever it climbs."""
+    for a, b in zip(tr[::1], tr[1:]):
+        if abs(b[2] - a[2]) < min_rise * math.dist(a[:2], b[:2]): continue
+        ang = math.degrees(math.atan2(b[1] - a[1], b[0] - a[0])); boxr(key, key, a[0], a[1], .7, w, min(a[2], b[2]) - .6, max(a[2], b[2]) + .04, ang, va=.4)
+def footpath(a, b, r=1.0, v=.8, cover="bare"):
+    """Ground worn bare between two points, as between a door and the lane."""
+    n = max(1, int(math.dist(a, b) / 1.2))
+    for i in range(n + 1): paint_disc(cover, lerp(a[0], b[0], i / n), lerp(a[1], b[1], i / n), r, v, 1.0)
+
 def path_dist(x, y): return bil(L.PD, x, y)
 def hides(x, y, r, h):
     """Would something this wide and tall, standing here, come between the camera and a walker on a path?"""

@@ -48,7 +48,23 @@ LEVEL = {}
 for k in PLACES:
     if k == "enemy city": LEVEL[k] = pad(AT[k][0], AT[k][1], 62, 48, 45, blend=4, how="mean"); claim(AT[k][0], AT[k][1], 42, 40)
     else: LEVEL[k] = pad(AT[k][0], AT[k][1], 46, 40, 45, blend=10); claim(AT[k][0], AT[k][1], 8, 6)
-roads = carve(roads, skip=(gorge > .12).astype(np.float32), hw=1.7)
+# the dzong's own ways, which no besieger walks: the stair that climbs the crag to its gate in three turns, the old road
+# from the valley (snowed over now, and barred), and the covered stair down to the stream that waters the garrison
+DZ = AT["enemy city"]; SKIP = (gorge > .12).astype(np.float32)
+def dl(lx, ly): return loc(DZ[0], DZ[1], 45, lx, ly, 1.3)
+RB = ground_px(800, 982); vx, vy = RB[0] - DZ[0], RB[1] - DZ[1]; vl = math.hypot(vx, vy)
+STAIR = trail([dl(0, -20), dl(0, -24), dl(11, -27), dl(13, -31), dl(-9, -34), dl(-11, -38), dl(5, -41), dl(3, -45)], hw=1.5, shoulder=2.2, ease=5, cover="pave", v=1.0)
+OLD = trail([STAIR[-1][:2], (DZ[0] + vx * .82, DZ[1] + vy * .82), (RB[0] - vx / vl * 7, RB[1] - vy / vl * 7)], hw=1.6, shoulder=3.0, ease=10, cover=None)
+wx_, wy_ = (-72 - 8 * math.sin(0)), 0.0
+def near_stream(p):      # the point of the stream nearest a place
+    best = None
+    for sv in np.arange(-120, 120, 2.0):
+        tv = -72 - 8 * math.sin(sv / 45.0); q = ((tv - sv) / R2, (tv + sv) / R2); d_ = math.dist(p, q)
+        if best is None or d_ < best[0]: best = (d_, q)
+    return best[1]
+W0 = dl(-23, 2); WS = near_stream(W0); wl = math.dist(W0, WS); WEND = (W0[0] + (WS[0] - W0[0]) * (wl - 9) / wl, W0[1] + (WS[1] - W0[1]) * (wl - 9) / wl)
+WATER = trail([W0, ((W0[0] + WEND[0]) / 2 + 3, (W0[1] + WEND[1]) / 2 - 3), WEND], hw=1.6, shoulder=2.0, ease=4, cover=None)
+roads = carve(roads, skip=SKIP, hw=1.7)
 for sp in L.SPANS: bridge(sp)
 
 # ---------------------------------------------------------------- the dzong
@@ -85,6 +101,37 @@ def dzong():
         for (a, b) in (((-21, -15.5, 16.4), (0, 2, 31.5)), ((21, -15.5, 16.4), (0, 2, 31.5)), ((-21, 15.5, 16.4), (0, 2, 31.5)), ((21, 15.5, 16.4), (0, 2, 31.5))): flag_line(a, b, sag=.04, size=.7)
         for (fx, fy) in ((-16, -12), (15, -11), (-4, -9)): fire(fx, fy, 11.6, .45, 120.0)           # watch fires on the wall-walk
 dzong()
+def approach():
+    """What makes the fortress a place people lived in and held: the gate stair with its parapet and its barbican, the road
+    below barred by the besiegers, and the walled stair down to the water with its tower at the stream."""
+    steps(STAIR, 2.6)
+    for a, b in zip(STAIR[::3], STAIR[3::3]):      # a parapet on the stair's outer side
+        dx, dy = b[0] - a[0], b[1] - a[1]; Lg = math.hypot(dx, dy)
+        if Lg < .5: continue
+        ox, oy = -dy / Lg, dx / Lg
+        if (a[0] + ox - DZ[0]) ** 2 + (a[1] + oy - DZ[1]) ** 2 < (a[0] - ox - DZ[0]) ** 2 + (a[1] - oy - DZ[1]) ** 2: ox, oy = -ox, -oy
+        m = ((a[0] + b[0]) / 2 + ox * 1.9, (a[1] + b[1]) / 2 + oy * 1.9); boxr("wash:" + WHITE, "paint:" + MAROON, m[0], m[1], Lg + .3, .6, min(a[2], b[2]) - 1.5, max(a[2], b[2]) + 1.1, math.degrees(math.atan2(dy, dx)), va=.6)
+    gx, gy, gz = STAIR[-1]                                             # the barbican at the stair's foot: a small gate tower, shut
+    with placed_s(gx, gy, 45, gz, 1.2):
+        T = battered("wash:" + WHITE, 0, 0, 7.5, 6, -3, 7.5, 0, .05, va=.5); parapet(T, 7.5, MAROON, .7, .18); door(0, 0, 7.5, 6, 0, 0, .5, 0, 2.2, 3.0, "#e2b53a", out=.3)
+        for sx in (-2.2, 2.2): window(0, 0, 7.5, 6, 0, 0, .5 + sx / 7.5, 4.6, .8, 1.1, lit=True)
+        lathe("gold", 0, 0, [(.35, 7.3), (.45, 8.2), (.05, 9.0)], 8)
+    claim(gx, gy, 6, 9); fire(*loc(gx, gy, 45, 5.5, -1.5, 1.2), gz, .4, 110.0)
+    for k in range(0, len(OLD) - 6, 7):                                # the old road: cairns along it under the snow
+        x, y, z = OLD[k]; dx, dy = OLD[k + 3][0] - x, OLD[k + 3][1] - y; Lg = math.hypot(dx, dy) or 1
+        for sd in (-1, 1): lathe("rubble", x - dy / Lg * 2.6 * sd, y + dx / Lg * 2.6 * sd, [(.55, z - .3), (.4, z + .5), (.1, z + .9)], 6, va=.5)
+    x, y, z = OLD[-1]; dx, dy = OLD[-1][0] - OLD[-6][0], OLD[-1][1] - OLD[-6][1]; Lg = math.hypot(dx, dy); px_, py_ = -dy / Lg, dx / Lg      # barred where it meets the besiegers' track
+    stone_wall([(x - px_ * 7, y - py_ * 7), (x + px_ * 7, y + py_ * 7)], 1.5, .9); stakes(x - px_ * 9 - dx / Lg * 2.5, y - py_ * 9 - dy / Lg * 2.5, x + px_ * 9 - dx / Lg * 2.5, y + py_ * 9 - dy / Lg * 2.5)
+    for a, b in zip(WATER[::4], WATER[4::4]):                          # the water stair: walled on both sides and roofed, stepping down the crag
+        dx, dy = b[0] - a[0], b[1] - a[1]; Lg = math.hypot(dx, dy)
+        if Lg < .5: continue
+        m = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2); zlo, zhi = min(a[2], b[2]), max(a[2], b[2]); boxr("wash:" + WHITE, "roof", m[0], m[1], Lg + .5, 3.6, zlo - 2, zhi + 3.2, math.degrees(math.atan2(dy, dx)), va=.7)
+        boxr("paint:" + MAROON, None, m[0], m[1], Lg + .6, 3.8, zhi + 2.7, zhi + 3.2, math.degrees(math.atan2(dy, dx)))
+    x, y, z = WATER[-1]
+    with placed_s(x, y, math.degrees(math.atan2(WS[1] - W0[1], WS[0] - W0[0])), z, 1.2):      # the water tower, on the bank
+        T = battered("wash:" + WHITE, 0, 0, 6.5, 6.5, -4, 10, 0, .05, va=.3); parapet(T, 10, MAROON, .7, .18)
+        for side in range(4): window(0, 0, 6.5, 6.5, 0, side, .5, 6.5, .8, 1.1, lit=side < 2)
+    claim(x, y, 6, 12)
 
 # ---------------------------------------------------------------- the camps
 def tent(x, y, rot, Lg=5.0, w=3.6, h=2.4, cloth="canvas:#d6cdb8", trim=None, lit=False):
@@ -135,7 +182,34 @@ def camp(k, chief=False):
     for _ in range(3):      # banners
         a = g.uniform(0, 6.28); bx, by = x + 12 * math.cos(a), y + 12 * math.sin(a)
         if path_dist(bx, by) > 3 and all(math.hypot(bx - a_, by - b_) > rr + 1 for a_, b_, rr in spots): pole(bx, by, zt(bx, by), 6.5, g=g)
-camp("camp A"); camp("camp B"); camp("camp C"); camp("commander's camp", chief=True)
+def trebuchet(x, y, rot):
+    """A counterweight engine: a timber frame on a sledge base, the long arm with its box of stones, the sling laid out behind."""
+    z = zt(x, y)
+    with placed_s(x, y, rot, z, 1.5):
+        for sy in (-1.3, 1.3):
+            bar("wood:#5a4636", (-3.2, sy, .15), (3.2, sy, .15), .3, .3); bar("wood:#5a4636", (-1.9, sy, .2), (0, sy, 4.6), .22, .22); bar("wood:#5a4636", (1.9, sy, .2), (0, sy, 4.6), .22, .22)
+        for sx in (-3.0, 0, 3.0): bar("wood:#5a4636", (sx, -1.3, .15), (sx, 1.3, .15), .26, .26)
+        beam("wood:#4d3d2e", (0, -1.5, 4.6), (0, 1.5, 4.6), .14, 6); bar("wood:#6b5846", (2.2, 0, 6.3), (-5.2, 0, 1.9), .26, .3)
+        boxr("wood:#4d3d2e", "rubble", 2.5, 0, 1.6, 1.4, 4.9, 6.3); beam("paint:#2a221c", (-5.2, 0, 1.9), (-6.6, 0, .25), .04, 4)
+        for k in range(5): lathe("rubble", -4.2 + (k % 3) * .5, 2.2 + (k // 3) * .5, [(.26, 0), (.3, .22), (.1, .45)], 6)
+    claim(x, y, 6, 8)
+def stores(x, y):
+    z = zt(x, y)
+    with placed_s(x, y, g.uniform(0, 90), z, 1.3):
+        for k in range(g.randint(4, 7)): boxr("wood:#6b5846", "wood:#7a6248", g.uniform(-1.6, 1.6), g.uniform(-1.2, 1.2), g.uniform(.8, 1.2), g.uniform(.7, 1.0), 0, g.uniform(.6, 1.3), g.uniform(0, 40))
+        for k in range(5): lathe("cloth:#b9a47e", 2.4 + (k % 3) * .6, -.5 + (k // 3) * .7, [(.3, 0), (.36, .25), (.3, .6), (.12, .72)], 7)
+        bar("wood:#5a4636", (-3.2, -1.6, .25), (-3.2, 1.6, .25), .14, .14); bar("wood:#5a4636", (-4.6, -1.6, .25), (-4.6, 1.6, .25), .14, .14); boxr("wood:#6b5846", "cloth:#b9a47e", -3.9, 0, 1.6, 2.6, .3, .9)      # a sledge, loaded
+    claim(x, y, 4.5, 2)
+camp("camp A"); camp("camp B"); camp("camp C"); camp("commander's camp", chief=True); approach()
+for k in ("camp A", "camp B", "camp C", "commander's camp"):
+    (x, y) = AT[k]; dx, dy = DZ[0] - x, DZ[1] - y; Lg = math.hypot(dx, dy); fx, fy = dx / Lg, dy / Lg
+    for (o1, o2) in ((44, 20), (44, -20)):
+        tx, ty = x + fx * o1 - fy * o2, y + fy * o1 + fx * o2
+        if path_dist(tx, ty) > 7 and free(tx, ty, 6, 1) and bil(gdist, tx, ty) > 14 and not hides(tx, ty, 3, 8): trebuchet(tx, ty, math.degrees(math.atan2(fy, fx))); paint_disc("bare", tx, ty, 6, .7, 3); break
+    for _ in range(30):
+        a = g.uniform(0, 6.28); tx, ty = x + 17 * math.cos(a), y + 17 * math.sin(a)
+        if path_dist(tx, ty) > 4 and free(tx, ty, 4.5, .5) and not hides(tx, ty, 3, 2): stores(tx, ty); break
+    footpath((x, y), DOOR[k], 1.6, .9)
 # watch fires along the ring, on the side away from the fortress, and a breastwork of stones before each
 for r in roads[:1]:
     for i, (x, y, ux, uy, dd) in enumerate(along([(p[0], p[1]) for p in r["pts"]], 46.0)):
