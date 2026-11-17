@@ -93,13 +93,13 @@ button.sd:hover { outline: 2px solid var(--node); outline-offset: 2px; }
 .map .intro { gap: var(--s5); }
 .map .sect > * { width: 100%; }
 .mapbox { overflow-x: auto; background: var(--room); border-radius: 12px; padding: var(--s4); }
-.mapbox svg { display: block; width: 100%; min-width: 840px; height: auto; }
+.mapbox svg { display: block; width: 100%; min-width: 680px; height: auto; }
 .mn { cursor: pointer; }
 .mn rect { fill: var(--ground); stroke: var(--line); stroke-width: 1.5; }
 .mn:hover rect, .mn:focus-visible rect { fill: var(--node-wash); stroke: var(--node); }
-.mn .n1 { font: 600 15px var(--serif); fill: var(--ink); } .mn .n2 { font: 11px var(--mono); fill: var(--soft); }
+.mn .n1 { font: 600 17px var(--serif); fill: var(--ink); } .mn .n2 { font: 13px var(--mono); fill: var(--soft); }
 .me { stroke: var(--soft); stroke-width: 1.5; fill: none; } .mh { fill: var(--soft); }
-.ml { font: 12px var(--sans); fill: var(--soft); }
+.ml { font: 14px var(--sans); fill: var(--soft); }
 
 /* the introduction: running text in the narrating serif, under the map's own section frame */
 .about .sect { gap: var(--s3); }

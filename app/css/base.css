@@ -14,7 +14,8 @@
   --t-h2: clamp(23px, 1.4vw + 16px, 30px); --t-h1: clamp(30px, 3vw + 16px, 44px);
   /* one spacing scale, in steps of four */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
-  --measure: 68ch;      /* the longest line of running text */
+  --col: 46rem;         /* the one column every page is set in: bar, prose, pictures, cards and panels share its edges */
+  --measure: 100%;      /* running text fills the column; at 46rem that is about 78 characters of reading text */
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --ground: #0b0f1a; --room: #171d30; --ink: #e6e9f2; --soft: #98a2bb; --line: #2e3753;
@@ -57,10 +58,7 @@ p, h1, h2, h3, dl, dd, ul, figure { margin: 0; }
 /* page frame: a collapsible drawer, then the content. Open, the drawer takes a column on wide screens and overlays on narrow ones. */
 .app { --dw: 300px; display: grid; grid-template-columns: var(--dw) minmax(0, 1fr); transition: grid-template-columns .22s ease; }
 .app[data-drawer="closed"] { grid-template-columns: 0 minmax(0, 1fr); }
-.content { min-width: 0; max-width: 1040px; width: 100%; margin: 0 auto; padding-inline: var(--s6); }
-/* Pages that are mostly reading (the introduction, a result's own page) are one column: the bar, the prose,
-   the pictures and the cards share both edges, and the prose fills the column instead of stopping short of it. */
-.content:has(.about, .start) { --measure: 100%; max-width: calc(46rem + 2 * var(--s6)); }
+.content { min-width: 0; max-width: calc(var(--col) + 2 * var(--s6)); width: 100%; margin: 0 auto; padding-inline: var(--s6); }
 .drawer { position: sticky; top: 0; height: 100vh; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; background: var(--room); border-right: 1px solid var(--line);
   padding: var(--s4) var(--s3) var(--s7); display: grid; gap: var(--s5); align-content: start; width: var(--dw); transition: transform .22s ease, visibility .22s; z-index: 30; }
 .app[data-drawer="closed"] .drawer { transform: translateX(-100%); visibility: hidden; }
@@ -76,8 +74,9 @@ p, h1, h2, h3, dl, dd, ul, figure { margin: 0; }
 .where button:hover { text-decoration: underline; text-underline-offset: 3px; }
 .where .sep { margin-inline: var(--s2); opacity: .6; }
 .brand { display: flex; align-items: center; gap: var(--s3); font: 500 var(--t-md)/1.2 var(--serif); letter-spacing: -.005em; }
-.brand svg { flex: none; width: 20px; height: 20px; }
-.brand .b-room { fill: var(--node); } .brand .b-wire { stroke: var(--ink); }
+.brand svg { flex: none; width: 26px; height: 26px; }
+/* the mark: a temple whose pediment is three nodes passing messages; the tile and the temple follow the theme, the nodes stay terracotta */
+.brand .b-tile { fill: var(--ink); } .brand .b-ped { stroke: var(--room); } .brand .b-col { fill: var(--room); } .brand .b-node { fill: #e0803a; }
 /* the two-way switches: one quiet track, the chosen side filled */
 .bar .reg { margin-left: auto; flex: none; }
 .reg { display: inline-flex; border-radius: 99px; padding: 3px; background: var(--room); box-shadow: inset 0 0 0 1px var(--line); }

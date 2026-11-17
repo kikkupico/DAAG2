@@ -196,7 +196,7 @@ const MAP_EDGES = [["clocks", "snapshot", "a state that could have been"], ["clo
     ["linear", "cap", "what lost messages take away"], ["cap", "quorum", "wait for some copies, not all"], ["quorum", "merge", "or never wait, and merge"], ["merge", "bayou", "when merging needs one order"],
     ["liars", "pbft", "the same, for a stream"], ["vr", "pbft", "the same, among liars"]];
 function mapHTML() {
-  const X = [20, 260, 500, 740], Y = [30, 150, 270, 390, 510], W = 170, H = 58, isle = reg === "isle";
+  const X = [20, 260, 500, 740], Y = [30, 150, 270, 390, 510], W = 196, H = 58, isle = reg === "isle";
   const at = { snapshot: [0, 0], clocks: [0, 1], cops: [0, 2], commit: [0, 3], benor: [1, 0], flp: [1, 1], suspect: [1, 2], paxos: [1, 3], vr: [1, 4],
     liars: [2, 3], pbft: [2, 4], linear: [3, 0], cap: [3, 1], quorum: [3, 2], merge: [3, 3], bayou: [3, 4] };
   let g = "";
@@ -208,7 +208,7 @@ function mapHTML() {
       g += `<path class="me" d="M${x} ${y1}V${y2 + k}"/><path class="mh" d="M${x - 5} ${y2 + k}L${x} ${y2}L${x + 5} ${y2 + k}z"/><text class="ml" x="${x + 12}" y="${(y1 + y2) / 2 + 4}">${esc(label)}</text><path class="mhit" d="M${x} ${y1}V${y2}"/></g>`;
     } else {
       const y = Y[ra] + H / 2, x1 = X[ca] + W, x2 = X[cb], far = cb - ca > 1;
-      g += `<path class="me" d="M${x1} ${y}H${x2 - 8}"/><path class="mh" d="M${x2 - 8} ${y - 5}L${x2} ${y}L${x2 - 8} ${y + 5}z"/><text class="ml" text-anchor="middle" x="${(x1 + x2) / 2}" y="${far ? y - 9 : Y[ra] + H + 18}">${esc(label)}</text><path class="mhit" d="M${x1} ${y}H${x2}"/></g>`;
+      g += `<path class="me" d="M${x1} ${y}H${x2 - 8}"/><path class="mh" d="M${x2 - 8} ${y - 5}L${x2} ${y}L${x2 - 8} ${y + 5}z"/><text class="ml" text-anchor="${far ? "middle" : "end"}" x="${far ? (x1 + x2) / 2 : x2 + 18}" y="${far ? y - 9 : Y[ra] + H + 18}">${esc(label)}</text><path class="mhit" d="M${x1} ${y}H${x2}"/></g>`;
     }
   });
   PAPERS.forEach(p => {
