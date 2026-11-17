@@ -83,8 +83,8 @@ p, h1, h2, h3, dl, dd, ul, figure { margin: 0; }
 .reg button[aria-pressed="true"] { background: var(--ink); color: var(--room); }
 
 /* small lists of a term and its meaning */
-.lexi { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: var(--s1) var(--s5); font-size: var(--t-sm); line-height: 1.5; max-width: var(--measure); }
-.lexi dt { font-weight: 500; } .lexi dd { color: var(--soft); }
+.lexi { display: grid; grid-template-columns: fit-content(50%) minmax(0, 1fr); gap: var(--s1) var(--s5); font-size: var(--t-sm); line-height: 1.5; max-width: var(--measure); }
+.lexi dt { font-weight: 500; } .lexi dd { color: var(--soft); } .lexi :is(dt, dd) { min-width: 0; overflow-wrap: anywhere; }
 .customs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: var(--s4) var(--s6); padding: 0; list-style: none; }
 .customs li { display: grid; gap: var(--s1); align-content: start; font-size: var(--t-sm); line-height: 1.5; }
 .fine { font-size: var(--t-sm); line-height: 1.55; color: var(--soft); max-width: var(--measure); }
@@ -122,7 +122,7 @@ nav#index { display: grid; gap: var(--s5); }
 .link { text-decoration: underline; text-underline-offset: 2px; font-weight: 500; margin-left: 6px; }
 .link:hover { color: var(--node); }
 
-main { min-width: 0; display: grid; gap: var(--s6); align-content: start; padding-block: var(--s4) 96px; }
+main { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s6); align-content: start; padding-block: var(--s4) 96px; }
 
 [hidden] { display: none !important; }
 

@@ -1,7 +1,7 @@
 /* the paper: its name, where it comes from, the idea, then three facts and the telling's words */
-.paper { display: grid; gap: var(--s5); }
+.paper { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); }
 h1 { font: 500 var(--t-h1)/1.1 var(--serif); letter-spacing: -.015em; text-wrap: balance; }
-.phead { display: grid; gap: var(--s2); }
+.phead { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s2); }
 .cite { display: flex; flex-wrap: wrap; gap: 2px var(--s5); font: var(--t-sm)/1.5 var(--sans); color: var(--soft); }
 .idea { font: var(--t-xl)/1.5 var(--serif); max-width: var(--measure); text-wrap: pretty; }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--s4) var(--s6); padding-top: var(--s5); border-top: 1px solid var(--line); }
@@ -10,8 +10,8 @@ h1 { font: 500 var(--t-h1)/1.1 var(--serif); letter-spacing: -.015em; text-wrap:
 .words { display: grid; gap: var(--s2); }
 
 /* a result's own page: its scenes, each with its point */
-.start { display: grid; gap: var(--s5); justify-items: start; }
-.toc { display: grid; width: 100%; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.start { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); justify-items: start; }
+.toc { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; padding: 0; list-style: none; border-top: 1px solid var(--line); }
 .toc button { display: grid; grid-template-columns: var(--s5) minmax(0, 1fr); gap: 2px var(--s2); width: 100%; padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
 .toc .n { grid-row: span 2; font: 500 var(--t-xs)/27px var(--mono); color: var(--soft); }
 .toc .t { font: 500 var(--t-lg)/1.5 var(--serif); }
@@ -19,7 +19,7 @@ h1 { font: 500 var(--t-h1)/1.1 var(--serif); letter-spacing: -.015em; text-wrap:
 .toc button:hover .t { text-decoration: underline; text-underline-offset: 3px; }
 
 /* the scene */
-.scene { display: grid; gap: var(--s5); }
+.scene { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); }
 #scene { scroll-margin-top: 64px; }      /* the sticky bar is 56px; a jump to the scene stops with its title just below it */
 .oc { flex: none; }
 /* the scene's head: the title with its switches at the far end, then the point and the cast */
@@ -57,7 +57,7 @@ h2 { font: 500 var(--t-h2)/1.15 var(--serif); letter-spacing: -.01em; text-wrap:
 .sum li span { grid-column: 2; font: var(--t-sm)/1.5 var(--sans); color: var(--soft); }
 .sum .together { font: var(--t-lg)/1.5 var(--serif); max-width: var(--measure); text-wrap: pretty; }
 .sum .together .label { display: block; margin-bottom: var(--s1); }
-.ctl { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; }
+.ctl { display: flex; max-width: 100%; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; }
 .btn.sm { padding: 9px 14px; font-size: var(--t-sm); font-weight: 500; border-width: 1px; border-color: var(--line); background: var(--room); }
 
 /* the scene at a glance: one dot per step */
