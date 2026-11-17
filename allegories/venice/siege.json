@@ -11,14 +11,14 @@
  "places": {
   "camp C": {
    "label": "galley",
-   "at": [200, 190],
-   "door": [290, 285],
+   "at": [275, 225],
+   "door": [325, 315],
    "landmark": "a Venetian war galley of the blockading fleet riding at anchor, seen small from high above: sails furled, oars shipped, its deck lit by lanterns"
   },
   "commander's camp": {
    "label": "flagship",
-   "at": [1330, 200],
-   "door": [1310, 285],
+   "at": [1345, 210],
+   "door": [1285, 290],
    "landmark": "the flagship of the blockading fleet: a Venetian war galley at anchor, seen small from high above, a little larger than the other three, with a gilded stern, more lanterns and a red and gold banner"
   },
   "enemy city": {
@@ -30,14 +30,14 @@
   },
   "camp B": {
    "label": "galley",
-   "at": [200, 1010],
-   "door": [290, 915],
+   "at": [275, 1050],
+   "door": [345, 925],
    "landmark": "a Venetian war galley of the blockading fleet riding at anchor, seen small from high above: sails furled, oars shipped, its deck lit by lanterns"
   },
   "camp A": {
    "label": "galley",
-   "at": [1400, 1010],
-   "door": [1310, 915],
+   "at": [1365, 975],
+   "door": [1265, 905],
    "landmark": "a Venetian war galley of the blockading fleet riding at anchor, seen small from high above: sails furled, oars shipped, its deck lit by lanterns"
   }
  },
@@ -45,27 +45,27 @@
   {
    "kind": "road",
    "width": 6,
-   "pts": [[330, 330], [560, 235], [800, 212], [1040, 235], [1270, 330], [1345, 600], [1270, 870], [1040, 968], [800, 990], [560, 968], [330, 870], [258, 600], [330, 330]]
+   "pts": [[350, 340], [500, 240], [675, 190], [860, 185], [1055, 205], [1255, 325], [1365, 375], [1420, 505], [1425, 625], [1355, 725], [1235, 880], [1060, 985], [800, 1030], [540, 980], [360, 885], [245, 745], [180, 580], [220, 420], [350, 340]]
   },
   {
    "kind": "road",
    "width": 6,
-   "pts": [[330, 330], [290, 285]]
+   "pts": [[350, 340], [325, 315]]
   },
   {
    "kind": "road",
    "width": 6,
-   "pts": [[1270, 330], [1310, 285]]
+   "pts": [[1255, 325], [1285, 290]]
   },
   {
    "kind": "road",
    "width": 6,
-   "pts": [[330, 870], [290, 915]]
+   "pts": [[360, 885], [345, 925]]
   },
   {
    "kind": "road",
    "width": 6,
-   "pts": [[1270, 870], [1310, 915]]
+   "pts": [[1235, 880], [1265, 905]]
   }
  ],
  "bands": false
