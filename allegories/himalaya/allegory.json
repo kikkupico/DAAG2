@@ -1,0 +1,16 @@
+{
+ "id": "himalaya",
+ "name": "The High Himalaya",
+ "title": "Distributed Algorithms of the High Himalaya",
+ "town": "Thangla",
+ "people": "the farmers, part-time village elders, soldiers and monks of a monastery village in the high Himalaya",
+ "stages": {
+  "city": "city.json",
+  "siege": "siege.json"
+ },
+ "words": [["amphorae", "jars"], ["amphora", "jar"], ["ox-cart", "yak train"], ["sardines", "dried cheese"], ["salt fish", "butter"], ["fish", "butter"], ["wine", "beer"], ["legislators", "elders"], ["legislator", "elder"], ["columns", "pillars"], ["stadia", "leagues"], ["spears", "arrows"], ["Homer", "Milarepa"], ["Hesiod", "Atisha"], ["Sappho", "Machig"], ["Iliad", "Kangyur"], ["Odyssey", "Tengyur"]],
+ "hero": {
+  "alt": "A Himalayan village seen from above: whitewashed flat-roofed houses and prayer flags round a great white chorten, a monastery with a golden roof on its crag, barley terraces, a turquoise river in a gorge crossed by timber bridges, and a snowy mountain wall.",
+  "caption": "The village of Thangla. Nobody here shares a room. Every message in every scene walks one of these paths."
+ }
+}

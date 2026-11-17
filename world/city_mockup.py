@@ -6,9 +6,10 @@ Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app app/js/data/ci
 (as at Plataea, 429 BC: two walls of mud brick with a walk between them), with a siege mound against the town's south-east face, and four
 camps outside the lines (the commander's to the north, A, B and C to the east, south and west). The only way between camps is the walk
 inside the double wall, so every message goes the long way round, out of bowshot of the town.
-With --app it also writes the page's city stage: the southeast picture alone (baked to app/img/<view>-<width>.webp, which needs
-Google Chrome and cwebp), where each place is in it, and the road route between every pair of places, lifted onto the stairs and
-terraces, all in the picture's own pixels. The page's city is made with --detail; the siege with --siege --night --detail.
+--network file.json writes this world's transport network (its places, and its roads as lines of plan points with heights): the
+source of allegories/greece/city.json and siege.json, from which tools/allegory.py works out every route the page draws.
+--app app/js/data/city.js bakes the southeast picture alone to app/img/<view>-<width>.webp (needs Google Chrome and cwebp). The page's
+city is made with --detail; the siege with --siege --night --detail. The page's data itself is written by tools/allegory.py build greece.
 --dump scene.json writes the same world as data for world/build_polis.py, which builds a richer world on it in Blender, in exactly this frame;
 --bg3d render.png then bakes that render beside the drawing (app/img/<view>-3d-<width>.webp), and the page can show either."""
 import math, sys, heapq, random
@@ -846,6 +847,32 @@ def dump():
         places={n: dict(at=at, door=door, z=zat(*at), zdoor=zroute(*door)) for n, (at, door) in APP_PLACES.items()},
         routes=route_samples(), precinct=PRECINCT, wall_n=WALL_N if not SIEGE else [], postern=POSTERN if not SIEGE else None), separators=(",", ":"))
 
+def network():
+    """This world's transport network for tools/allegory.py: every place, and every road as a line of plan points [east, north, up],
+    with a point wherever the walker's height stops changing evenly. The page's routes are worked out from this file."""
+    import json
+    r2 = lambda v: round(v, 2)
+    def line(pts):
+        out = []
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+            n = max(1, int(math.hypot(x2 - x1, y2 - y1) / 3)); S_ = [(x1 + (x2 - x1) * j / n, y1 + (y2 - y1) * j / n) for j in range(n + 1)]
+            Z = [zroute(x, y) for x, y in S_]; keep = [0]
+            for j in range(1, n):                                                  # keep a sample only where the height leaves the straight line between its neighbours
+                if abs(Z[j] - (Z[j - 1] + Z[j + 1]) / 2) > 1e-6: keep.append(j)
+            out += [[r2(S_[j][0]), r2(S_[j][1]), round(Z[j], 3)] for j in keep]
+        out.append([r2(pts[-1][0]), r2(pts[-1][1]), round(zroute(*pts[-1]), 3)])
+        return out
+    label = {"library NW": "town library", "library T": "hill school", "library SE": "cape library", "proposer P": "proposer", "proposer Q": "proposer",
+             "camp A": "camp", "camp B": "camp", "camp C": "camp"}
+    places = {}
+    for k, pl in PLACES.items():
+        (ax, ay), (dx, dy) = pl["at"], pl["door"]
+        places[pl.get("name", k)] = dict(label=label.get(k, k), at=[ax, ay, round(zat(ax, ay), 3)], door=[dx, dy, round(zroute(dx, dy), 3)])
+    if SIEGE: places["enemy city"]["reach"] = False                              # shut in: no messenger goes there
+    else: places["crossroads"] = dict(label="crossroads", at=[0, 6, 0], door=[0, 0, 0])
+    return json.dumps(dict(stage="siege" if SIEGE else "city", units="m", night=NIGHT, places=places,
+                           roads=[dict(kind=k, width=w, pts=line(pts)) for w, k, pts in ROADS]), indent=1)
+
 def route_samples():
     """Every road route the page draws, in plan metres with the walker's height: the same samples app_js() projects."""
     G, key = graph(); names = sorted(APP_PLACES); out = []
@@ -871,6 +898,8 @@ elif "--app" in sys.argv:                                                       
     if os.path.exists(_r): BG3D = _r
 if "--dump" in sys.argv:
     i = sys.argv.index("--dump"); open(sys.argv.pop(i + 1), "w").write(dump()); sys.argv.pop(i)
+if "--network" in sys.argv:
+    i = sys.argv.index("--network"); open(sys.argv.pop(i + 1), "w").write(network()); sys.argv.pop(i)
 if "--crop" in sys.argv: open(sys.argv[sys.argv.index("--crop") + 1], "w").write(crop_svg(-70, 120, 25, 205))
 open(sys.argv[1], "w").write(svg())
-if "--app" in sys.argv: open(sys.argv[sys.argv.index("--app") + 1], "w").write(app_js())
+if "--app" in sys.argv: app_js(); print("baked the pictures; now run: python3 tools/allegory.py build greece")

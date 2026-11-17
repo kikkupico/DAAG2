@@ -56,7 +56,7 @@ function paperHTML(it) {
   const facts = g => `<dl class="facts">${[["The goal", g.goal], ["What is shared", g.shared], ["What it assumes", g.assumes]].map(([k, v]) => `<div><dt class="label">${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`;
   const words = (label, list) => list.length ? `<div class="words"><p class="label">${label}</p><dl class="lexi">${list.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl></div>` : "";
   if (I) return `${head}
-    <p class="idea">Told among the ${HAT[I.hat][0].toLowerCase()} of Paxos. ${esc(HAT[I.hat][1])} ${esc(I.tale)}</p>
+    <p class="idea">Told among the ${HAT[I.hat][0].toLowerCase()} of ${esc(ALLEGORY.town)}. ${esc(HAT[I.hat][1])} ${esc(I.tale)}</p>
     ${I.frame ? facts(I.frame) : ""}
     ${words("In the telling, in plain terms", I.gloss)}`;
   const names = (p.names || "").split(" · ").filter(Boolean).map(e => { const i = e.indexOf(" = "); return i < 0 ? [e, ""] : [e.slice(0, i), e.slice(i + 3)]; });
@@ -217,7 +217,7 @@ function mapHTML() {
   });
   const svg = `<div class="mapbox"><svg viewBox="0 0 980 610" role="group" aria-label="How the sixteen lead to one another">${g}</svg></div>`;
   const words = [["Courier", "A message. It may be slow, lost, or overtaken by a later one."], ["Ledger", "Permanent state. It passes to whoever takes over."], ["Slate", "Temporary state. It is wiped when its owner goes."],
-    ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody on the island has it. Here it is set beside the telling, in a dashed frame."]];
+    ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody in " + ALLEGORY.town + " has it. Here it is set beside the telling, in a dashed frame."]];
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
   const sect = (label, body) => `<section class="sect"><p class="label">${label}</p>${body}</section>`;
   if (isle) return `<div class="map">
@@ -226,7 +226,7 @@ function mapHTML() {
     ${sect("How the sixteen lead to one another", svg)}
     ${sect("Four kinds of work, four kinds of problem", items(Object.values(HAT)))}
     ${sect("Six words used everywhere", items(words))}
-    ${sect("About the telling", `<p class="fine">Those who do the work have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, a fishery, a granary and a winery, stand in for A, B and C, and a notary for K. A few of the people they serve are named, such as Ann and Bob, who book the reading room. What is asked for and decided is specific here, such as a colour for the temple columns or an order for grain, but the steps are the same.</p>`)}
+    ${sect("About the telling", `<p class="fine">Those who do the work have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, the ${esc(CITY.label.fishery)}, the ${esc(CITY.label.granary)} and the ${esc(CITY.label.winery)}, stand in for A, B and C, and a notary for K. A few of the people they serve are named, such as Ann and Bob, who book the reading room. What is asked for and decided is specific here, such as a colour for the ${esc(CITY.label.temple)} columns or an order for ${ALLEGORY.fill("grain")}, but the steps are the same.</p>`)}
   </div>`;
   return `<div class="map">
     <div class="intro"><h1>${U().map}</h1>

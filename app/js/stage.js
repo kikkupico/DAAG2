@@ -1,16 +1,18 @@
 // ---------- the stage: the picture, with one step's couriers drawn on its roads ----------
-let stageStep = 0;
+let stageStep = Math.max(0, +new URLSearchParams(location.search).get("step") || 0);      // ?step=2 opens a scene at that step
 const stageOf = it => { const T = TELL[it.p.id]; return T && T.stage ? T.stage : null; };
 function along(pts, t) {    // the point a fraction t of the way along a line of points
   const L = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1])); let d = t * L.reduce((a, b) => a + b, 0);
   for (let i = 0; i < L.length; i++) { if (d <= L[i] || i === L.length - 1) { const f = L[i] ? Math.min(1, d / L[i]) : 0; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f]; } d -= L[i]; }
   return pts[0];
 }
-// ---------- the city stage: the isometric city from world/city_mockup.py, with messengers walking its roads ----------
+// ---------- the city stage: the picture of the allegory's world, with messengers walking its roads ----------
 // A step plays as a short animation: timers ring at your place, messengers arriving walk in along the roads, the step happens
 // at your place (a ring), then messengers leaving walk out. Each leaves a trail; a lost one stops partway. Replay runs it again.
-// The geometry a stage plays on: the city or the siege, both from world/city_mockup.py. Each entry point below sets GEO from its scene's stage before drawing.
-const geoFor = S => S.view === "siege" ? SIEGE : CITY;
+// The geometry a stage plays on. The Allegory plays on the current allegory's own world (CITY and SIEGE, from app/allegories/<id>.js,
+// built by tools/allegory.py from its network files); the Abstraction always plays on PLAIN, which no allegory changes. Both name their places by the same role ids, so
+// a scene's stage (TELL[...].stage) serves both. Each entry point below sets GEO from its scene's stage before drawing.
+const geoFor = S => { const v = S.view === "siege" ? "siege" : "city"; return reg === "isle" ? (v === "siege" ? SIEGE : CITY) : PLAIN[v]; };
 let GEO = typeof CITY !== "undefined" ? CITY : null;
 const useGeo = S => (GEO = geoFor(S));
 const cityRoute = (a, b) => {
@@ -46,7 +48,7 @@ function sizeLabel(lb, E) {      // a place's plate: the node's chip, the place'
 function layPlaces(fig, E) {     // puts each place's plate beside its mark, inside the frame and clear of the others; returns everything a tag must keep off
   const svg = fig.querySelector(".stg > svg"), o = svg.getBoundingClientRect(), k = GEO.w / (o.width || GEO.w), plain = fig.classList.contains("abs"), g = .3 * E;
   const blocks = [...fig.querySelectorAll(".replay, .thb")].filter(b => b.offsetWidth).map(b => { const q = b.getBoundingClientRect(); return [[(q.left - o.left) * k - g, (q.top - o.top) * k - g, (q.right - o.left) * k + g, (q.bottom - o.top) * k + g], 60]; });
-  const gs = [...fig.querySelectorAll(".cpl")], { e, n, u } = GEO.iso, hw = (e[0] + n[0]) * 7.6, dn = (e[1] - n[1]) * 7.6, up = dn - u[1] * 9;      // in the Abstraction register the mark is a block
+  const gs = [...fig.querySelectorAll(".cpl")], { e, n, u } = PLAIN.city.iso, hw = (e[0] + n[0]) * 7.6, dn = (e[1] - n[1]) * 7.6, up = dn - u[1] * 9;      // in the Abstraction register the mark is a block
   const marks = gs.map(c => { const x = +c.dataset.x, y = +c.dataset.y; return plain ? [x - hw, y - up, x + hw, y + dn] : [x - .55 * E, y - .55 * E, x + .55 * E, y + .55 * E]; });
   marks.forEach(m => blocks.push([m, 25]));
   gs.map((c, i) => i).sort((a, b) => gs[b].classList.contains("me") - gs[a].classList.contains("me")).forEach(i => {
@@ -91,7 +93,7 @@ function cityTrips(it, S) {        // this step's messages as walks along the ro
 const cityBox = () => [0, 0, GEO.w, GEO.h];      // the whole picture, at its own aspect (the city's is 4:3), for every scene
 const decided = r => r.perm && typeof r.perm.decided === "string" && r.perm.decided !== "none" ? r.perm.decided : "";
 function cityBlock(k, x, y, me, letter) {    // a node in the Abstraction register: a solid block standing where its place is
-  const { e, n, u } = GEO.iso, s = 7, h = 9, fx = v => v.toFixed(1);
+  const { e, n, u } = PLAIN.city.iso, s = 7, h = 9, fx = v => v.toFixed(1);
   const P = (a, b, c) => fx(x + e[0] * a + n[0] * b + u[0] * c) + "," + fx(y + e[1] * a + n[1] * b + u[1] * c);
   const face = (cls, pts) => `<polygon class="${cls}" points="${pts.map(q => P(...q)).join(" ")}"/>`;
   const [tx, ty] = [x + u[0] * h, y + u[1] * h];
@@ -117,8 +119,8 @@ function cityPlaces(it, S) {       // the scene's places, each named as the step
 function cityHTML(it, S) {
   useGeo(S);
   const [bx, by, bw, bh] = cityBox(it, S), u = bw / 650, me = S[it.s.who], [mx] = GEO.places[me];
-  const plain = reg !== "isle", baked = !plain && GEO.img;     // the drawn city and siege: baked to WebP by world/city_mockup.py, under the messengers
-  const r3 = baked && GEO.img3d && bg === "rendered", pic = r3 ? GEO.img3d : GEO.img;   // or the same frame rendered in Blender: same pixels, same roads
+  const plain = reg !== "isle", baked = !plain && GEO.img;     // the world's picture, baked to WebP by tools/allegory.py, under the messengers
+  const r3 = baked && GEO.img3d && bg === "rendered", pic = r3 ? GEO.img3d : GEO.img;   // a world may have a second picture of the same frame (the first one has a drawing and a render)
   const world = plain ? `<rect class="gnd" width="${GEO.w}" height="${GEO.h}"/><path class="rdn street" d="${GEO.plain.street}"/><path class="rdn road" d="${GEO.plain.road}"/>` : baked ? "" : GEO.svg;
   return `<figure class="stage city${plain ? " abs" : GEO.night ? " night" : ""}" id="stage" data-scene="${esc(it.key)}" data-reg="${reg}" data-pic="${r3 ? "rendered" : "drawn"}" data-u="${u.toFixed(3)}" data-mx="${((mx - bx) / bw).toFixed(3)}" style="--ar:${(bw / bh).toFixed(3)}"><div class="stv"><div class="stw"><div class="stg${baked ? " baked" : ""}">`
     + (baked ? `<img class="wld" src="${Object.values(pic)[0]}" srcset="${Object.entries(pic).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="${GEO.w}" height="${GEO.h}" alt="" decoding="async">` : "")

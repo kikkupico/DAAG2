@@ -132,10 +132,10 @@ env/
 
 # the Blender build of the city and siege: dumped scenes, renders, logs (world/build_polis.py)
 world/build3d/
-# the reskin kit's guide images (world/reskin/reskin.py build), small and wanted alongside its README
-!world/reskin/*.png
-!world/reskin/examples/*.jpg
 
 # the briefs for the detail passes: kept on disk, not in the repository
 world/detail-plan/
 world/detail-plan-siege/
+
+# an allegory's working files: plates, diagrams, overlays, intermediate paintings (tools/allegory.py)
+allegories/*/work/

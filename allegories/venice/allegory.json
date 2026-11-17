@@ -1,0 +1,16 @@
+{
+ "id": "venice",
+ "name": "The Venetian lagoon",
+ "title": "Distributed Algorithms of the Venetian Lagoon",
+ "town": "Rivoalto",
+ "people": "the merchants, part-time councillors, sea captains and scribes of a town in the Venetian lagoon",
+ "stages": {
+  "city": "city.json",
+  "siege": "siege.json"
+ },
+ "words": [["amphorae", "barrels"], ["amphora", "barrel"], ["ox-cart", "barge"], ["wine", "glass"], ["grain", "salt"], ["legislators", "councillors"], ["legislator", "councillor"], ["stadia", "miles"], ["spears", "crossbows"], ["Homer", "Virgil"], ["Hesiod", "Ovid"], ["Sappho", "Petrarch"], ["Iliad", "Aeneid"], ["Odyssey", "Commedia"]],
+ "hero": {
+  "alt": "A town on low islands in a teal lagoon, seen from above: a domed basilica and its bell tower, a paved square, palazzi, workshops and a salt works, joined by quays and bridges over narrow canals.",
+  "caption": "The town of Rivoalto. Nobody here shares a room. Every message in every scene walks one of these quays."
+ }
+}

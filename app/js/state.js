@@ -2,8 +2,9 @@
 const isTop = k => k === "map" || k === "intro";      // the two pages that belong to no result
 let sel = "intro", cmp = false, reg = "isle";
 const haz = new Set();
-let bg = "rendered";            // the Allegory's background: the frame rendered in Blender (or ?bg=drawn for the drawn city)
+let bg = "rendered";            // the Allegory's background, where a world has two pictures of its frame: the second (or ?bg=drawn for the first)
 try { if (localStorage.getItem("reg") === "plain") reg = "plain"; } catch (e) {}
+{ const q = new URLSearchParams(location.search).get("reg"); if (q === "plain" || q === "isle") reg = q; }      // ?reg=plain: for a link or a screenshot
 { const q = new URLSearchParams(location.search).get("bg"); if (q === "rendered" || q === "3d") bg = "rendered"; else if (q === "drawn") bg = "drawn"; }
 
 const UI = {
@@ -20,7 +21,7 @@ const UI = {
     differ0: "The two scenes differ from the start: the node keeps different things.", until: d => `The two scenes are identical from inside until step ${d}.`,
   },
   isle: {
-    title: "Distributed Algorithms of Ancient Greece",
+    title: ALLEGORY.title,
     map: "Bird's Eye View", arrives: "Arrives", leaves: "Leaves", perm: "in the ledger", temp: "on the slate",
     permL: "ledger: passes to a successor", tempL: "slate: wiped when its owner goes",
     seen: "World view", unseen: w => `${w} cannot see this`, point: "The point",

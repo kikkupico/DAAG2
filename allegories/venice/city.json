@@ -1,0 +1,130 @@
+{
+ "stage": "city",
+ "units": "px",
+ "night": false,
+ "picture": "city.png",
+ "setting": "an early medieval town of the Venetian lagoon, built on low islands of mud and reed",
+ "route": "Each dark band becomes a route that people walk along: a quay paved in pale Istrian stone or a broad timber boardwalk where it runs on land, and a stone or timber bridge wherever it crosses water. A route is never water itself.",
+ "ground": "Paint a shallow teal-green lagoon seen in clear morning light, with low islands of mud, grass and reed under the routes; narrow canals divide the islands and open water with pale sandbanks and reed beds surrounds them. Wherever a route crosses a canal it is carried on a bridge.",
+ "fill": "Fill the islands with close-packed brick and timber houses with weathered tile roofs, small paved squares with wellheads, kitchen gardens, boats moored along the canals (never on a route), and salt pans and fishing stakes out in the shallows. Do not fall back on a generic mainland town with fields.",
+ "places": {
+  "winery": {
+   "label": "glassworks",
+   "at": [330, 125],
+   "door": [290, 240],
+   "landmark": "a glassworks: a brick workshop with smoking furnace chimneys and stacks of firewood, on its own small island"
+  },
+  "northwest library": {
+   "label": "abbey library",
+   "at": [800, 150],
+   "door": [800, 215],
+   "landmark": "a monastery with a cloister and a library, where records are kept"
+  },
+  "temple library": {
+   "label": "scriptorium",
+   "at": [1090, 290],
+   "door": [1180, 355],
+   "landmark": "a scriptorium beside the basilica: a stone hall where records are copied and kept"
+  },
+  "temple": {
+   "label": "basilica",
+   "at": [1420, 200],
+   "door": [1320, 235],
+   "landmark": "the seat of power: a great domed basilica with a colonnaded front and a tall brick bell tower, the grandest place in the picture"
+  },
+  "proposer P": {
+   "label": "palazzo",
+   "at": [540, 470],
+   "door": [440, 604.4],
+   "landmark": "a merchant's palazzo with arcaded loggias, marked by one strong blue feature: blue awnings and a long blue banner"
+  },
+  "crossroads": {
+   "label": "campo",
+   "at": [840, 585],
+   "door": [830, 632],
+   "landmark": "an open paved square where the routes meet, with one carved stone wellhead as its centrepiece; travellers arrive here"
+  },
+  "pottery": {
+   "label": "cooperage",
+   "at": [250, 500],
+   "door": [240, 600],
+   "landmark": "a cooper's yard: an open-sided workshop surrounded by stacked barrels and staves"
+  },
+  "proposer Q": {
+   "label": "palazzo",
+   "at": [1050, 750],
+   "door": [1110, 654],
+   "landmark": "a rival merchant's palazzo of the same size and style as the blue one, marked by one strong red feature: red awnings and a long red banner"
+  },
+  "fishery": {
+   "label": "fish market",
+   "at": [380, 900],
+   "door": [290, 960],
+   "landmark": "a fish market on a quay: a long open timber hall with nets drying on racks and fishing boats moored beside it"
+  },
+  "southeast library": {
+   "label": "notary's archive",
+   "at": [133, 760],
+   "door": [178, 822],
+   "landmark": "a notary's archive: a sturdy stone tower house where contracts and records are kept"
+  },
+  "granary": {
+   "label": "salt works",
+   "at": [1478, 1062],
+   "door": [1445, 1035],
+   "landmark": "a salt works: brick storehouses with white heaps of salt, beside shallow rectangular evaporation pans"
+  }
+ },
+ "roads": [
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[240, 600], [420, 600], [600, 640], [700, 640], [760, 640], [830, 632], [920, 640], [960, 630], [1080, 600]]
+  },
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[1080, 600], [1180, 355], [1320, 235]]
+  },
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[760, 640], [740, 420], [800, 215]]
+  },
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[420, 600], [340, 400], [290, 240]]
+  },
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[290, 240], [520, 200], [800, 215], [1060, 180], [1320, 235]]
+  },
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[600, 640], [520, 800], [470, 870], [380, 930], [290, 960]]
+  },
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[1080, 600], [1180, 780], [1320, 950]]
+  },
+  {
+   "kind": "road",
+   "width": 6,
+   "pts": [[470, 870], [760, 960], [1050, 980], [1320, 950]]
+  },
+  {
+   "kind": "road",
+   "width": 4,
+   "pts": [[178, 822], [240, 852], [285, 925], [290, 960]]
+  },
+  {
+   "kind": "road",
+   "width": 4,
+   "pts": [[1320, 950], [1445, 1035]]
+  }
+ ]
+}
