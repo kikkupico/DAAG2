@@ -125,3 +125,7 @@ button.sd:hover { outline: 2px solid var(--node); outline-offset: 2px; }
 .about .skins figure { margin: 0; display: grid; gap: var(--s1); align-content: start; }
 .about .skins img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; background: var(--room); }
 .about .skins figcaption { font: var(--t-sm)/1.4 var(--sans); color: var(--soft); }
+/* the link to the repository: in the drawer, and at the foot of the introduction */
+.more > .label ~ .label { margin-top: var(--s4); }
+.pl.ext { color: inherit; text-decoration: none; }
+.about .src { font: var(--t-sm)/1.6 var(--sans); color: var(--soft); max-width: var(--measure); }

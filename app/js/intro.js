@@ -65,6 +65,7 @@ function introHTML() {
       <p class="idea">Sixteen results from distributed computing, each told as a few short scenes from inside one participant. In the Allegory they are ${esc(ALLEGORY.people)}. In the Abstraction they are nodes A, B and C. The steps are the same.</p>
       ${go}</div>
     ${hero}${purpose}${inspiration}${chamber}${one}${how}${fork}
+    <p class="src">The code, the text and the pictures are on GitHub at ${ext(REPO, "kikkupico/DAAG2")}: the code under MIT, the text and pictures under CC BY 4.0. Corrections are welcome as issues.</p>
     <nav class="pager" aria-label="Reading order"><button type="button" data-key="map"><span class="label">Next</span><span>${U().map}</span></button><button type="button" data-key="${first.p.id}"><span class="label">Or begin · the first result</span><span>${esc(paperName(first.p))}</span></button></nav>
   </div>`;
 }

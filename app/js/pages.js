@@ -14,7 +14,7 @@ function facetsHTML() {
 }
 const isle_ = (plain, isle) => reg === "isle" ? isle : plain;
 // Under the list of results and the filter: the tool that works across results.
-const moreHTML = () => `<span class="label">Across results</span><button type="button" class="pl map" data-key="${isVs(sel) ? sel : "cmp"}" aria-pressed="${isVs(sel)}"><span>Compare two results</span></button>`;
+const moreHTML = () => `<span class="label">Across results</span><button type="button" class="pl map" data-key="${isVs(sel) ? sel : "cmp"}" aria-pressed="${isVs(sel)}"><span>Compare two results</span></button><span class="label">This project</span><a class="pl ext" href="${REPO}" target="_blank" rel="noopener"><span>Source on GitHub</span><small aria-hidden="true">↗</small></a>`;
 function indexHTML(it, land) {
   const cur = it ? it.p : null;
   const chev = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5L7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
