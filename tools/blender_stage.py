@@ -25,8 +25,14 @@ W, H = 1600, 1200
 R2 = math.sqrt(2); SPAN = 215 * R2; ELEV = math.asin(.75)
 TOWARD = Vector((math.cos(ELEV) / R2, -math.cos(ELEV) / R2, math.sin(ELEV)))      # from the world to the camera
 
+def set_elev(deg):
+    """For a world that sets its own camera height above the horizon (the network file's "camera": {"elev": degrees}). Call it before camera()."""
+    global ELEV, TOWARD
+    ELEV = math.radians(deg); TOWARD = Vector((math.cos(ELEV) / R2, -math.cos(ELEV) / R2, math.sin(ELEV)))
+
 def network(path):
     net = json.load(open(path))
+    if (net.get("camera") or {}).get("elev"): set_elev(net["camera"]["elev"])
     if net.get("units") != "m": raise SystemExit('%s: a world built in Blender needs "units": "m"' % path)
     return net
 
@@ -41,7 +47,7 @@ def camera(width=2400, scene=None):
 
 def project(x, y, z=0.0):
     """Where a world point lands in the picture, in its 1600 x 1200 pixels (the same sum as tools/allegory.py's m2px)."""
-    return (W / 2 + (W / SPAN) * (x + y) / R2, H / 2 - (W / SPAN) * (.75 * (y - x) / R2 + math.cos(ELEV) * z))
+    return (W / 2 + (W / SPAN) * (x + y) / R2, H / 2 - (W / SPAN) * (math.sin(ELEV) * (y - x) / R2 + math.cos(ELEV) * z))
 
 def roads(net, material=None, lift=.03, widths=None, scene=None):
     """One mesh ribbon along every road of the network, `lift` above the heights the file gives. widths: {kind: width} to
@@ -74,7 +80,7 @@ def check(net, step=3.0, scene=None):
                 p = Vector([a[k] + (b[k] - a[k]) * j / m for k in range(3)]) + Vector((0, 0, .9)); u, v = project(p.x, p.y, p.z)
                 if not (0 <= u <= W and 0 <= v <= H): continue
                 n += 1; hit, loc, _, _, ob, _ = scene.ray_cast(dg, p + TOWARD * 500, -TOWARD)
-                if hit and (loc - p).length > 1.6: hidden.append((round(p.x, 1), round(p.y, 1), ob.name))
+                if hit and (loc - p).length > .9 / TOWARD.z + .6: hidden.append((round(p.x, 1), round(p.y, 1), ob.name))      # the ray passes a walker's middle and meets the ground just behind
     by = {}
     for h in hidden: by[h[2]] = by.get(h[2], 0) + 1
     print("ROAD CHECK: %d points in the frame, %d hidden from the camera" % (n, len(hidden)))

@@ -44,6 +44,16 @@ overlay are the tests.
 `stage.project(x, y, z)` gives the picture pixel of a world point, and `python3 tools/allegory.py xy px2m 800 600` the
 ground point under a pixel, for planning what falls where in the frame.
 
+## A lower camera, if the user asks for one
+
+The standard camera looks down at 48.6 degrees. A world built in Blender may lower it, to show more of its walls and
+mountains: put `"camera": {"elev": 34}` in the network file and the tool, `stage.network` and `stage.camera` all follow
+(or call `stage.set_elev(34)` before `stage.camera`). Only the height changes: the camera still looks from the south-east
+in parallel projection at 4:3. Below about 30 degrees too much hides behind buildings. With a lower camera the frame
+shows deeper ground (a square no longer: 304 units across, 304 x 0.75 / sin(elev) deep), a height lifts a point further
+up the picture, and anything tall hides more behind it, so run `stage.check` and look at the overlay with extra care.
+Do not lower it unasked. `allegories/himalaya/` is built this way.
+
 ## What the frame shows
 
 A square of ground 304 units on a side, standing on its corner: north `(0, 215)` is the upper right corner of the

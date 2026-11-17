@@ -35,7 +35,10 @@ MODEL = "gemini-nano-banana-2.1"          # the only image model to use: it edit
 # above the horizon (asin 0.75), in parallel projection: north is the upper right corner, east the lower right, and a circle on the
 # ground is an ellipse three quarters as tall as wide. The frame shows a ground square 304 units on a side, standing on its corner.
 R2 = math.sqrt(2); SPAN = 215 * R2; K = W / SPAN; SIN, COS = .75, math.sqrt(1 - .75 ** 2)
-def m2px(x, y, z=0.0): return (W / 2 + K * (x + y) / R2, H / 2 - K * (SIN * (y - x) / R2 + COS * z))
+def m2px(x, y, z=0.0, elev=None):
+    """elev: the camera's height above the horizon in degrees, for a stage that sets its own; otherwise the standard asin 0.75."""
+    sn, cs = (SIN, COS) if elev is None else (math.sin(math.radians(elev)), math.cos(math.radians(elev)))
+    return (W / 2 + K * (x + y) / R2, H / 2 - K * (sn * (y - x) / R2 + cs * z))
 def px2m(u, v):        # the point of the ground (z = 0) under a pixel
     a, b = (u - W / 2) * R2 / K, (H / 2 - v) * R2 / (K * SIN); return ((a - b) / 2, (a + b) / 2)
 
@@ -94,7 +97,7 @@ class Stage:
         s.places = s.d.get("places", {}); s.roads = s.d.get("roads", [])
         s.work = os.path.join(s.dir, "work")
     def px(s, p):
-        if s.units == "m": return m2px(p[0], p[1], p[2] if len(p) > 2 else 0.0)
+        if s.units == "m": return m2px(p[0], p[1], p[2] if len(p) > 2 else 0.0, (s.d.get("camera") or {}).get("elev"))
         return (float(p[0]), float(p[1]))
     def at(s, k): return s.px(s.places[k]["at"])
     def door(s, k): return s.px(s.places[k]["door"])

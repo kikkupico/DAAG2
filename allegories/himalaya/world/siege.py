@@ -6,7 +6,7 @@ It writes allegories/himalaya/siege.json and renders siege.png beside it (or wor
 The besiegers' way round the fortress is a track trodden in the snow, out of bowshot of the walls, with a spur to each camp.
 Nothing leads into the dzong."""
 import math, os, random, sys
-os.environ["HIM_STAGE"] = "siege"; os.environ["HIM_NIGHT"] = "1"
+os.environ["HIM_STAGE"] = "siege"; os.environ.setdefault("HIM_ELEV", "34"); os.environ["HIM_NIGHT"] = "1"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 import kit

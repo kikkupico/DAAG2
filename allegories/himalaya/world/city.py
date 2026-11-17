@@ -7,7 +7,7 @@ It writes allegories/himalaya/city.json (the network, at the heights this land g
 The layout is given in picture pixels, so that every place falls in its zone of the frame, and turned into plan points on the
 land. A path is only walkable ground: the land is benched along it and worn bare, and nothing more is modelled there."""
 import math, os, random, sys
-os.environ["HIM_STAGE"] = "city"
+os.environ["HIM_STAGE"] = "city"; os.environ.setdefault("HIM_ELEV", "34")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from kit import *
 import kit

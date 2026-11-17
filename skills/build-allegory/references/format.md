@@ -54,6 +54,7 @@ allegory's file, as the siege does above; its picture and names come along with 
 | `night` | `true` gives the page its night styling over a dark picture. |
 | `setting` | The phrase the image prompts are written around. For the siege, name the siege. |
 | `picture` | The finished picture, beside this file. 4:3, 1800 px wide or more. |
+| `camera` | Optional, for `"units": "m"` only: `{"elev": 34}` sets the camera's height above the horizon in degrees (the standard is 48.6). A lower camera shows more of the walls and of rising ground and makes the picture look more three-dimensional; it also lets tall things hide more of the ground behind them. The direction (from the south-east), the parallel projection and the 4:3 frame never change. |
 | `places` | One entry for every role id of the stage, no more and no fewer. |
 | `places.*.label` | The place's name in this world: a bare common noun with no article ("algae farm"). |
 | `places.*.at` | Where the landmark stands: the centre of its footprint. Must be in one of the seven zones. |

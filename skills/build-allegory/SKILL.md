@@ -35,7 +35,8 @@ Fixed. Do not change these, and do not edit the files that hold them:
 
 - **The frame and the camera.** Every picture is 4:3, and stands for 1600 x 1200 picture pixels. The camera is a parallel
   projection from the south-east, about 49 degrees above the horizon: north is the upper right corner, east the lower
-  right. Never another angle, never perspective, never a straight-down plan.
+  right. Never another direction, never perspective, never a straight-down plan. (A world built in Blender may
+  lower the camera's height if the user asks for a more three-dimensional look: see `references/blender.md`.)
 - **The places.** Each world has a fixed set of places, known by role ids (`fishery`, `temple`, `camp A`, ...). You decide
   what each one *is* in your setting and what it is called, never which ones exist. See `references/telling.md`.
 - **Where places may stand.** Cut the frame in thirds each way. A place stands in one of seven zones: the four **corners**,

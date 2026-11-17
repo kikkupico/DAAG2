@@ -13,9 +13,10 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ALLEGORY = os.path.dirname(HE
 STAGE = os.environ.get("HIM_STAGE", "city"); NIGHT = os.environ.get("HIM_NIGHT") == "1"
 _a = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 DRAFT = "--draft" in _a; GUIDES = "--guides" in _a
-R2 = math.sqrt(2); SPAN = 215 * R2; K = 1600 / SPAN; SIN, COS = .75, math.sqrt(1 - .75 ** 2)
+ELEV = float(os.environ.get("HIM_ELEV", math.degrees(math.asin(.75))))      # the camera's height above the horizon, in degrees: lower shows more of the walls and the mountains
+R2 = math.sqrt(2); SPAN = 215 * R2; K = 1600 / SPAN; SIN, COS = math.sin(math.radians(ELEV)), math.cos(math.radians(ELEV))
 _scene = os.path.join(tempfile.gettempdir(), "himalaya-%s-scene.json" % STAGE)
-json.dump(dict(frame=dict(aw=1600, ah=1200, k=K, elev=math.asin(.75), width_m=SPAN), siege=STAGE == "siege", night=NIGHT), open(_scene, "w"))
+json.dump(dict(frame=dict(aw=1600, ah=1200, k=K, elev=math.radians(ELEV), width_m=SPAN), siege=STAGE == "siege", night=NIGHT), open(_scene, "w"))
 OUT = os.path.join(ALLEGORY, "work", STAGE + "-draft.png") if DRAFT else os.path.join(ALLEGORY, STAGE + ".png")
 os.makedirs(os.path.join(ALLEGORY, "work"), exist_ok=True)
 def _has(k): return k in _a
@@ -29,6 +30,7 @@ from polis.core import (ROOT, ASSETS, scene, Part, Scatter, collection_of, face,
                         placed, lin, along, chaikin, smooth, lerp, opt, flag, TOWARD, project)
 from polis.sh import Sh, image
 import blender_stage
+blender_stage.set_elev(ELEV)
 
 U = 1.4        # how much larger than life everything built is drawn, so it reads in a picture 900 px wide
 def _to_world(x, y, z=0.0):
@@ -80,11 +82,21 @@ def _win(x, y, r):
     fi, fj = _ij(x, y); k = int(r / STEP) + 2
     return slice(max(0, int(fj) - k), min(N, int(fj) + k + 2)), slice(max(0, int(fi) - k), min(N, int(fi) + k + 2))
 def ground_px(u, v):
-    """The plan point of the land that the picture shows at pixel (u, v)."""
-    x, y = px2m(u, v)
-    for _ in range(12): x, y = px2m(u, v + K * COS * zt(x, y))
-    return x, y
-
+    """The plan point of the land that the picture shows at pixel (u, v): the first ground the camera's ray meets, coming down
+    from above (a lower camera can have higher ground standing in front of what a simple sum would find)."""
+    hi = float(L.Z.max()) + 2; lo = float(L.Z.min()) - 2; z = hi; prev = None
+    while z > lo:
+        x, y = px2m(u, v + K * COS * z)
+        if abs(x) < HALF - 2 and abs(y) < HALF - 2 and zt(x, y) >= z:
+            if prev is None: return x, y
+            za, zb = z, prev                                      # between the last clear height and this one, closer
+            for _ in range(12):
+                zm = (za + zb) / 2; xm, ym = px2m(u, v + K * COS * zm)
+                if zt(xm, ym) >= zm: za = zm
+                else: zb = zm
+            return px2m(u, v + K * COS * za)
+        prev = z; z -= .5
+    return px2m(u, v)
 def _rect_d(cx, cy, w, d, rot, xs, ys):
     c, s = math.cos(math.radians(rot)), math.sin(math.radians(rot)); lx = (xs - cx) * c + (ys - cy) * s; ly = -(xs - cx) * s + (ys - cy) * c
     return np.maximum(np.abs(lx) - w / 2, np.abs(ly) - d / 2)
@@ -228,7 +240,7 @@ def finish_land(winter=False):
     gy, gx = np.gradient(L.Z, STEP); slope = np.hypot(gx, gy)
     L.COV["rock"][:] = np.maximum(L.COV["rock"], np.clip((slope - .58) / .4, 0, 1) * (L.PD > 2.2))
     L.COV["snow"][:] = L.COV["snow"] * (1 - .8 * np.clip((slope - 1.0) / .6, 0, 1))        # snow does not lie on the steepest rock
-    lim = SPAN / 2 * R2 + 60; keep = (np.abs(X + Y) < lim) & (np.abs(X - Y) < lim + 120)
+    lim = SPAN / 2 * R2 + 60; keep = (np.abs(X + Y) < lim) & (np.abs(X - Y) < (lim + 120) * .75 / SIN + 60)
     idx = np.arange(N * N).reshape(N, N); q = keep[:-1, :-1] & keep[:-1, 1:] & keep[1:, 1:] & keep[1:, :-1]
     quads = np.stack([idx[:-1, :-1][q], idx[:-1, 1:][q], idx[1:, 1:][q], idx[1:, :-1][q]], 1)
     used = np.unique(quads); remap = np.full(N * N, -1, np.int64); remap[used] = np.arange(len(used)); quads = remap[quads]
@@ -559,6 +571,6 @@ def finish(net, winter=False):
 
 def write_network(path, stage, places, roads, night=False, **extra):
     """The world's transport network, for tools/allegory.py: the places and the paths at the heights the land gave them."""
-    o = dict(stage=stage, units="m", night=night, picture=stage + ".png", **extra, places=places, roads=roads)
+    o = dict(stage=stage, units="m", night=night, picture=stage + ".png", camera=dict(elev=ELEV), **extra, places=places, roads=roads)
     sys.path.insert(0, os.path.join(REPO, "tools")); import allegory
     open(path, "w").write(allegory.dumps(o)); return o
