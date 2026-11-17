@@ -58,6 +58,9 @@ p, h1, h2, h3, dl, dd, ul, figure { margin: 0; }
 .app { --dw: 300px; display: grid; grid-template-columns: var(--dw) minmax(0, 1fr); transition: grid-template-columns .22s ease; }
 .app[data-drawer="closed"] { grid-template-columns: 0 minmax(0, 1fr); }
 .content { min-width: 0; max-width: 1040px; width: 100%; margin: 0 auto; padding-inline: var(--s6); }
+/* Pages that are mostly reading (the introduction, a result's own page) are one column: the bar, the prose,
+   the pictures and the cards share both edges, and the prose fills the column instead of stopping short of it. */
+.content:has(.about, .start) { --measure: 100%; max-width: calc(46rem + 2 * var(--s6)); }
 .drawer { position: sticky; top: 0; height: 100vh; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; background: var(--room); border-right: 1px solid var(--line);
   padding: var(--s4) var(--s3) var(--s7); display: grid; gap: var(--s5); align-content: start; width: var(--dw); transition: transform .22s ease, visibility .22s; z-index: 30; }
 .app[data-drawer="closed"] .drawer { transform: translateX(-100%); visibility: hidden; }

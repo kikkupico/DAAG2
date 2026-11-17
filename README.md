@@ -33,8 +33,8 @@ python3 -m http.server -d app
   Textures, scanned rocks, trees and skies come from [Poly Haven](https://polyhaven.com) (CC0);
   `world/fetch_assets.py` downloads them. The `.blend` files and renders aren't in the repo.
 - `allegories/<id>/`: other settings for the same scenes. The drawer has a menu to switch between
-  them: a Venetian lagoon and a Himalayan dzong as well as Greece. Their pictures are AI-repainted
-  from Blender renders (Gemini image model), and their road networks are hand-made JSON.
+  them: a Himalayan dzong, built in Blender like the Greek town, and a Venetian lagoon, painted by
+  an image model (Gemini). Each one's road network is hand-made JSON.
   `tools/allegory.py` checks a network, draws it and builds it into the page.
 - `skills/build-allegory/`: instructions an AI coding agent follows to build a new setting
   (pictures, roads, renamed places) end to end.
