@@ -4,6 +4,7 @@ A static page (`app/`, no build step: open `app/index.html` or serve the folder)
 computing twice, as an Allegory and as an Abstraction.
 
 - `app/js/data/scenes*.js`, `papers.js`: the steps of every scene. Plain data, shared by both tellings.
+- `app/js/home.js`, `app/css/home.css`: the front page, shown at the bare address (no hash). It plays Paxos's first scene in both tellings and wipes between them. `app/js/intro.js` (`#intro`) is the how-to-use page.
 - `app/js/data/telling.js`: the Allegory's prose. Place names are tokens (`{fishery}`) filled from the current allegory.
 - `allegories/<id>/`: an allegory's source: its name and words, and the road network of its city and its siege.
 - `tools/allegory.py`: checks a network, draws it, prepares and checks its picture, and builds it into the page.

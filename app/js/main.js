@@ -1,5 +1,5 @@
 // ---------- wiring ----------
-// A key is "intro" (the landing page), "map", a result's id (its own page), or a scene.
+// A key is "home" (the front page, at the bare address), "intro" (how the site works), "map", a result's id (its own page), or a scene.
 const isPaper = k => PAPERS.some(x => x.id === k);
 const resolve = k => { const p = PAPERS.find(x => x.id === k); return p ? byKey(`${p.id}-${p.scenes[0].id}`) : byKey(k); };
 function renderDrawer() {
@@ -13,7 +13,9 @@ function renderDrawer() {
 }
 function render() {
   const it = resolve(sel), land = isPaper(sel);
-  document.documentElement.dataset.reg = reg;
+  const home = sel === "home";
+  document.documentElement.dataset.reg = home ? "isle" : reg;      // the front page plays both tellings itself, in the Allegory's dress
+  $("app").dataset.view = home ? "home" : "";
   $("brand").textContent = document.title = U().title;
   document.querySelectorAll(".reg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.reg === reg)));
   renderDrawer();
@@ -22,11 +24,11 @@ function render() {
   $("where").innerHTML = vs ? "Compare" : sel === "intro" ? "Introduction" : !it ? esc(U().map) : land ? esc(paperName(it.p)) : `<button type="button" data-key="${it.p.id}">${esc(paperName(it.p))}</button><span class="sep" aria-hidden="true">/</span>${esc(nameOf(it))}`;
   $("paper").hidden = !land;
   $("paper").innerHTML = land ? paperHTML(it) : "";
-  $("scene").innerHTML = vs ? vsHTML(sel) : land ? landHTML(it) : it ? sceneHTML(it) : sel === "intro" ? introHTML() : mapHTML();
+  $("scene").innerHTML = vs ? vsHTML(sel) : land ? landHTML(it) : it ? sceneHTML(it) : home ? homeHTML() : sel === "intro" ? introHTML() : mapHTML();
   layTheater();
   if (theater) $("main").scrollTop = 0;      // in theater mode a result's own page scrolls inside the window-filling frame
-  centreStage();
-  try { if (location.hash.slice(1) !== sel) history.replaceState(null, "", "#" + sel); } catch (e) {}
+  centreStage(); playHome();
+  try { if (location.hash.slice(1) !== (home ? "" : sel)) history.replaceState(null, "", home ? location.pathname + location.search : "#" + sel); } catch (e) {}
 }
 const WIDE = window.matchMedia("(min-width: 1100px)");
 function setDrawer(open, keep) {
@@ -40,7 +42,7 @@ function go(key, keep, to) {
   if (!it && !isTop(key) && !vsValid(key)) return;
   if (key !== sel) {
     stageStep = 0;
-    try { history.pushState(null, "", "#" + key); } catch (e) {}   // a new history entry, so Back returns here
+    try { history.pushState(null, "", key === "home" ? location.pathname + location.search : "#" + key); } catch (e) {}   // a new history entry, so Back returns here
   }
   sel = key;
   if (!keep) cmp = false;
@@ -83,7 +85,7 @@ document.addEventListener("change", e => {
   else go(d.vs === "a" ? vsKey(s.value, b) : vsKey(a, s.value), true);
   const el = document.querySelector(d.vs === "pair" ? `select[data-vs="pair"][data-a="${d.a}"]` : `select[data-vs="${d.vs}"]`); if (el) el.focus();
 });
-const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); if (isTop(k) || resolve(k) || vsValid(k)) sel = k; };
+const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); if (!k) sel = "home"; else if (isTop(k) || resolve(k) || vsValid(k)) sel = k; };
 // Back/Forward (and hand-edited hashes): follow the address, as a fresh page
 window.addEventListener("hashchange", () => {
   const was = sel; fromHash();

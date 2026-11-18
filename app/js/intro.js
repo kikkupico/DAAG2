@@ -1,5 +1,6 @@
-// ---------- the introduction: what this is, where it comes from, and how to read it ----------
-// The landing page. It is about the app itself, so it reads the same in both registers; only the title and a few nouns follow the register.
+// ---------- the introduction: how the site works, and how to read a scene ----------
+// Why the idea exists, and Lamport's stories, are told on the front page (home.js). This page is about using the app,
+// so it reads the same in both registers; only the title and a few nouns follow the register.
 const REPO = "https://github.com/kikkupico/DAAG2";
 function introHTML() {
   const isle = reg === "isle", first = ALL[0];
@@ -8,19 +9,6 @@ function introHTML() {
   const ps = (...xs) => xs.map(x => `<p>${x}</p>`).join("");
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
   const go = `<div class="ctl"><button type="button" class="btn go-out" data-key="${first.p.id}">Start with ${esc(paperName(first.p))}</button><button type="button" class="btn" data-key="map">${UI.isle.map}: how the sixteen connect</button></div>`;
-  const pic = CITY.img3d || CITY.img, H = ALLEGORY.hero || {};
-  const hero = `<figure class="hero"><img src="${pic[1200]}" srcset="${Object.entries(pic).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="1200" height="900" alt="${esc(H.alt || "The town of " + ALLEGORY.town + " seen from above, with roads between the places where its people work.")}">
-    <figcaption>${esc(H.caption || "The town of " + ALLEGORY.town + ". Nobody here shares a room. Every message in every scene walks one of these roads.")}</figcaption></figure>`;
-
-  const purpose = sect("The purpose", "Sixteen results, one message at a time", ps(
-    `The classic results of distributed computing are short to state and hard to keep in your head. Logical clocks, Paxos, the FLP impossibility, the CAP theorem, Byzantine agreement: each fits on a page, and each tends to slip away a week after you have read it.`,
-    `The rules are not the hard part. The hard part is that nobody in the system sees the whole of it. A participant knows what it has written down and what has reached it, and everything else is a guess. This app lets you sit in that seat. Each result is told as a few short scenes, each scene is a handful of steps, and at each step you see exactly what one participant holds, what arrives and what it sends.`));
-
-  const inspiration = sect("The inspiration", "Lamport told it as a story, twice", ps(
-    `In 1982 Leslie Lamport, Robert Shostak and Marshall Pease described agreement among faulty computers as ${ext("https://lamport.azurewebsites.net/pubs/byz.pdf", "<cite>The Byzantine Generals Problem</cite>")}: generals camped around an enemy city, who can reach one another only by messenger, must settle on one plan although some of them are traitors. The story made the problem famous.`,
-    `Encouraged by that, Lamport cast his next algorithm as archaeology. ${ext("https://lamport.azurewebsites.net/pubs/lamport-paxos.pdf", "<cite>The Part-Time Parliament</cite>")} reports on the lost parliament of the Greek island of Paxos, whose legislators wandered in and out of the Chamber, kept their own ledgers, spoke only through forgetful messengers, and still never passed two conflicting laws. It was written in 1990 and published in 1998. Readers found the story harder than the algorithm, and in 2001 he retold it without the island as <cite>Paxos Made Simple</cite>.`,
-    `This app takes both stories at their word and puts them in one place. The part-time legislators and the besieging generals are Lamport's. Merchants and scholars were added to carry the results that are about ordering events and about answering without waiting. All of them live in the same town and use the same few things: a courier, a ledger, a slate, an hourglass.`));
-
   const chamber = sect("What was left out", "Why Paxos has no Chamber here", ps(
     `Lamport's legislators meet in a Chamber. Two earlier versions of this project kept it. ${ext("https://kikkupico.github.io/paxos-illustrated/", "Paxos Illustrated")} set Lamport's text, word for word, among illustrations of the hall. ${ext("https://kikkupico.github.io/DAAG/", "The first Distributed Algorithms of Ancient Greece")} built the Chamber as a round hall on the island's summit and set several of its books inside. Both were sincere attempts to draw the paper as written, and both ran into the same wall.`)
     + items([
@@ -61,10 +49,10 @@ function introHTML() {
     <p>The skill paints or models the world, lays out its roads, and renames every place to match.</p></aside>`;
 
   return `<div class="map about">
-    <div class="intro"><h1>${U().title}</h1>
-      <p class="idea">Sixteen results from distributed computing, each told as a few short scenes from inside one participant. In the Allegory they are ${esc(ALLEGORY.people)}. In the Abstraction they are nodes A, B and C. The steps are the same.</p>
-      ${go}</div>
-    ${hero}${purpose}${inspiration}${chamber}${one}${how}${fork}
+    <div class="intro"><p class="label">Introduction</p><h1>How this site works</h1>
+      <p class="idea">Sixteen results from distributed computing, each told as a few short scenes from inside one participant. In the Allegory they are ${esc(ALLEGORY.people)}. In the Abstraction they are nodes A, B and C. The steps are the same. Here is how to find your way around.</p>
+      ${go}<p class="fine">New here? <button type="button" class="link" data-key="home">The front page</button> shows the idea in a minute, and where it comes from.</p></div>
+    ${how}${one}${chamber}${fork}
     <p class="src">The code, the text and the pictures are on GitHub at ${ext(REPO, "kikkupico/DAAG2")}: the code under MIT, the text and pictures under CC BY 4.0. Corrections are welcome as issues.</p>
     <nav class="pager" aria-label="Reading order"><button type="button" data-key="map"><span class="label">Next</span><span>${U().map}</span></button><button type="button" data-key="${first.p.id}"><span class="label">Or begin · the first result</span><span>${esc(paperName(first.p))}</span></button></nav>
   </div>`;

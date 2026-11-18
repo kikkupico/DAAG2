@@ -25,15 +25,16 @@
 <link rel="stylesheet" href="css/stage.css">
 <link rel="stylesheet" href="css/compare.css">
 <link rel="stylesheet" href="css/theater.css">
+<link rel="stylesheet" href="css/home.css">
 </head>
 <body>
 <div class="app" id="app" data-drawer="open">
   <aside class="drawer" id="drawer" aria-label="Contents">
     <div class="dhead">
-      <div class="brand">
+      <button type="button" class="brand" data-key="home" title="The front page">
         <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect class="b-tile" width="32" height="32" rx="7"/><path class="b-ped" d="M16 5 L5 13 L27 13 Z" fill="none" stroke-width="2" stroke-linejoin="round"/><g class="b-node"><circle cx="16" cy="5.5" r="3"/><circle cx="5.5" cy="13" r="3"/><circle cx="26.5" cy="13" r="3"/></g><g class="b-col"><rect x="8" y="16" width="3" height="8"/><rect x="14.5" y="16" width="3" height="8"/><rect x="21" y="16" width="3" height="8"/><rect x="4" y="26" width="24" height="2.5" rx="1.25"/></g></svg>
         <span id="brand">Distributed Algorithms of Ancient Greece</span>
-      </div>
+      </button>
       <button type="button" class="dclose" data-drawer="close" aria-label="Close the menu"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
     <nav id="index" aria-label="Results and scenes"></nav>
@@ -68,6 +69,7 @@
 <script src="js/pages.js"></script>
 <script src="js/compare.js"></script>
 <script src="js/intro.js"></script>
+<script src="js/home.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
