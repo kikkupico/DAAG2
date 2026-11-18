@@ -1,14 +1,14 @@
 """SVG mockup of the walled city: a top-down plan (north up) and the same plan seen from the southeast, as in the concept.
 Plan coordinates are metres, x east, y north, origin at the crossroads.
-Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app site/js/data/city.js]
-     python3 world/city_mockup.py --siege world/plan/siege-plan.svg [--app site/js/data/siege.js]
+Run: python3 world/city_mockup.py world/plan/city-plan.svg [--site site/js/data/city.js]
+     python3 world/city_mockup.py --siege world/plan/siege-plan.svg [--site site/js/data/siege.js]
 --siege draws the soldiers' world instead: the same land, a flat walled town with its gates shut, shut in by the besiegers' double wall
 (as at Plataea, 429 BC: two walls of mud brick with a walk between them), with a siege mound against the town's south-east face, and four
 camps outside the lines (the commander's to the north, A, B and C to the east, south and west). The only way between camps is the walk
 inside the double wall, so every message goes the long way round, out of bowshot of the town.
 --network file.json writes this world's transport network (its places, and its roads as lines of plan points with heights): the
 source of allegories/greece/city.json and siege.json, from which tools/allegory.py works out every route the page draws.
---app site/js/data/city.js bakes the southeast picture alone to site/img/<view>-<width>.webp (needs Google Chrome and cwebp). The page's
+--site site/js/data/city.js bakes the southeast picture alone to site/img/<view>-<width>.webp (needs Google Chrome and cwebp). The page's
 city is made with --detail; the siege with --siege --night --detail. The page's data itself is written by tools/allegory.py build greece.
 --dump scene.json writes the same world as data for world/build_polis.py, which builds a richer world on it in Blender, in exactly this frame;
 --bg3d render.png then bakes that render beside the drawing (site/img/<view>-3d-<width>.webp), and the page can show either."""
@@ -748,7 +748,7 @@ def night(body, V):
         if kind == "torch": lights += '<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#fff1c4"/>' % (px, py, .5 * V.k)
     return defs + body + '<g style="mix-blend-mode:screen">' + lights + "</g>"
 
-def app_js():
+def site_js():
     AW, AH = 1600, 1200; V = View(AW / 2, AH / 2, AW / (R2 * L), True)
     body = '<rect width="%d" height="%d" fill="%s"/>' % (AW, AH, GROUND) + "".join(draw(V, "city"))
     if NIGHT: body = night(body, V)
@@ -785,7 +785,7 @@ def app_js():
     img = bake(body, AW, AH, view)                                                 # the picture itself goes to the page as an image, not as markup
     img3d = bake_png(BG3D, view + "-3d") if BG3D else None                         # the same frame rendered in Blender (world/build_polis.py), if given
     city = dict(w=AW, h=AH, night=NIGHT, img=img, **({"img3d": img3d} if img3d else {}), plain={k: "".join(v) for k, v in plain.items()}, iso=iso, places=places, doors=doors, routes=routes)
-    head = "// The %s stage, written by world/city_mockup.py%s --app: the southeast picture, its places and the road routes between them.\n" % (view, " --siege" if SIEGE else "")
+    head = "// The %s stage, written by world/city_mockup.py%s --site: the southeast picture, its places and the road routes between them.\n" % (view, " --siege" if SIEGE else "")
     data = "const %s = %s;\n" % (name, json.dumps(city, separators=(",", ":")))
     return head + data
 
@@ -795,8 +795,8 @@ def bake(body, AW, AH, view):
     """Render the stage picture to WebP beside the page (site/img), once per width, with headless Chrome (the only renderer
     that draws the night's screen-blended lights as the browser does) and cwebp. Returns {width: path from the page}."""
     import os, subprocess, tempfile
-    app_dir = os.path.normpath(os.path.join(os.path.dirname(sys.argv[sys.argv.index("--app") + 1]), "..", ".."))
-    os.makedirs(os.path.join(app_dir, "img"), exist_ok=True)
+    site_dir = os.path.normpath(os.path.join(os.path.dirname(sys.argv[sys.argv.index("--site") + 1]), "..", ".."))
+    os.makedirs(os.path.join(site_dir, "img"), exist_ok=True)
     out = {}
     with tempfile.TemporaryDirectory() as tmp:
         src = os.path.join(tmp, view + ".svg")
@@ -805,7 +805,7 @@ def bake(body, AW, AH, view):
             png, rel = os.path.join(tmp, "%s-%d.png" % (view, w)), "img/%s-%d.webp" % (view, w)
             subprocess.run([CHROME, "--headless", "--disable-gpu", "--hide-scrollbars", "--window-size=%d,%d" % (AW, AH),
                             "--force-device-scale-factor=%g" % (w / AW), "--screenshot=" + png, "file://" + src], check=True, capture_output=True)
-            subprocess.run(["cwebp", "-quiet", "-q", "82", "-m", "6", png, "-o", os.path.join(app_dir, rel)], check=True)
+            subprocess.run(["cwebp", "-quiet", "-q", "82", "-m", "6", png, "-o", os.path.join(site_dir, rel)], check=True)
             out[w] = rel
     return out
 
@@ -813,14 +813,14 @@ def bake_png(src, view):
     """Shrink a rendered picture of the same frame to the page's widths, as WebP beside the drawn ones. Returns {width: path from the page}."""
     import os, subprocess, tempfile
     from PIL import Image
-    app_dir = os.path.normpath(os.path.join(os.path.dirname(sys.argv[sys.argv.index("--app") + 1]), "..", ".."))
+    site_dir = os.path.normpath(os.path.join(os.path.dirname(sys.argv[sys.argv.index("--site") + 1]), "..", ".."))
     im = Image.open(src).convert("RGB"); assert abs(im.width / im.height - 4 / 3) < .002, "the render must be 4:3, as the drawn frame"
     out = {}
     with tempfile.TemporaryDirectory() as tmp:
         for w in BAKE_WIDTHS:
             png, rel = os.path.join(tmp, "%s-%d.png" % (view, w)), "img/%s-%d.webp" % (view, w)
             im.resize((w, round(w * 3 / 4)), Image.LANCZOS).save(png)
-            subprocess.run(["cwebp", "-quiet", "-q", "80", "-m", "6", png, "-o", os.path.join(app_dir, rel)], check=True)
+            subprocess.run(["cwebp", "-quiet", "-q", "80", "-m", "6", png, "-o", os.path.join(site_dir, rel)], check=True)
             out[w] = rel
     return out
 
@@ -874,7 +874,7 @@ def network():
                            roads=[dict(kind=k, width=w, pts=line(pts)) for w, k, pts in ROADS]), indent=1)
 
 def route_samples():
-    """Every road route the page draws, in plan metres with the walker's height: the same samples app_js() projects."""
+    """Every road route the page draws, in plan metres with the walker's height: the same samples site_js() projects."""
     G, key = graph(); names = sorted(APP_PLACES); out = []
     for i, a in enumerate(names):
         for b in names[i + 1:]:
@@ -892,7 +892,7 @@ def route_samples():
 BG3D = None
 if "--bg3d" in sys.argv:                                                          # a Blender render of this frame, baked beside the drawing
     i = sys.argv.index("--bg3d"); BG3D = sys.argv.pop(i + 1); sys.argv.pop(i)
-elif "--app" in sys.argv:                                                          # otherwise the last render, if there is one, so a rebuild keeps it
+elif "--site" in sys.argv:                                                          # otherwise the last render, if there is one, so a rebuild keeps it
     import os
     _r = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build3d", ("siege" if SIEGE else "city") + ".png")
     if os.path.exists(_r): BG3D = _r
@@ -902,4 +902,4 @@ if "--network" in sys.argv:
     i = sys.argv.index("--network"); open(sys.argv.pop(i + 1), "w").write(network()); sys.argv.pop(i)
 if "--crop" in sys.argv: open(sys.argv[sys.argv.index("--crop") + 1], "w").write(crop_svg(-70, 120, 25, 205))
 open(sys.argv[1], "w").write(svg())
-if "--app" in sys.argv: app_js(); print("baked the pictures; now run: python3 tools/allegory.py build greece")
+if "--site" in sys.argv: site_js(); print("baked the pictures; now run: python3 tools/allegory.py build greece")
