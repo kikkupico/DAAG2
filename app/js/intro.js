@@ -1,5 +1,5 @@
 // ---------- the introduction: how the site works, and how to read a scene ----------
-// Why the idea exists, and Lamport's stories, are told on the front page (home.js). This page is about using the app,
+// Why the idea exists, and Lamport's stories, are told on the front page (home.js). This page is about how to read it,
 // so it reads the same in both registers; only the title and a few nouns follow the register.
 const REPO = "https://github.com/kikkupico/DAAG2";
 function introHTML() {

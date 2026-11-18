@@ -105,14 +105,14 @@
 .pager button:hover span:last-child { text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 1099px) {
-  .app, .app[data-drawer="closed"] { grid-template-columns: minmax(0, 1fr); }
+  .shell, .shell[data-drawer="closed"] { grid-template-columns: minmax(0, 1fr); }
   .drawer { position: fixed; left: 0; top: 0; bottom: 0; width: min(320px, 88vw); box-shadow: 0 0 40px rgb(0 0 0 / .25); }
   .scrim { display: block; position: fixed; inset: 0; background: rgb(0 0 0 / .4); z-index: 25; transition: opacity .2s; }
-  .app[data-drawer="closed"] .scrim { opacity: 0; pointer-events: none; }
+  .shell[data-drawer="closed"] .scrim { opacity: 0; pointer-events: none; }
   .content { padding-inline: var(--s4); }
   .dtog { margin-left: -6px; }
 }
-@media (prefers-reduced-motion: reduce) { .app, .drawer, .chev svg { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .shell, .drawer, .chev svg { transition: none; } }
 @container (max-width: 720px) {
   .tl { grid-template-columns: minmax(0, 1fr); }
   .tl > * { grid-column: 1; }

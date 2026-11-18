@@ -15,7 +15,7 @@ function render() {
   const it = resolve(sel), land = isPaper(sel);
   const home = sel === "home";
   document.documentElement.dataset.reg = home ? "isle" : reg;      // the front page plays both tellings itself, in the Allegory's dress
-  $("app").dataset.view = home ? "home" : "";
+  $("shell").dataset.view = home ? "home" : "";
   $("brand").textContent = document.title = U().title;
   document.querySelectorAll(".reg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.reg === reg)));
   renderDrawer();
@@ -32,7 +32,7 @@ function render() {
 }
 const WIDE = window.matchMedia("(min-width: 1100px)");
 function setDrawer(open, keep) {
-  $("app").dataset.drawer = open ? "open" : "closed";
+  $("shell").dataset.drawer = open ? "open" : "closed";
   $("dtog").setAttribute("aria-expanded", String(open));
   if (!keep) try { localStorage.setItem("drawer", open ? "open" : "closed"); } catch (e) {}
 }
@@ -57,7 +57,7 @@ function go(key, keep, to) {
 function act(b) {
   const d = b.dataset;
   if (d.key) go(d.key, !!d.keep, b.closest("#drawer") ? "top" : b.closest(".pager") ? "scene" : "");
-  else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("app").dataset.drawer !== "open" : d.drawer === "open");
+  else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("shell").dataset.drawer !== "open" : d.drawer === "open");
   else if (d.tog) { expanded.has(d.tog) ? expanded.delete(d.tog) : expanded.add(d.tog); renderDrawer(); }
   else if (d.reg) { reg = d.reg; try { localStorage.setItem("reg", reg); } catch (e) {} render(); }
   else if (d.cmp) { cmp = !cmp; render(); }
@@ -71,7 +71,7 @@ function act(b) {
 const HOT = "[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && !WIDE.matches && $("app").dataset.drawer === "open") { setDrawer(false, true); $("dtog").focus(); return; }
+  if (e.key === "Escape" && !WIDE.matches && $("shell").dataset.drawer === "open") { setDrawer(false, true); $("dtog").focus(); return; }
   if (e.key !== "Enter" && e.key !== " ") return;
   const b = e.target.closest(".mn, .mx");
   if (b) { e.preventDefault(); act(b); }

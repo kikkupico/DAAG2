@@ -1,10 +1,10 @@
-/* The front page: none of the app's frame (no drawer, no bar), a dark hero with the scene playing, then a few short sections.
+/* The front page: none of the page's frame (no drawer, no bar), a dark hero with the scene playing, then a few short sections.
    The hero keeps one night-Aegean palette in both themes; the sections below follow the page's own tokens. */
-.app[data-view="home"] { display: block; }
-.app[data-view="home"] :is(.drawer, .scrim, .bar) { display: none !important; }
-.app[data-view="home"] .content { max-width: none; padding: 0; }
-.app[data-view="home"] main { padding: 0; gap: 0; display: block; }
-.app[data-view="home"] #paper { display: none; }
+.shell[data-view="home"] { display: block; }
+.shell[data-view="home"] :is(.drawer, .scrim, .bar) { display: none !important; }
+.shell[data-view="home"] .content { max-width: none; padding: 0; }
+.shell[data-view="home"] main { padding: 0; gap: 0; display: block; }
+.shell[data-view="home"] #paper { display: none; }
 
 .home { --hb: #061820; --hb2: #0c2a33; --hi: #eaf3f4; --hs: #a7c0c6; --hl: #29505a; --acc: #e0803a; --sea: #5cc4e0;
   --hcol: 46rem; --hwide: 72rem; overflow-x: clip; }

@@ -56,12 +56,12 @@ p, h1, h2, h3, dl, dd, ul, figure { margin: 0; }
 
 
 /* page frame: a collapsible drawer, then the content. Open, the drawer takes a column on wide screens and overlays on narrow ones. */
-.app { --dw: 300px; display: grid; grid-template-columns: var(--dw) minmax(0, 1fr); transition: grid-template-columns .22s ease; }
-.app[data-drawer="closed"] { grid-template-columns: 0 minmax(0, 1fr); }
+.shell { --dw: 300px; display: grid; grid-template-columns: var(--dw) minmax(0, 1fr); transition: grid-template-columns .22s ease; }
+.shell[data-drawer="closed"] { grid-template-columns: 0 minmax(0, 1fr); }
 .content { min-width: 0; max-width: calc(var(--col) + 2 * var(--s6)); width: 100%; margin: 0 auto; padding-inline: var(--s6); }
 .drawer { position: sticky; top: 0; height: 100vh; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; background: var(--room); border-right: 1px solid var(--line);
   padding: var(--s4) var(--s3) var(--s7); display: grid; gap: var(--s5); align-content: start; width: var(--dw); transition: transform .22s ease, visibility .22s; z-index: 30; }
-.app[data-drawer="closed"] .drawer { transform: translateX(-100%); visibility: hidden; }
+.shell[data-drawer="closed"] .drawer { transform: translateX(-100%); visibility: hidden; }
 .scrim { display: none; }
 .dhead { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); padding-left: var(--s2); min-height: 36px; }
 .dclose { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: var(--soft); }

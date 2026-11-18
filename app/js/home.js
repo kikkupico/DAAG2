@@ -97,7 +97,7 @@ function homeHTML() {
   const { it, I } = homeScene(), step = 1;
   return `<div class="home">
   <header class="htop"><button type="button" class="hbrand" data-key="intro">${brand}<span>${esc(ALLEGORY.title)}</span></button>
-    <nav>${ext(REPO, "GitHub")}<button type="button" class="hopen" data-key="intro">Open the app</button></nav></header>
+    <nav>${ext(REPO, "GitHub")}<button type="button" class="hopen" data-key="intro">Get started</button></nav></header>
   <section class="hero">
     <div class="htext">
       <p class="hey">Lamport did it first</p>
@@ -160,7 +160,7 @@ function homeHTML() {
         <button type="button" class="hpath" data-key="paxos"><span class="hlab">Or step right in</span><b>Explore Paxos</b>
           <span>${esc(F("The idea in a paragraph, the papers behind it, then four scenes: a clean round, one legislator's own view, a successor who inherits a ledger, and what breaks if promises are kept on the slate."))}</span><span class="hgo">Paxos →</span></button>
       </div>
-      <p class="hfine">Prefer another setting? The same scenes are also told in ${ALLEGORIES.list.filter(a => a.id !== ALLEGORIES.current).map(a => esc(a.name.replace(/^The /, "the "))).join(" and ")}: choose one from the menu at the foot of the app's side drawer. Or ${ext(REPO + "/tree/main/skills/build-allegory", "build your own")}. Code under MIT, text and pictures under CC BY 4.0, on ${ext(REPO, "GitHub")}.</p>
+      <p class="hfine">Prefer another setting? The same scenes are also told in ${ALLEGORIES.list.filter(a => a.id !== ALLEGORIES.current).map(a => esc(a.name.replace(/^The /, "the "))).join(" and ")}: choose one from the menu at the foot of the side drawer. Or ${ext(REPO + "/tree/main/skills/build-allegory", "build your own")}. Code under MIT, text and pictures under CC BY 4.0, on ${ext(REPO, "GitHub")}.</p>
     </div>
   </section>
 </div>`;
