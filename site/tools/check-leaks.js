@@ -1,5 +1,5 @@
 // Checks that the Abstraction register's own text never uses the Allegory's vocabulary.
-// Usage: node app/tools/check-leaks.js     (exit 1 if anything leaks)
+// Usage: node site/tools/check-leaks.js     (exit 1 if anything leaks)
 //
 // Allegory words are collected from TELL (roles, hats, node and place names, the words `lex`
 // swaps in, the left side of each `gloss`). The plain surfaces are scanned for them:

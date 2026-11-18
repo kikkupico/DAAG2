@@ -15,7 +15,7 @@ the page is worked out from those files. See skills/build-allegory/SKILL.md for 
   python3 tools/allegory.py lock <dir> <stage> <image> <ground>   # <image>-locked.png: pass 1's routes pasted back over a finished picture
   python3 tools/allegory.py overlay <dir> <stage> [image]     # work/<stage>-overlay.png: routes, doors and places drawn over the picture
   python3 tools/allegory.py trace <dir> <stage> [image]       # for a painted picture: how much of each road has a visible road under it
-  python3 tools/allegory.py build <dir> [--default]           # check, bake the pictures into app/img, add the allegory to the page (app/allegories/<id>.js)
+  python3 tools/allegory.py build <dir> [--default]           # check, bake the pictures into site/img, add the allegory to the page (site/allegories/<id>.js)
   python3 tools/allegory.py default <id>                      # make an allegory on the page the one it opens with
   python3 tools/allegory.py remove <id>                       # take an allegory off the page (its source in allegories/<id>/ stays)
   python3 tools/allegory.py list                              # the allegories on the page
@@ -525,21 +525,21 @@ def paint(S):
 
 # ------------------------------------------------------------------ build: the page's data
 def bake(S):
-    """The stage's picture at the page's widths, as WebP in app/img. A stage with "baked" names pictures already there."""
+    """The stage's picture at the page's widths, as WebP in site/img. A stage with "baked" names pictures already there."""
     if S.d.get("baked"): return {k: {str(w): v.replace("{w}", str(w)) for w in WIDTHS} for k, v in S.d["baked"].items()}
     pic = S.picture(); rels = {str(w): "img/%s-%s-%d.webp" % (S.owner, S.name, w) for w in WIDTHS}
     if not pic or not os.path.exists(pic):                                # the source picture is not kept in the repository; the baked ones are
-        if all(os.path.exists(os.path.join(REPO, "app", r)) for r in rels.values()): print("%s: no source picture here; keeping the baked ones in app/img" % S.name); return {"img": rels}
+        if all(os.path.exists(os.path.join(REPO, "site", r)) for r in rels.values()): print("%s: no source picture here; keeping the baked ones in site/img" % S.name); return {"img": rels}
         sys.exit("%s: its picture is missing (%s)" % (S.name, pic))
     from PIL import Image
     im = Image.open(pic).convert("RGB"); out = {}
     for w in WIDTHS:
-        rel = "img/%s-%s-%d.webp" % (S.owner, S.name, w); im.resize((w, round(w * 3 / 4)), Image.LANCZOS).save(os.path.join(REPO, "app", rel), "WEBP", quality=82, method=6); out[str(w)] = rel
+        rel = "img/%s-%s-%d.webp" % (S.owner, S.name, w); im.resize((w, round(w * 3 / 4)), Image.LANCZOS).save(os.path.join(REPO, "site", rel), "WEBP", quality=82, method=6); out[str(w)] = rel
     return {"img": out}
 
-# The page holds every allegory that has been built, one file each in app/allegories/, and the list of them in app/js/data/allegories.js.
+# The page holds every allegory that has been built, one file each in site/allegories/, and the list of them in site/js/data/allegories.js.
 # It opens with the default one; the reader can pick another from the menu.
-PAGE = os.path.join(REPO, "app", "allegories"); LIST = os.path.join(REPO, "app", "js", "data", "allegories.js")
+PAGE = os.path.join(REPO, "site", "allegories"); LIST = os.path.join(REPO, "site", "js", "data", "allegories.js")
 LOADER = r"""// The allegories the page can tell, and the one it opens with. Written by tools/allegory.py (build, default, remove). Do not edit by hand.
 const ALLEGORIES = %s;
 // Which one this visit tells: ?allegory=<id> in the address, else the reader's last choice, else the default. Its file defines
@@ -571,7 +571,7 @@ def build(d, default=False):
         o = dict(w=W, h=H, night=bool(S.d.get("night")), **bake(S), label={k: S.places[k]["label"] for k in S.places},
                  places={k: r1(S.at(k)) for k in S.places}, doors={k: r1(S.door(k)) for k in S.places}, routes=R)
         out.append("const %s = %s;\n" % (n.upper(), js(o)))
-    open(os.path.join(PAGE, A["id"] + ".js"), "w").write("".join(out)); print("wrote app/allegories/%s.js" % A["id"])
+    open(os.path.join(PAGE, A["id"] + ".js"), "w").write("".join(out)); print("wrote site/allegories/%s.js" % A["id"])
     L = listed(); L["list"] = [a for a in L["list"] if a["id"] != A["id"]] + [{"id": A["id"], "name": A["name"]}]
     if default or not L["default"]: L["default"] = A["id"]
     write_list(L)
@@ -587,9 +587,9 @@ def remove(i):
     if not os.path.exists(f): sys.exit("%r is not on the page" % i)
     if len(L["list"]) < 2: sys.exit("%r is the only allegory on the page: build another before removing it" % i)
     os.remove(f); n = 0
-    for g in os.listdir(os.path.join(REPO, "app", "img")):
-        if g.startswith(i + "-") and g.endswith(".webp"): os.remove(os.path.join(REPO, "app", "img", g)); n += 1
-    print("removed app/allegories/%s.js and %d pictures; allegories/%s/ is kept" % (i, n, i)); write_list(L)
+    for g in os.listdir(os.path.join(REPO, "site", "img")):
+        if g.startswith(i + "-") and g.endswith(".webp"): os.remove(os.path.join(REPO, "site", "img", g)); n += 1
+    print("removed site/allegories/%s.js and %d pictures; allegories/%s/ is kept" % (i, n, i)); write_list(L)
 
 def browser():
     for c in ("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/Applications/Chromium.app/Contents/MacOS/Chromium",
@@ -600,14 +600,14 @@ def browser():
 
 def shot(d, keys):
     """Screenshots of the page as it is now built, without opening a browser by hand: each scene in the Allegory, and the first
-    also in the Abstraction, into <dir>/work/page-<scene>[-plain].png. Serves app/ itself for as long as it takes."""
+    also in the Abstraction, into <dir>/work/page-<scene>[-plain].png. Serves site/ itself for as long as it takes."""
     import http.server, subprocess, threading
     d = find(d); exe = browser()
     if not os.path.exists(os.path.join(PAGE, os.path.basename(d) + ".js")): sys.exit("%s is not on the page yet: build it first" % os.path.basename(d))
-    if not exe: sys.exit("no Chrome, Chromium or Edge found. Serve the page (python3 -m http.server 8000 -d app) and look at it some other way, or say that it was not looked at.")
+    if not exe: sys.exit("no Chrome, Chromium or Edge found. Serve the page (python3 -m http.server 8000 -d site) and look at it some other way, or say that it was not looked at.")
     keys = keys or ["clocks-jump", "paxos-round", "quorum-overlap", "liars-four"]; work = os.path.join(d, "work"); os.makedirs(work, exist_ok=True)
     class H_(http.server.SimpleHTTPRequestHandler):
-        def __init__(s, *a, **k): super().__init__(*a, directory=os.path.join(REPO, "app"), **k)
+        def __init__(s, *a, **k): super().__init__(*a, directory=os.path.join(REPO, "site"), **k)
         def log_message(s, *a): pass
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H_); threading.Thread(target=srv.serve_forever, daemon=True).start()
     for k, reg in [(k, "isle") for k in keys] + [(keys[0], "plain")]:

@@ -9,7 +9,7 @@ function along(pts, t) {    // the point a fraction t of the way along a line of
 // ---------- the city stage: the picture of the allegory's world, with messengers walking its roads ----------
 // A step plays as a short animation: timers ring at your place, messengers arriving walk in along the roads, the step happens
 // at your place (a ring), then messengers leaving walk out. Each leaves a trail; a lost one stops partway. Replay runs it again.
-// The geometry a stage plays on. The Allegory plays on the current allegory's own world (CITY and SIEGE, from app/allegories/<id>.js,
+// The geometry a stage plays on. The Allegory plays on the current allegory's own world (CITY and SIEGE, from site/allegories/<id>.js,
 // built by tools/allegory.py from its network files); the Abstraction always plays on PLAIN, which no allegory changes. Both name their places by the same role ids, so
 // a scene's stage (TELL[...].stage) serves both. Each entry point below sets GEO from its scene's stage before drawing.
 const geoFor = S => { const v = S.view === "siege" ? "siege" : "city"; return reg === "isle" ? (v === "siege" ? SIEGE : CITY) : PLAIN[v]; };

@@ -84,9 +84,9 @@ left, and `[0, 0]` the centre. A height `z` lifts a point up the picture by 3.48
 
 ## What `build` writes
 
-`app/allegories/<id>.js` (the allegory's name and words and, for each stage, the picture's files, the labels, each place
-and door in pixels, and the route between every two places), the pictures as `app/img/<id>-<stage>-<width>.webp`, and
-the allegory's entry in `app/js/data/allegories.js`, the list of allegories the page holds and which one it opens with.
+`site/allegories/<id>.js` (the allegory's name and words and, for each stage, the picture's files, the labels, each place
+and door in pixels, and the route between every two places), the pictures as `site/img/<id>-<stage>-<width>.webp`, and
+the allegory's entry in `site/js/data/allegories.js`, the list of allegories the page holds and which one it opens with.
 These are the only files of the page that change.
 
 The page holds every allegory that has been built. With more than one, a menu in the side drawer lets the reader choose;

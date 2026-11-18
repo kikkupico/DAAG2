@@ -43,9 +43,9 @@ Fixed. Do not change these, and do not edit the files that hold them:
   the **middle of the top edge**, the **middle of the left edge**, or the **centre**. Nothing stands in the middle of the
   right edge (the replay and theater buttons are there) or the middle of the bottom edge. This spreads the landmarks
   evenly over the picture. The checker enforces it.
-- **The Abstraction.** It keeps its own roads and positions whatever you build. Never edit `app/js/data/plain.js`,
-  `scenes.js`, `scenes-extra.js`, `papers.js` or `app/js/rows.js`.
-- **Generated files.** `app/allegories/<id>.js` and `app/js/data/allegories.js` are written by the tool. Never edit them by hand.
+- **The Abstraction.** It keeps its own roads and positions whatever you build. Never edit `site/js/data/plain.js`,
+  `scenes.js`, `scenes-extra.js`, `papers.js` or `site/js/rows.js`.
+- **Generated files.** `site/allegories/<id>.js` and `site/js/data/allegories.js` are written by the tool. Never edit them by hand.
 
 Yours:
 
@@ -149,7 +149,7 @@ files. `references/telling.md` explains each and the optional `words`, which car
 ## 7. Build and verify
 
 ```sh
-python3 tools/allegory.py build <id>      # checks, bakes the pictures into app/img, and adds the allegory to the page
+python3 tools/allegory.py build <id>      # checks, bakes the pictures into site/img, and adds the allegory to the page
 python3 tools/allegory.py shot <id>       # screenshots of the built page into allegories/<id>/work/page-*.png
 ```
 
@@ -163,7 +163,7 @@ merchants' scene (`clocks-jump`), a legislators' (`paxos-round`), a scholars' (`
 - the prose under the picture reads as natural sentences with your place names and words in it;
 - the Abstraction's picture (`page-clocks-jump-plain.png`) is the plain diagram it always was, with none of your names in it.
 
-To look at the page yourself: `python3 -m http.server 8000 -d app`, then http://localhost:8000. A scene's address takes
+To look at the page yourself: `python3 -m http.server 8000 -d site`, then http://localhost:8000. A scene's address takes
 `?reg=plain` for the Abstraction and `?step=3` for a step, before the `#`.
 
 If `shot` finds no browser and you have no other way to see the page, say so in your report; do not claim it was checked.

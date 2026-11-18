@@ -17,17 +17,23 @@ Every scene is told twice, with the same steps:
 Lamport started this: the Byzantine generals (1982) and the part-time parliament of Paxos (1998).
 This project takes both stories at their word and puts them in one town.
 
+The site opens on a front page that shows the idea in a few seconds: one round of Paxos plays on
+the town, couriers walking its roads, and a seam wipes across to the same messages between nodes
+A, B, C and P. From there it points to a short guide to the site (`#intro`), or straight into Paxos.
+
 ## Running it
 
-It's a static page with no build step. Open `app/index.html`, or serve the folder:
+It's a static page with no build step. Open `site/index.html`, or serve the folder:
 
 ```sh
-python3 -m http.server -d app
+python3 -m http.server -d site
 ```
 
 ## How it is made
 
-- `app/js/data/`: the steps of every scene, as plain data shared by both tellings, and the
+- `site/js/home.js`, `site/css/home.css`: the front page, shown at the bare address. Every other
+  page has its own hash, so links into a result or a scene are unaffected.
+- `site/js/data/`: the steps of every scene, as plain data shared by both tellings, and the
   Allegory's prose.
 - `world/`: the Greek town and its siege, modelled and rendered in Blender (Python scripts).
   Textures, scanned rocks, trees and skies come from [Poly Haven](https://polyhaven.com) (CC0);
@@ -42,7 +48,7 @@ python3 -m http.server -d app
 Checks:
 
 ```sh
-node app/tools/check-leaks.js          # the Abstraction uses none of the Allegory's words
+node site/tools/check-leaks.js          # the Abstraction uses none of the Allegory's words
 python3 tools/allegory.py check greece # a setting's road network keeps every rule
 ```
 

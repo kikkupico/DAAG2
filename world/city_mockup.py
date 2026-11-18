@@ -1,17 +1,17 @@
 """SVG mockup of the walled city: a top-down plan (north up) and the same plan seen from the southeast, as in the concept.
 Plan coordinates are metres, x east, y north, origin at the crossroads.
-Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app app/js/data/city.js]
-     python3 world/city_mockup.py --siege world/plan/siege-plan.svg [--app app/js/data/siege.js]
+Run: python3 world/city_mockup.py world/plan/city-plan.svg [--app site/js/data/city.js]
+     python3 world/city_mockup.py --siege world/plan/siege-plan.svg [--app site/js/data/siege.js]
 --siege draws the soldiers' world instead: the same land, a flat walled town with its gates shut, shut in by the besiegers' double wall
 (as at Plataea, 429 BC: two walls of mud brick with a walk between them), with a siege mound against the town's south-east face, and four
 camps outside the lines (the commander's to the north, A, B and C to the east, south and west). The only way between camps is the walk
 inside the double wall, so every message goes the long way round, out of bowshot of the town.
 --network file.json writes this world's transport network (its places, and its roads as lines of plan points with heights): the
 source of allegories/greece/city.json and siege.json, from which tools/allegory.py works out every route the page draws.
---app app/js/data/city.js bakes the southeast picture alone to app/img/<view>-<width>.webp (needs Google Chrome and cwebp). The page's
+--app site/js/data/city.js bakes the southeast picture alone to site/img/<view>-<width>.webp (needs Google Chrome and cwebp). The page's
 city is made with --detail; the siege with --siege --night --detail. The page's data itself is written by tools/allegory.py build greece.
 --dump scene.json writes the same world as data for world/build_polis.py, which builds a richer world on it in Blender, in exactly this frame;
---bg3d render.png then bakes that render beside the drawing (app/img/<view>-3d-<width>.webp), and the page can show either."""
+--bg3d render.png then bakes that render beside the drawing (site/img/<view>-3d-<width>.webp), and the page can show either."""
 import math, sys, heapq, random
 
 R2 = math.sqrt(2)
@@ -792,7 +792,7 @@ def app_js():
 BAKE_WIDTHS = (800, 1200, 1800)           # the stage is about 360 css px on a phone (720 px at 2x, 1080 at 3x) and at most about 900 on a desktop (1800 at 2x)
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 def bake(body, AW, AH, view):
-    """Render the stage picture to WebP beside the page (app/img), once per width, with headless Chrome (the only renderer
+    """Render the stage picture to WebP beside the page (site/img), once per width, with headless Chrome (the only renderer
     that draws the night's screen-blended lights as the browser does) and cwebp. Returns {width: path from the page}."""
     import os, subprocess, tempfile
     app_dir = os.path.normpath(os.path.join(os.path.dirname(sys.argv[sys.argv.index("--app") + 1]), "..", ".."))

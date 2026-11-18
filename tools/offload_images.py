@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check locally linked images in app/index.html (and the stylesheets/scripts it loads),
+"""Check locally linked images in site/index.html (and the stylesheets/scripts it loads),
 upload new or changed images to Cloudflare R2 via Wrangler, and rewrite links in the page
 to serve them from the specified custom domain.
 
@@ -23,7 +23,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-DEFAULT_HTML = os.path.join(REPO, "app", "index.html")
+DEFAULT_HTML = os.path.join(REPO, "site", "index.html")
 DEFAULT_BUCKET = "daag2"
 CACHE_PATH = os.path.join(HERE, ".r2-upload.cache")
 
@@ -266,12 +266,12 @@ def rewrite_file_links(text: str, domain: str, valid_keys: set[str]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Upload locally linked images from app/index.html to Cloudflare R2 and rewrite links."
+        description="Upload locally linked images from site/index.html to Cloudflare R2 and rewrite links."
     )
     parser.add_argument("domain_pos", nargs="?", help="Public domain serving the R2 bucket (e.g. images.detangled.dev)")
     parser.add_argument("-d", "--domain", dest="domain_opt", help="Public domain serving the R2 bucket")
     parser.add_argument("-b", "--bucket", default=DEFAULT_BUCKET, help=f"R2 bucket name (default: {DEFAULT_BUCKET})")
-    parser.add_argument("--html", default=DEFAULT_HTML, help="Path to index.html (default: app/index.html)")
+    parser.add_argument("--html", default=DEFAULT_HTML, help="Path to index.html (default: site/index.html)")
     parser.add_argument("--workers", type=int, default=4, help="Parallel upload workers (default: 4)")
     parser.add_argument("--force", action="store_true", help="Re-upload all referenced images even if cached")
     parser.add_argument("--dry-run", action="store_true", help="Report planned uploads and link updates without writing")
