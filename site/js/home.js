@@ -161,6 +161,7 @@ function homeHTML() {
           <span>${esc(F("The idea in a paragraph, the papers behind it, then four scenes: a clean round, one legislator's own view, a successor who inherits a ledger, and what breaks if promises are kept on the slate."))}</span><span class="hgo">Paxos →</span></button>
       </div>
       <p class="hfine">Prefer another setting? The same scenes are also told in ${ALLEGORIES.list.filter(a => a.id !== ALLEGORIES.current).map(a => esc(a.name.replace(/^The /, "the "))).join(" and ")}: choose one from the menu at the foot of the side drawer. Or ${ext(REPO + "/tree/main/skills/build-allegory", "build your own")}. Code under MIT, text and pictures under CC BY 4.0, on ${ext(REPO, "GitHub")}.</p>
+      <p class="hfine">Found a step that is wrong, or a result told unfairly? Corrections are welcome as ${ext(REPO + "/issues", "issues")}.</p>
     </div>
   </section>
 </div>`;
