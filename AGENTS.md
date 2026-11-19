@@ -13,7 +13,9 @@ computing twice, as an Allegory and as an Abstraction.
 - `world/`: the Blender build of the original Greek town and siege.
 - `viz/`: Distributed Computing Papers Visualised, a three.js app on the same data (serve the repo root, open `/viz/`).
   It plays a scene's global trace (`viz/data/traces.js`: every node's state and every message's send and arrival),
-  from behind any node or from above the whole system. Abstraction first; the Allegory waits for a 3D world (`viz/js/worlds.js`).
+  from behind any node or from above the whole system. The Allegory plays in the Blender town (`?reg=isle`): build its
+  world with `python3 viz/tools/world_net.py greece city` (places and routes in 3D, committed) and
+  `blender -b world/build3d/w-city.blend -P viz/tools/export_world.py -- viz/worlds/greece-city` (the .glb, gitignored).
 
 ## Skills
 
