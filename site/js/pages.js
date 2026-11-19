@@ -166,8 +166,7 @@ function ctlHTML(it) {     // one circle per step
   const k = U().strip;
   return `<div class="sctl" id="sctl">${povHTML(it)}
     <button type="button" class="btn sm arrow" data-stage="-1" aria-label="Previous step"${stageStep ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sgs">${groups}</div><button type="button" class="btn sm arrow" data-stage="1" aria-label="Next step"${atEnd ? " disabled" : ""}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 2.5L10 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div></div>
-    <div class="tbar"><button type="button" class="btn" data-stage="-1"${stageStep ? "" : " disabled"}>Back</button><button type="button" class="btn go-out" data-stage="1"${atEnd ? " disabled" : ""}>${atEnd ? "The end" : stageStep ? "Next step" : "Begin"}</button></div></div>`;
+    <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div></div></div>`;
 }
 // The world view: what happened out of the node's sight. It is set into the telling at the step it belongs to, always in the second ink
 // and a dashed frame, under an eye and a line saying whose sight it lies beyond, so it never reads as something the node knows.

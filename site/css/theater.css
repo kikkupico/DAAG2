@@ -61,6 +61,12 @@
 .shead .sabout p { margin: 0; }
 :root[data-theater="stack"] .shead .point { font-size: var(--t-sm); }      /* under the picture there is little room */
 
+/* the stepper's arrows, the way through a scene: coloured so they stand out from the dots, the way on filled */
+:root[data-theater] #sctl .arrow { border-color: var(--node); color: var(--node); background: var(--node-wash); }
+:root[data-theater] #sctl .arrow[data-stage="1"] { background: var(--node); color: var(--on-node); }
+:root[data-theater] #sctl .arrow:hover:not(:disabled) { filter: brightness(1.12); }
+:root[data-theater] #sctl .arrow:disabled { opacity: .35; }
+
 /* the replay button: on the picture's right edge, at mid-height (that edge is usually empty; the corner collided with labels) */
 .stage .replay { right: 10px; top: calc(50% - 14px); }
 
@@ -79,21 +85,14 @@
 .twinp .tw-h b { font: 500 var(--t-md)/1.3 var(--serif); }
 .twinp .tw-same { margin: 0; font-style: italic; color: var(--soft); }
 
-/* a phone: under the picture the column is a sheet with a handle; pulled up, it covers most of the picture. Back and the
-   next step sit in a bar at the foot of the screen, in reach of a thumb */
-.sheet-h, .tbar { display: none; }
+/* a phone: under the picture the column is a sheet with a handle; pulled up, it covers most of the picture */
+.sheet-h { display: none; }
 @media (max-width: 639px) {
   :root[data-theater="stack"] .sheet-h { display: grid; place-items: center; width: 100%; height: 22px; margin: -10px 0 -2px; }
   :root[data-theater="stack"] .sheet-h i { width: 40px; height: 5px; border-radius: 3px; background: var(--line); }
   :root[data-theater="stack"] #pict { transition: max-height .25s ease; max-height: 100vh; overflow: hidden; }
   :root[data-theater="stack"][data-sheet="up"] #pict { max-height: 16vh; }
   :root[data-theater="stack"] #shead { border-radius: 14px 14px 0 0; box-shadow: 0 -8px 20px rgb(0 0 0 / .18); position: relative; z-index: 2; }
-  :root[data-theater="stack"] .tbar { display: flex; gap: var(--s2); position: fixed; left: 0; right: 0; bottom: 0; z-index: 52; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); background: var(--room); border-top: 1px solid var(--line); }
-  :root[data-theater="stack"] .tbar .btn { flex: 1; justify-content: center; min-height: 46px; }
-  :root[data-theater="stack"] .tbar .go-out { flex: 2; }
-  :root[data-theater="stack"] #panel { padding-bottom: 84px; }
-  :root[data-theater="stack"] #sctl .arrow { display: none; }      /* the bar has them */
-  :root[data-theater="stack"] #sctl .sgs { flex-basis: 100%; }    /* so the dots keep a row of their own */
   .split .hcap { top: auto; bottom: 4px; left: 4px; padding: 2px 6px; box-shadow: none; }      /* two small pictures: just the name, at the foot */
   .split .hcap .label { display: none; }
   .split .hcap b { font-size: var(--t-xs); }
