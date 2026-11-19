@@ -12,7 +12,8 @@ function theaterHead(key) {
   const isMap = key === "map", it = isMap ? null : resolve(key), land = isPaper(key);
   const n = it ? it.p.scenes.findIndex(s => s.id === it.s.id) + 1 : 0;
   const where = isMap ? `<span class="tp"><b>${U().map}</b></span><span class="ts">How the sixteen lead to one another</span>`
-    : `<span class="tp"><b>${esc(paperName(it.p))}</b><i>${land ? "" : ` · scene ${n} of ${it.p.scenes.length}`}</i></span><span class="ts">${land ? "Introduction" : esc(nameOf(it))}</span>`;
+    : land ? `<span class="tp">Introduction</span><span class="ts">${esc(paperName(it.p))}</span>`
+    : `<span class="tp"><b>${esc(paperName(it.p))}</b><i> · scene ${n} of ${it.p.scenes.length}</i></span><span class="ts">${esc(nameOf(it))}</span>`;
   const regs = `<div class="reg" role="group" aria-label="How the scenes are told">${[["isle", "Allegory"], ["plain", "Abstraction"]].map(([r, w]) => `<button type="button" data-reg="${r}" aria-pressed="${reg === r}">${w}</button>`).join("")}</div>`;
   const menu = `<button type="button" class="tnav tmenu" data-drawer="toggle" aria-label="Contents" title="Contents" aria-controls="drawer" aria-expanded="${$("shell").dataset.drawer === "open"}"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`;
   const map = `<button type="button" class="tnav tmap" data-key="map" aria-label="${U().map}: how the sixteen connect" title="${U().map}"${isMap ? ` aria-current="page"` : ""}><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 4.5l5-2 5 2 5-2v11l-5 2-5-2-5 2z M6.5 2.5v11 M11.5 4.5v11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>`;
@@ -42,9 +43,11 @@ function layTheater() {
   const vh = window.innerHeight - hh;
   // the least the stepper and panel need: beside the picture, or under it. On a phone the panel scrolls under a picture as
   // wide as the screen, so it is left less
-  const narrow = vw < 640, side = Math.max(260, Math.min(380, .27 * vw)), rest = narrow ? Math.max(240, .3 * vh) : Math.max(330, .38 * vh) + Math.min(sh, 160);
-  const a = Math.min(vw - side, vh * ar), b = Math.min(vw, (vh - rest) * ar), w = Math.floor(Math.max(a, b));
-  root.dataset.theater = a >= b ? "side" : "stack";
+  const narrow = vw < 640, side = Math.max(260, Math.min(380, .27 * vw)), rest = Math.max(330, .38 * vh) + Math.min(sh, 160);
+  const a = Math.min(vw - side, vh * ar), b = Math.min(vw, (vh - rest) * ar);
+  // an upright phone: the picture under the head takes about a third of the height, so the step's text has room
+  const up = narrow && a < Math.min(vw, .34 * window.innerHeight * ar), w = Math.floor(up ? Math.min(vw, .34 * window.innerHeight * ar) : Math.max(a, b));
+  root.dataset.theater = up || a < b ? "stack" : "side";
   bar.style.setProperty("--tw", w + "px");
   if (img) img.sizes = w + "px";      // so the browser picks a file sharp enough for the larger picture
 }

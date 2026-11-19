@@ -98,6 +98,31 @@
   .split .hcap b { font-size: var(--t-xs); }
 }
 @media (prefers-reduced-motion: reduce) { :root[data-theater="stack"] #pict { transition: none; } }
+/* an upright phone: every part above the step's text kept short. The head is one row, naming the scene; the column's own
+   head is just the sheet's handle and the ⓘ, which also holds the point; the tabs are tighter; the dots lose their key */
+.sab-point { display: none; }
+@media (max-width: 639px) {
+  :root[data-theater="stack"] #thead { flex-wrap: nowrap; gap: 2px; padding: 3px 4px; }
+  :root[data-theater="stack"] .thead .tgo { order: 0; flex: 1 1 auto; }
+  :root[data-theater="stack"] .thead .tp, :root[data-theater="stack"] .thead .tmap { display: none; }
+  :root[data-theater="stack"] .thead .ts { font-size: var(--t-md); }
+  :root[data-theater="stack"] .thead .tnav { width: 34px; height: 34px; }
+  :root[data-theater="stack"] .thead .reg button { padding: 6px 8px; font-size: 11.5px; }
+  :root[data-theater="stack"] #shead { position: relative; padding: 0 8px; gap: 0; }
+  :root[data-theater="stack"] .shead .sheet-h { margin: 0; height: 24px; }
+  :root[data-theater="stack"] .shead .sh-t { position: absolute; right: 6px; top: -4px; }
+  :root[data-theater="stack"] .shead .sh-t h2, :root[data-theater="stack"] #shead > .point, :root[data-theater="stack"] .split .shead > .cmpnote { display: none; }
+  :root[data-theater="stack"] .shead .sh-i { width: 30px; height: 30px; }
+  :root[data-theater="stack"] .shead .sabout { margin: 4px 0 8px; max-height: 40vh; }
+  :root[data-theater="stack"] .sab-point { display: block; }
+  :root[data-theater="stack"] .split .shead > .ctl { position: absolute; left: 8px; top: 0; }
+  :root[data-theater="stack"] .split .shead .btn { padding: 2px 10px; min-height: 0; font-size: var(--t-xs); }
+  :root[data-theater="stack"] .stepbar .pov [data-pov] { padding: 7px 10px 6px; }
+  :root[data-theater="stack"] #sctl { padding-block: 4px 6px; gap: 4px 8px; }
+  :root[data-theater="stack"] #sctl .sfoot { display: none; }
+  :root[data-theater="stack"] #sctl .sg > .label { font-size: 10px; }
+  :root[data-theater="stack"] #panel { padding-top: 8px; }
+}
 
 /* the end of a scene: the way on */
 .endnav { margin-top: var(--s4); display: flex; flex-wrap: wrap; gap: var(--s2); }

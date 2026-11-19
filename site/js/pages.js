@@ -102,7 +102,7 @@ function sheadHTML(it) {
   const rule = noteOf(it), cmpB = twinBtn(it);
   return `<div class="shead" id="shead">${sheetHandle()}<div class="sh-t"><h2>${esc(nameOf(it))}</h2><button type="button" class="sh-i" data-about="1" aria-expanded="${aboutOpen}" aria-controls="sabout" aria-label="About this scene" title="About this scene">`
     + `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 8v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="5.4" r="1" fill="currentColor"/></svg></button></div>`
-    + `${pointHTML(it)}<div class="sabout" id="sabout"${aboutOpen ? "" : " hidden"}>${basisHTML(it)}<p class="cast">${castHTML(it)}</p>${rule ? `<p class="rule">${rule}</p>` : ""}${cmpB ? `<div class="ctl">${cmpB}</div>` : ""}</div></div>`;
+    + `${pointHTML(it)}<div class="sabout" id="sabout"${aboutOpen ? "" : " hidden"}><div class="sab-point">${pointHTML(it)}</div>${basisHTML(it)}<p class="cast">${castHTML(it)}</p>${rule ? `<p class="rule">${rule}</p>` : ""}${cmpB ? `<div class="ctl">${cmpB}</div>` : ""}</div></div>`;
 }
 // ---------- twin scenes on one stage ----------
 // A scene and its near-twin side by side: two pictures, each playing its own scene's step, and one stepper for both, over
