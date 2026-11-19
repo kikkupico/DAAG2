@@ -96,15 +96,15 @@ function homeHTML() {
     ["the slate", "temporary state, lost in a crash"], ["an hourglass", "a timer"], ["a legislator who leaves office", "a node that stops, and its replacement"], ["a traitor", "a node that lies"], ["roads cut off", "a network partition"]];
   const { it, I } = homeScene(), step = 1;
   return `<div class="home">
-  <header class="htop"><button type="button" class="hbrand" data-key="intro">${brand}<span>${esc(ALLEGORY.title)}</span></button>
+  <header class="htop"><button type="button" class="hbrand" data-key="home">${brand}<span>${esc(ALLEGORY.title)}</span></button>
     <nav>${ext(REPO, "GitHub")}<button type="button" class="hopen" data-key="intro">Get started</button></nav></header>
   <section class="hero">
     <div class="htext">
       <p class="hey">Lamport did it first</p>
       <h1>Distributed algorithms, told as stories.</h1>
       <p class="hlede">Leslie Lamport first published Paxos as an archaeologist's report on the lost parliament of a Greek island. This site tells sixteen classic results the same way: as scenes in one town, where every message is a courier walking the roads. One switch turns the story back into nodes A, B and C.</p>
-      <div class="hcta"><button type="button" class="hbtn pri" data-key="intro">Start with the guide</button><button type="button" class="hbtn" data-key="paxos">Or step right into Paxos</button></div>
-      <p class="hhint">The guide takes two minutes. Paxos opens on its own page, with the idea, the papers and four scenes.</p>
+      <div class="hcta"><button type="button" class="hbtn pri" data-key="${ORDER[0]}" data-guide="1">Start with the first paper</button><button type="button" class="hbtn" data-key="paxos" data-guide="1">Or step right into Paxos</button></div>
+      <p class="hhint">Either way, a two-minute guide opens first, over the page. The first paper is ${esc(paperName(resolve(ORDER[0]).p))}; Paxos has the idea, the papers and four scenes.</p>
     </div>
     ${homeStageHTML()}
   </section>
@@ -155,9 +155,9 @@ function homeHTML() {
       <p class="hlab">Where to begin</p>
       <h2>Step inside ${esc(ALLEGORY.town)}</h2>
       <div class="hpaths">
-        <button type="button" class="hpath first" data-key="intro"><span class="hlab">Recommended · two minutes</span><b>Start with the guide</b>
-          <span>How a scene is told, how to step through it, what the dashed frames mean, and how to switch between the tellings. Then the sixteen results, in order.</span><span class="hgo">How this site works →</span></button>
-        <button type="button" class="hpath" data-key="paxos"><span class="hlab">Or step right in</span><b>Explore Paxos</b>
+        <button type="button" class="hpath first" data-key="${ORDER[0]}" data-guide="1"><span class="hlab">Recommended · from the beginning</span><b>Start with the first paper</b>
+          <span>${esc(paperName(resolve(ORDER[0]).p))}, then the sixteen results in order. A two-minute guide opens over it first: how a scene is told, how to step through it, what the dashed frames mean, and how to switch between the tellings.</span><span class="hgo">${esc(paperName(resolve(ORDER[0]).p))} →</span></button>
+        <button type="button" class="hpath" data-key="paxos" data-guide="1"><span class="hlab">Or step right in</span><b>Explore Paxos</b>
           <span>${esc(F("The idea in a paragraph, the papers behind it, then four scenes: a clean round, one legislator's own view, a successor who inherits a ledger, and what breaks if promises are kept on the slate."))}</span><span class="hgo">Paxos →</span></button>
       </div>
       <p class="hfine">Prefer another setting? The same scenes are also told in ${ALLEGORIES.list.filter(a => a.id !== ALLEGORIES.current).map(a => esc(a.name.replace(/^The /, "the "))).join(" and ")}: choose one from the menu at the foot of the side drawer. Or ${ext(REPO + "/tree/main/skills/build-allegory", "build your own")}. Code under MIT, text and pictures under CC BY 4.0, on ${ext(REPO, "GitHub")}.</p>

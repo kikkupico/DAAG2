@@ -1,4 +1,21 @@
-// ---------- the introduction: how the site works, and how to read a scene ----------
+// ---------- the guide: how the site works, and how to read a scene ----------
+// Not a page: a panel over the whole window, opened over the stage (the ? in its head, the drawer's Introduction, an
+// address ending #intro, or the front page's ways in, which arrive with it open). It leads nowhere but back to the stage.
+let guideOpen = false;
+function renderGuide() {
+  let el = $("guide");
+  if (!guideOpen) { if (el) el.remove(); document.documentElement.classList.remove("guiding"); return; }
+  const fresh = !el;
+  if (fresh) { document.body.insertAdjacentHTML("beforeend", `<div class="gmodal" id="guide" role="dialog" aria-modal="true" aria-labelledby="guide-t"></div>`); el = $("guide"); }
+  const top = el.querySelector(".gbody") ? el.querySelector(".gbody").scrollTop : 0;
+  el.innerHTML = `<button type="button" class="gclose" data-guideclose="1" aria-label="Close the guide" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`
+    + `<div class="gbody">${introHTML()}<p class="gend"><button type="button" class="btn go-out" data-guideclose="1">Begin</button></p></div>`;
+  el.querySelector(".gbody").scrollTop = top;
+  document.documentElement.classList.add("guiding");
+  if (fresh) el.querySelector(".gclose").focus();
+}
+function openGuide() { guideOpen = true; renderGuide(); }
+function closeGuide() { guideOpen = false; renderGuide(); const b = document.querySelector(".thead .tguide"); if (b) b.focus(); }
 // Why the idea exists, and Lamport's stories, are told on the front page (home.js). This page is about how to read it,
 // so it reads the same in both registers; only the title and a few nouns follow the register.
 const REPO = "https://github.com/kikkupico/DAAG2";
@@ -8,7 +25,6 @@ function introHTML() {
   const sect = (label, title, body) => `<section class="sect"><p class="label">${label}</p><h2>${title}</h2>${body}</section>`;
   const ps = (...xs) => xs.map(x => `<p>${x}</p>`).join("");
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
-  const go = `<div class="ctl"><button type="button" class="btn go-out" data-key="${first.p.id}">Start with ${esc(paperName(first.p))}</button><button type="button" class="btn" data-key="map">${UI.isle.map}: how the sixteen connect</button></div>`;
   const chamber = sect("What was left out", "Why Paxos has no Chamber here", ps(
     `Lamport's legislators meet in a Chamber. Two earlier versions of this project kept it. ${ext("https://kikkupico.github.io/paxos-illustrated/", "Paxos Illustrated")} set Lamport's text, word for word, among illustrations of the hall. ${ext("https://kikkupico.github.io/DAAG/", "The first Distributed Algorithms of Ancient Greece")} built the Chamber as a round hall on the island's summit and set several of its books inside. Both were sincere attempts to draw the paper as written, and both ran into the same wall.`)
     + items([
@@ -31,7 +47,7 @@ function introHTML() {
 
   const how = sect("A short guide", "How to use it", `<ol class="guide">${[
       ["Pick a result", "The menu, behind the three lines at the top left, lists the sixteen in four chapters. Read in order, or open the " + UI.isle.map + " to see which result answers a problem another one raises."],
-      ["Read its page, then its scenes", "A result opens on its Introduction: the idea, the papers behind it and the words used, beside its picture. Its scenes follow, each marked as one that works, one that goes wrong, or one that never finishes. The two pickers at the top jump to any result and any scene; the arrows beside them walk the reading order."],
+      ["Read its page, then its scenes", "A result opens on its Introduction: the idea, the papers behind it and the words used, beside its picture. Its scenes follow, each marked as one that works, one that goes wrong, or one that never finishes. The head names the result and the scene, and the menu goes anywhere. The last step of a scene leads on to the next."],
       ["Step through a scene", "Use the arrows beside the row of dots, the dots themselves, or the left and right arrow keys. In the picture, couriers walk the roads; the replay button runs a step again. Beside it, each step reads top to bottom: what arrives, what is kept, what leaves. The last dot is the end: what happened, and the way on."],
       ["Know where you stand", "Each scene's name and its point sit over its steps. The ⓘ beside the name tells what the scene rests on, the paper it comes from, who you are in it, and the rule you follow."],
       ["See through other eyes", "Some scenes have tabs over their steps, one for each participant. The first tells the scene as written; any other tells the same moments from inside someone else, with what they could not see in the dashed frame."],
@@ -50,11 +66,10 @@ function introHTML() {
     <p>The skill paints or models the world, lays out its roads, and renames every place to match.</p></aside>`;
 
   return `<div class="map about">
-    <div class="intro"><p class="label">Introduction</p><h1>How this site works</h1>
+    <div class="intro"><p class="label">The guide</p><h1 id="guide-t">How this site works</h1>
       <p class="idea">Sixteen results from distributed computing, each told as a few short scenes from inside one participant. In the Allegory they are ${esc(ALLEGORY.people)}. In the Abstraction they are nodes A, B and C. The steps are the same. Here is how to find your way around.</p>
-      ${go}<p class="fine">New here? <button type="button" class="link" data-key="home">The front page</button> shows the idea in a minute, and where it comes from.</p></div>
+    </div>
     ${how}${one}${chamber}${fork}
     <p class="src">The code, the text and the pictures are on GitHub at ${ext(REPO, "kikkupico/DAAG2")}: the code under MIT, the text and pictures under CC BY 4.0. Corrections are welcome as issues.</p>
-    <nav class="pager" aria-label="Reading order"><button type="button" data-key="map"><span class="label">Next</span><span>${U().map}</span></button><button type="button" data-key="${first.p.id}"><span class="label">Or begin · the first result</span><span>${esc(paperName(first.p))}</span></button></nav>
   </div>`;
 }

@@ -26,22 +26,23 @@
 /* the head: the menu; the pickers for the result and the scene, between the ways to the pages before and after; the tellings; the guide */
 .thead { display: none; }
 .thead .tgo { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--s2) var(--s3); }
-.thead .tpick { min-width: 0; display: flex; align-items: center; gap: 8px; }
-.thead .tpick.paper { flex: 0 1 220px; } .thead .tpick.scene { flex: 0 1 340px; }
-.thead .tpick .label { flex: none; }
-.thead select { appearance: none; width: 100%; min-width: 0; font: 500 var(--t-sm)/1.2 var(--sans); color: var(--ink); background: var(--ground) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23889' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 11px center / 10px; border: 1px solid var(--line); border-radius: 99px; padding: 8px 30px 8px 14px; cursor: pointer; text-overflow: ellipsis; }
-.thead select:hover { border-color: var(--node); }
-:root[data-reg="isle"] .thead select { font: 400 var(--t-md)/1.2 var(--serif); }
+.thead .tt { flex: 1 1 auto; min-width: 0; display: grid; gap: 1px; text-align: center; }
+.thead .tt > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thead .tp { font: var(--t-sm)/1.35 var(--sans); color: var(--soft); }
+.thead .tp b { font-weight: 600; color: var(--ink); }
+.thead .tp i { font-style: normal; }
+.thead .ts { font: 500 var(--t-lg)/1.25 var(--serif); }
+:root[data-reg="isle"] .thead .ts { font-weight: 400; }
+.thead .tmap[aria-current] { background: var(--node-wash); color: var(--node); }
 .thead .reg { margin-left: auto; flex: none; }
 .thead .tnav { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 6px; color: var(--soft); }
 .thead .tnav:hover { background: var(--ground); color: var(--ink); }
 .thead .tnav[disabled] { opacity: .3; pointer-events: none; }
-@media (max-width: 1000px) { .thead .tpick .label { display: none; } .thead .reg button { padding: 7px 10px; } }
+@media (max-width: 1000px) { .thead .reg button { padding: 7px 10px; } }
 /* a narrow window: the pickers and their arrows take a row of their own, under the menu, the tellings and the guide */
 @media (max-width: 720px) {
   :root[data-theater] #thead { flex-wrap: wrap; padding: 6px 8px; }
   .thead .tgo { order: 1; flex: 1 1 100%; }
-  .thead .tpick.paper { flex: 1 1 40%; } .thead .tpick.scene { flex: 1 1 60%; }
   .thead .reg button { padding: 7px 9px; font-size: var(--t-xs); }
 }
 
@@ -116,6 +117,20 @@
 :root[data-theater="intro"] .ipict { display: grid; align-content: center; position: fixed; left: 0; top: var(--hh, 56px); bottom: 0; width: var(--iw, 0px); z-index: 51; background: var(--ground); border-right: 1px solid var(--line); overflow: hidden; }
 :root[data-theater="intro"] .ipict .stage { margin: 0; }
 :root[data-theater="intro"] .ipict .stv { width: var(--iw); max-width: none; border-radius: 0; }
+
+/* the overview on the stage: the map in the left pane, scaled to fit it; on a narrow window, at the top of the text */
+:root[data-theater="intro"] .mpict { align-content: center; padding: var(--s5); }
+:root[data-theater="intro"] .mpict .mapbox { margin: 0; }
+:root[data-theater="intro"] .mpict svg { width: 100%; height: auto; max-height: calc(100vh - var(--hh, 56px) - 48px); }
+@media (max-width: 959px) { :root[data-theater="intro"] .mpict { display: block; position: static; width: auto; padding: 0; margin-bottom: var(--s5); border: 0; background: none; } }
+
+/* the guide: a panel over the whole window, read and closed */
+.gmodal { position: fixed; inset: 0; z-index: 70; background: var(--ground); overflow: hidden; }
+.gmodal .gbody { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: var(--s7) max(var(--s5), calc((100vw - 760px) / 2)) var(--s7); box-sizing: border-box; }
+.gmodal .gclose { position: fixed; top: 12px; right: 14px; z-index: 71; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--room); border: 1px solid var(--line); color: var(--ink); box-shadow: 0 2px 10px rgb(0 0 0 / .2); }
+.gmodal .gclose:hover { border-color: var(--node); }
+.gmodal .gend { margin: var(--s6) 0 0; }
+:root.guiding { overflow: hidden; }
 
 /* a short window, such as a phone on its side: tighter, so more of the step's text shows without scrolling */
 @media (max-height: 520px) {

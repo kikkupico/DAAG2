@@ -1,5 +1,6 @@
 // ---------- wiring ----------
-// A key is "home" (the front page, at the bare address), "intro" (how the site works), "map", a result's id (its own page), or a scene.
+// A key is "home" (the front page, at the bare address), "intro" (how the site works: the guide, opened over the stage),
+// "map" (the overview, on the stage), a result's id (its own page), or a scene.
 const isPaper = k => PAPERS.some(x => x.id === k);
 const resolve = k => { const p = PAPERS.find(x => x.id === k); return p ? byKey(`${p.id}-${p.scenes[0].id}`) : byKey(k); };
 function renderDrawer() {
@@ -29,7 +30,7 @@ function render() {
   const was = theater; layTheater();
   if (theater !== was) setDrawer(theater ? false : WIDE.matches && savedDrawer() !== "closed", true);
   if (theater) $("main").scrollTop = 0;      // in theater mode a result's own page scrolls inside the window-filling frame
-  centreStage(); playHome();
+  centreStage(); playHome(); renderGuide();
   try { if (location.hash.slice(1) !== (home ? "" : sel)) history.replaceState(null, "", home ? location.pathname + location.search : "#" + sel); } catch (e) {}
 }
 const WIDE = window.matchMedia("(min-width: 1100px)");
@@ -41,6 +42,8 @@ function setDrawer(open, keep) {
 }
 // to: where the page lands. "top" (from the side menu) shows the top of the page; "scene" (from the pager) puts the scene's title under the bar.
 function go(key, keep, to) {
+  // the guide is not a page: it opens over the stage, or over the first result when there is no stage to open it over
+  if (key === "intro") { if (theater) { setDrawer(false, true); return openGuide(); } key = ORDER[0]; guideOpen = true; }
   const was = resolve(sel), it = resolve(key);
   if (!it && !isTop(key) && !vsValid(key)) return;
   if (key !== sel) {
@@ -59,7 +62,8 @@ function go(key, keep, to) {
 }
 function act(b) {
   const d = b.dataset;
-  if (d.key) go(d.key, !!d.keep, b.closest("#drawer") ? "top" : b.closest(".pager") ? "scene" : "");
+  if (d.key) { go(d.key, !!d.keep, b.closest("#drawer") ? "top" : b.closest(".pager") ? "scene" : ""); if (d.guide) openGuide(); }      // data-guide: arrive with the guide open
+  else if (d.guideclose) closeGuide();
   else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("shell").dataset.drawer !== "open" : d.drawer === "open", theater);      // the stage's overlay is not the reader's preference
   else if (d.about) toggleAbout();
   else if (d.sheet) toggleSheet();
@@ -74,9 +78,10 @@ function act(b) {
   else if (d.step) showStep(+d.step);
   else if (d.pov) setPov(d.pov);
 }
-const HOT = "[data-pov],[data-about],[data-sheet],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
+const HOT = "[data-guideclose],[data-pov],[data-about],[data-sheet],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && guideOpen) { closeGuide(); return; }
   if (e.key === "Escape" && (!WIDE.matches || theater) && $("shell").dataset.drawer === "open") { setDrawer(false, true); const b = theater ? document.querySelector(".thead .tmenu") : $("dtog"); if (b) b.focus(); return; }
   if (e.key !== "Enter" && e.key !== " ") return;
   const b = e.target.closest(".mn, .mx");
@@ -91,7 +96,7 @@ document.addEventListener("change", e => {
   else go(d.vs === "a" ? vsKey(s.value, b) : vsKey(a, s.value), true);
   const el = document.querySelector(d.vs === "pair" ? `select[data-vs="pair"][data-a="${d.a}"]` : `select[data-vs="${d.vs}"]`); if (el) el.focus();
 });
-const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); if (!k) sel = "home"; else if (isTop(k) || resolve(k) || vsValid(k)) sel = k; };
+const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); if (!k) sel = "home"; else if (k === "intro") { sel = ORDER[0]; guideOpen = true; } else if (isTop(k) || resolve(k) || vsValid(k)) sel = k; };
 // Back/Forward (and hand-edited hashes): follow the address, as a fresh page
 window.addEventListener("hashchange", () => {
   const was = sel; fromHash();

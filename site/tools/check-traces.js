@@ -17,7 +17,7 @@ const get = n => vm.runInContext(n, ctx);
 const PAPERS = get("PAPERS"), TELL = get("TELL"), TRACES = get("TRACES"), PLAIN = get("PLAIN");
 const project = get("traceRows"), traceLen = get("traceLen"), actSteps = get("actSteps");
 
-const bad = [];
+const bad = [], PSEUDO = new Set(["outside", "timer", "nothing", "coin"]);
 const norm = r => JSON.stringify({ perm: r.perm || {}, temp: r.temp || {}, recv: r.recv || [], sent: (r.sent || []).map(m => m[2] === "lost" ? m.slice(0, 3) : m.slice(0, 2)) });
 for (const [key, T] of Object.entries(TRACES)) {
   const p = PAPERS.find(p => key.startsWith(p.id + "-")), s = p && p.scenes.find(s => key === p.id + "-" + s.id);
@@ -35,12 +35,14 @@ for (const [key, T] of Object.entries(TRACES)) {
   // 2. the messages
   T.msgs.forEach((m, i) => {
     const [from, to, text, sent, arr, flag] = m, at = `${key}: message ${i} (${from}→${to} ${text})`;
-    if (!T.nodes[from] && from !== "outside" && from !== "timer") bad.push(`${at}: unknown sender`);
-    if (!T.nodes[to]) bad.push(`${at}: unknown receiver`);
+    if (!T.nodes[from] && !PSEUDO.has(from)) bad.push(`${at}: unknown sender`);
+    if (!T.nodes[to] && to !== "outside") bad.push(`${at}: unknown receiver`);
+    if (PSEUDO.has(from) && to === "outside") bad.push(`${at}: nothing goes from outside to outside`);
     if (!(sent >= 0 && sent <= N)) bad.push(`${at}: leaves at step ${sent}, outside 0..${N}`);
-    if (arr !== null && !(arr > sent && arr <= N)) bad.push(`${at}: arrives at step ${arr}, not after it leaves or past the end`);
+    if (arr !== null && to !== "outside" && !(arr > sent && arr <= N)) bad.push(`${at}: arrives at step ${arr}, not after it leaves or past the end`);
     if (flag && flag !== "lost") bad.push(`${at}: unknown flag ${flag}`);
-    if ((from === "outside" || from === "timer") && arr === null) bad.push(`${at}: an outside message must arrive`);
+    if (PSEUDO.has(from) && arr === null) bad.push(`${at}: an outside message, a timer, a coin or an empty step must arrive`);
+    if (to === "outside" && arr !== sent) bad.push(`${at}: a reply to outside leaves the scene at once: arrives must equal sent`);
   });
   T.steps.forEach((st, k) => Object.keys(st.acts || {}).forEach(X => { if (!T.nodes[X]) bad.push(`${key}: step ${k} has an act for unknown node ${X}`); }));
   if (T.steps[0].acts) bad.push(`${key}: step 0 is the start and has no acts`);
@@ -48,7 +50,7 @@ for (const [key, T] of Object.entries(TRACES)) {
   const S = TELL[p.id] && TELL[p.id].stage, G = S && PLAIN[S.view === "siege" ? "siege" : "city"];
   if (!S) bad.push(`${key}: ${p.id} has no stage`);
   else nodes.forEach(X => { if (!S[X] || !G.places[S[X]]) bad.push(`${key}: node ${X} has no place on the stage`); });
-  if (S && T.msgs.some(m => m[0] === "outside") && !(S.client && G.places[S.client])) bad.push(`${key}: outside messages but no client place`);
+  // (a stage with no client place is fine: the page shows a request from outside at the node it reaches)
   // 4. the other nodes' accounts
   nodes.filter(X => X !== s.who).forEach(X => actSteps(T, X).forEach(k => { const a = T.steps[k].acts && T.steps[k].acts[X];
     if (!a || !a.why) bad.push(`${key}: ${X} acts at step ${k} but has no \`why\` to tell it`); }));

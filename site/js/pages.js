@@ -23,7 +23,7 @@ function indexHTML(it, land) {
     const scenes = open ? `<ul class="scl">${p.scenes.map(s => { const x = byKey(`${p.id}-${s.id}`); return `<li><button type="button" class="sl" data-key="${x.key}" aria-pressed="${!land && x === it}"><span>${esc(nameOf(x))}</span>${ocMark(x.oc)}</button></li>`; }).join("")}</ul>` : "";
     return `<div class="pg${matches(p) ? "" : " off"}${open ? " open" : ""}"><div class="prow"><button type="button" class="pl" data-key="${p.id}" aria-pressed="${here}"${inside ? ` aria-current="true"` : ""}><span>${esc(paperName(p))}</span><small>${esc(p.year)}</small></button><button type="button" class="chev" data-tog="${p.id}" aria-expanded="${open}" aria-label="Scenes in ${esc(paperName(p))}">${chev}</button></div>${scenes}</div>`;
   };
-  return `<div class="chap"><button type="button" class="pl map" data-key="intro" aria-pressed="${sel === "intro"}"><span>Introduction</span></button><button type="button" class="pl map" data-key="map" aria-pressed="${sel === "map"}"><span>${U().map}</span></button></div>`
+  return `<div class="chap"><button type="button" class="pl map" data-key="intro" aria-pressed="${guideOpen}"><span>The guide</span></button><button type="button" class="pl map" data-key="map" aria-pressed="${sel === "map"}"><span>${U().map}</span></button></div>`
     + CHAPTERS.map(([name, ids]) => {
       const ps = ids.map(id => PAPERS.find(x => x.id === id)).filter(p => matches(p) || p === cur);
       if (!ps.length) return "";
@@ -295,17 +295,17 @@ function mapHTML() {
     ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody in " + ALLEGORY.town + " has it. Here it is set beside the telling, in a dashed frame."]];
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
   const sect = (label, body) => `<section class="sect"><p class="label">${label}</p>${body}</section>`;
-  if (isle) return `<div class="map">
+  // on the stage: the map on the left, where the window is wide enough (else at the top of the text), the words on the right
+  const pane = `${theaterHead("map")}<div class="ipict mpict">${svg}</div>`;
+  if (isle) return `${pane}<div class="map">
     <div class="intro"><h1>${U().map}</h1>
       <p class="idea">The sixteen results, each marked with who tells it. An arrow leads from one result to another that answers the problem it raises, or builds on it. Pick a result to open it, or an arrow to set the two side by side.</p></div>
-    ${sect("How the sixteen lead to one another", svg)}
     ${sect("Four kinds of work, four kinds of problem", items(Object.values(HAT)))}
     ${sect("Six words used everywhere", items(words))}
     ${sect("About the telling", `<p class="fine">Those who do the work have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, the ${esc(CITY.label.fishery)}, the ${esc(CITY.label.granary)} and the ${esc(CITY.label.winery)}, stand in for A, B and C, and a notary for K. A few of the people they serve are named, such as Ann and Bob, who book the reading room. What is asked for and decided is specific here, such as a colour for the ${esc(CITY.label.temple)} columns or an order for ${ALLEGORY.fill("grain")}, but the steps are the same.</p>`)}
   </div>`;
-  return `<div class="map">
+  return `${pane}<div class="map">
     <div class="intro"><h1>${U().map}</h1>
       <p class="idea">The sixteen results and how they connect. An arrow leads from one result to another that answers the problem it raises, or builds on it. Pick a result to open it, or an arrow to compare the two.</p></div>
-    ${sect("How the sixteen lead to one another", svg)}
   </div>`;
 }
