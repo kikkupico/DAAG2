@@ -62,6 +62,7 @@ function act(b) {
   if (d.key) go(d.key, !!d.keep, b.closest("#drawer") ? "top" : b.closest(".pager") ? "scene" : "");
   else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("shell").dataset.drawer !== "open" : d.drawer === "open", theater);      // the stage's overlay is not the reader's preference
   else if (d.about) toggleAbout();
+  else if (d.sheet) toggleSheet();
   else if (d.tog) { expanded.has(d.tog) ? expanded.delete(d.tog) : expanded.add(d.tog); renderDrawer(); }
   else if (d.reg) { reg = d.reg; try { localStorage.setItem("reg", reg); } catch (e) {} render(); }
   else if (d.cmp) { cmp = !cmp; render(); }
@@ -73,7 +74,7 @@ function act(b) {
   else if (d.step) showStep(+d.step);
   else if (d.pov) setPov(d.pov);
 }
-const HOT = "[data-pov],[data-about],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
+const HOT = "[data-pov],[data-about],[data-sheet],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && (!WIDE.matches || theater) && $("shell").dataset.drawer === "open") { setDrawer(false, true); const b = theater ? document.querySelector(".thead .tmenu") : $("dtog"); if (b) b.focus(); return; }

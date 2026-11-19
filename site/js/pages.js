@@ -97,13 +97,58 @@ function stripHTML(it) {
 // its place in the result's argument), who you are in it, its rule, and its near-twin to compare with. The ⓘ stays as the
 // reader left it from scene to scene.
 let aboutOpen = false;
-const twinBtn = it => { const other = it.pov ? null : byKey(PAIR[it.key]); return other ? `<button type="button" class="btn sm" data-cmp="1" aria-pressed="false">Compare with “${esc(nameOf(other))}”</button>` : ""; };
+const twinBtn = it => { const other = it.pov ? null : byKey(PAIR[it.key]); return other ? `<button type="button" class="btn sm" data-cmp="1" aria-pressed="${cmp}">${cmp ? "Close comparison" : `Compare with “${esc(nameOf(other))}”`}</button>` : ""; };
 function sheadHTML(it) {
   const rule = noteOf(it), cmpB = twinBtn(it);
-  return `<div class="shead" id="shead"><div class="sh-t"><h2>${esc(nameOf(it))}</h2><button type="button" class="sh-i" data-about="1" aria-expanded="${aboutOpen}" aria-controls="sabout" aria-label="About this scene" title="About this scene">`
+  return `<div class="shead" id="shead">${sheetHandle()}<div class="sh-t"><h2>${esc(nameOf(it))}</h2><button type="button" class="sh-i" data-about="1" aria-expanded="${aboutOpen}" aria-controls="sabout" aria-label="About this scene" title="About this scene">`
     + `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 8v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="5.4" r="1" fill="currentColor"/></svg></button></div>`
     + `${pointHTML(it)}<div class="sabout" id="sabout"${aboutOpen ? "" : " hidden"}>${basisHTML(it)}<p class="cast">${castHTML(it)}</p>${rule ? `<p class="rule">${rule}</p>` : ""}${cmpB ? `<div class="ctl">${cmpB}</div>` : ""}</div></div>`;
 }
+// ---------- twin scenes on one stage ----------
+// A scene and its near-twin side by side: two pictures, each playing its own scene's step, and one stepper for both, over
+// the longer one's steps. The dots mark the first step where the two differ from inside, and the steps only one of them has.
+// The panel tells the open scene's step, then the twin's: the same, from inside, until they part; then its own words.
+function splitOf() {
+  if (!cmp) return null;
+  const it = byKey(sel), other = it && byKey(PAIR[it.key]); if (!other || !stageOf(it)) return null;
+  return { it, other, long: other.s.rows.length > it.s.rows.length ? other : it, short: other.s.rows.length > it.s.rows.length ? it : other, d: firstDiff(it.s, other.s) };
+}
+function splitHTML(sp) {
+  const { it, other } = sp, half = (x, id, word) => `<div class="half"><p class="hcap"><span class="label">${word}</span><b>${esc(nameOf(x))}</b>${ocMark(x.oc)}</p>${stageHTML(x, id)}</div>`;
+  return `<div class="strip stepbar split" id="stepbar" role="group" aria-label="Steps of the two scenes"><div class="pict" id="pict">${half(it, "stage", "This scene")}${half(other, "stage2", "Beside it")}</div>${theaterHead(it.key)}`
+    + `<div class="shead" id="shead">${sheetHandle()}<div class="sh-t"><h2>${esc(nameOf(it))} <span class="beside">beside “${esc(nameOf(other))}”</span></h2></div>`
+    + `<p class="cmpnote">${sp.d < 0 ? U().same : sp.d === 0 ? U().differ0 : U().until(sp.d)}</p><div class="ctl"><button type="button" class="btn sm" data-cmp="1" aria-pressed="true">Close comparison</button></div></div>`
+    + `${splitCtlHTML(sp)}${splitPanelHTML(sp)}</div>`;
+}
+function splitCtlHTML(sp) {      // the longer scene's dots, marked where the two part and where only one goes on
+  const n = sp.short.s.rows.length, N = sp.long.s.rows.length, only = esc(nameOf(sp.long));
+  return ctlHTML(sp.long).replace(/(<button type="button" class="sd [^"]*") data-step="(\d+)" title="([^"]*)"/g, (m, a, t, title) => {
+    t = +t; const mark = t === sp.d ? ` data-dv="1"` : t > n && t <= N ? ` data-only="1"` : "";
+    const note = t === sp.d ? " (the first difference)" : t > n && t <= N ? ` (only in “${only}”)` : "";
+    return `${a} data-step="${t}"${mark} title="${title}${note}"`;
+  });
+}
+function splitPanelHTML(sp) {
+  const { other, d } = sp, n = stageStep, rows = tellOf(other).rows;
+  const head = `<p class="tw-h"><span class="label">Beside it</span><b>${esc(nameOf(other))}</b></p>`;
+  const body = n >= rows.length ? sysHTML(other, `<p class="verdict">${ocMark(other.oc)}${VERDICT[other.oc]}</p><p>${esc(TAKE[other.key])}</p>`)
+    : (d < 0 || n < d ? `<p class="tw-same">${U().sameStep}</p>` : `<p class="say">${rows[n].say}</p>`) + (rows[n].aside ? sysHTML(other, `<p>${rows[n].aside}</p>`) : "");
+  return panelHTML(sp.it).replace(/<\/div>$/, `<div class="twinp">${head}${body}</div></div>`);
+}
+// On a phone, under the picture, the scene's column is a sheet: its handle (a tap, or a swipe up or down) pulls it up over
+// most of the picture to read, and back down to watch. It stays where the reader left it.
+let sheetUp = false;
+const sheetHandle = () => `<button type="button" class="sheet-h" data-sheet="1" aria-expanded="${sheetUp}" aria-label="${sheetUp ? "Show the picture" : "Show more of the step"}"><i></i></button>`;
+function setSheet(up) {
+  sheetUp = up; document.documentElement.dataset.sheet = up ? "up" : "";
+  const b = document.querySelector(".sheet-h"); if (b) { b.setAttribute("aria-expanded", String(up)); b.setAttribute("aria-label", up ? "Show the picture" : "Show more of the step"); }
+}
+{ let y0 = null;
+  document.addEventListener("pointerdown", e => { if (e.target.closest && e.target.closest(".sheet-h")) y0 = e.clientY; });
+  document.addEventListener("pointerup", e => { if (y0 === null) return; const dy = e.clientY - y0; y0 = null; if (Math.abs(dy) > 24) { setSheet(dy < 0); swiped = true; } });
+}
+let swiped = false;      // a swipe on the handle ends in a click too: that click is the swipe's, not a tap
+function toggleSheet() { if (swiped) { swiped = false; return; } setSheet(!sheetUp); }
 function toggleAbout() {
   aboutOpen = !aboutOpen;
   const a = $("sabout"), b = document.querySelector(".sh-i"); if (a) a.hidden = !aboutOpen; if (b) b.setAttribute("aria-expanded", String(aboutOpen));
@@ -121,7 +166,8 @@ function ctlHTML(it) {     // one circle per step
   const k = U().strip;
   return `<div class="sctl" id="sctl">${povHTML(it)}
     <button type="button" class="btn sm arrow" data-stage="-1" aria-label="Previous step"${stageStep ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sgs">${groups}</div><button type="button" class="btn sm arrow" data-stage="1" aria-label="Next step"${atEnd ? " disabled" : ""}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 2.5L10 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div></div></div>`;
+    <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div></div>
+    <div class="tbar"><button type="button" class="btn" data-stage="-1"${stageStep ? "" : " disabled"}>Back</button><button type="button" class="btn go-out" data-stage="1"${atEnd ? " disabled" : ""}>${atEnd ? "The end" : stageStep ? "Next step" : "Begin"}</button></div></div>`;
 }
 // The world view: what happened out of the node's sight. It is set into the telling at the step it belongs to, always in the second ink
 // and a dashed frame, under an eye and a line saying whose sight it lies beyond, so it never reads as something the node knows.
@@ -207,6 +253,7 @@ function sceneHTML(base) {
     body = `<p class="cmpnote">${d < 0 ? U().same : d === 0 ? U().differ0 : U().until(d)}</p><div class="cmp">${column(it, 0)}${column(other, 1)}</div>`;
   } else body = `<div class="player">${stripHTML(it)}</div>`;
   if (!both && stageOf(it)) return body;
+  if (both && stageOf(it)) return `<div class="player">${splitHTML(splitOf())}</div>`;
   return `<div class="scene-head">
       <div class="stitle"><h2>${esc(nameOf(it))}</h2>${cmpBtn ? `<div class="ctl">${cmpBtn}</div>` : ""}</div>
       ${both ? "" : pointHTML(it)}

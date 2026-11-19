@@ -17,7 +17,7 @@ const UI = {
     kept: "State", noneIn: "nothing arrives", noneOut: "nothing leaves", noneKept: "holds nothing",
     client: "client", timer: "timer", nothing: "no message", coin: "coin", inplay: "In play", pick: "pick any to find scenes that share them", unit: ["paper", "papers", "in"],
     strip: ["permanent state changes", "temporary only", "no change", "something arrives", "something leaves"],
-    same: "From inside, the two scenes are identical at every step. Only the global view, in the dashed frames, tells them apart.",
+    same: "From inside, the two scenes are identical at every step. Only the global view, in the dashed frames, tells them apart.", sameStep: "From inside, this step is the same.",
     differ0: "The two scenes differ from the start: the node keeps different things.", until: d => `The two scenes are identical from inside until step ${d}.`,
   },
   isle: {
@@ -29,7 +29,7 @@ const UI = {
     kept: "Ledger and slate", noneIn: "no courier arrives", noneOut: "no courier leaves", noneKept: "nothing in the ledger or on the slate",
     client: "citizen", timer: "hourglass", nothing: "no courier", coin: "tossed coin", inplay: "In play", pick: "pick any to find scenes that share them", unit: ["result", "results", "in"],
     strip: ["the ledger changes", "slate only", "no change", "a courier arrives", "a courier leaves"],
-    same: "From inside, the two scenes are identical at every step. Only the world view, in the dashed frames, tells them apart.",
+    same: "From inside, the two scenes are identical at every step. Only the world view, in the dashed frames, tells them apart.", sameStep: "From inside, this step is the same.",
     differ0: "The two scenes differ from the start: different things are kept.", until: d => `The two scenes are identical from inside until step ${d}.`,
   },
 };

@@ -4,7 +4,7 @@
 // and the step's panel ("side") or above them ("stack"), whichever leaves it larger; a result's own page has its picture
 // at rest beside its text ("intro"). `theater` says whether the open page is on the stage; layTheater sets it.
 let theater = false;
-const onStage = () => isPaper(sel) || (!cmp && !!$("stepbar") && !!$("stage"));
+const onStage = () => isPaper(sel) || (!!$("stepbar") && !!$("stage"));
 // The head, over everything on the stage: the menu, pickers for the result and the scene, the way to the pages before and
 // after in the reading order, the two tellings, and the guide.
 function theaterHead(key) {
@@ -40,7 +40,8 @@ function layTheater() {
   const root = document.documentElement, bar = $("stepbar"), fig = $("stage"), img = fig && fig.querySelector && fig.querySelector("img.wld");
   theater = onStage();
   if (!theater) { delete root.dataset.theater; if (bar) bar.style.removeProperty("--tw"); if (img) img.sizes = "(max-width: 640px) 100vw, 900px"; return; }
-  const vw = window.innerWidth, ar = fig ? parseFloat(fig.style.getPropertyValue("--ar")) || 4 / 3 : 4 / 3;
+  // two twin scenes side by side are one picture twice as wide
+  const vw = window.innerWidth, ar = (fig ? parseFloat(fig.style.getPropertyValue("--ar")) || 4 / 3 : 4 / 3) * ($("stage2") ? 2 : 1);
   if (isPaper(sel)) {          // a result's own page: its picture at rest on the left, where the window is wide enough; the text scrolls beside it
     root.dataset.theater = "intro";
     const hh = $("thead") ? $("thead").offsetHeight : 0, vh = window.innerHeight - hh, w = vw >= 960 && fig ? Math.floor(Math.min(.5 * vw, vh * ar)) : 0;
