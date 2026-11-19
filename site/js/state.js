@@ -1,6 +1,9 @@
 // ---------- state, and the two registers ----------
 const isTop = k => k === "map" || k === "intro" || k === "home";      // the pages that belong to no result: the front page, the introduction, the map
 let sel = "home", cmp = false, reg = "isle";
+// beside: a scene of another result set beside the open scene on one split stage, from a comparison ("#flp-wait~cap-stale")
+let beside = null;
+const besideOf = k => { const [a, b] = String(k).split("~"); return b !== undefined && byKey(a) && byKey(b) && a !== b ? [a, b] : null; };
 const haz = new Set();
 let bg = "rendered";            // the Allegory's background, where a world has two pictures of its frame: the second (or ?bg=drawn for the first)
 try { if (localStorage.getItem("reg") === "plain") reg = "plain"; } catch (e) {}

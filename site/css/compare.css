@@ -89,3 +89,6 @@
   .al-h { display: none; }
   .al-c.none { display: none; }
 }
+
+/* a pair's ways in: watch the two on one split stage, or line their steps up here */
+.vp-go { display: flex; flex-wrap: wrap; gap: var(--s2); }

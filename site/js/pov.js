@@ -48,7 +48,7 @@ function setPov(X) {
 }
 // The tabs: every node of the trace, the narrator first, each with its role in the current telling.
 function povHTML(it) {
-  const base = byKey(it.key), T = traceOf(base); if (!T || cmp) return "";      // beside a twin, both scenes are as told
+  const base = byKey(it.key), T = traceOf(base); if (!T || cmp || beside) return "";      // beside a twin, both scenes are as told
   const I = isleOf(it.p), cur = it.s.who, ids = [base.s.who, ...traceNodes(T).filter(Y => Y !== base.s.who)];
   const name = Y => I ? (nmOf(I, Y) ? esc(nmOf(I, Y)) : esc(roleOf(I, Y))) : esc(T.nodes[Y].role || "node");
   return `<div class="pov" role="tablist" aria-label="Whose eyes">${ids.map(Y => `<button type="button" role="tab" data-pov="${Y}" aria-selected="${Y === cur}"${Y === cur ? "" : ` tabindex="-1"`} title="${Y === base.s.who ? "The scene as told" : "The same scene, from inside " + Y}"><b>${nmOf(I, Y) ? "" : Y}</b><span>${name(Y)}</span>${Y === base.s.who ? `<i class="told" aria-label="the narrator">told</i>` : ""}</button>`).join("")}</div>`;

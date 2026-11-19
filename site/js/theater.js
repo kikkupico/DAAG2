@@ -24,9 +24,12 @@ function theaterHead(key) {
 function layTheater() {
   const root = document.documentElement, bar = $("stepbar"), fig = $("stage"), img = fig && fig.querySelector && fig.querySelector("img.wld");
   theater = onStage();
+  // on an upright phone two pictures do not go side by side: they take turns, full width, and a swipe changes which is up
+  const swipe = theater && !!$("stage2") && window.innerWidth < 640 && window.innerHeight > window.innerWidth;
+  if (swipe) root.dataset.swipe = "1"; else delete root.dataset.swipe;
   if (!theater) { delete root.dataset.theater; if (bar) bar.style.removeProperty("--tw"); if (img) img.sizes = "(max-width: 640px) 100vw, 900px"; return; }
   // two twin scenes side by side are one picture twice as wide
-  const vw = window.innerWidth, ar = (fig ? parseFloat(fig.style.getPropertyValue("--ar")) || 4 / 3 : 4 / 3) * ($("stage2") ? 2 : 1);
+  const vw = window.innerWidth, ar = (fig ? parseFloat(fig.style.getPropertyValue("--ar")) || 4 / 3 : 4 / 3) * ($("stage2") && !swipe ? 2 : 1);
   if (isPaper(sel) || sel === "map") {      // a result's own page, or the overview: its picture (the town at rest, or the map) on the left where the window is wide enough; the text scrolls beside it
     root.dataset.theater = "intro";
     const map = sel === "map", hh = $("thead") ? $("thead").offsetHeight : 0, vh = window.innerHeight - hh;

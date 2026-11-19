@@ -140,7 +140,7 @@ function playCity() {
 }
 function playFig(fig, it, slot) {
   const S = it && stageOf(it); if (!fig || !fig.classList.contains("city") || !S) return;
-  useGeo(S);
+  const G = useGeo(S);      // the frame of this picture: beside another result's, GEO is changed by the other one's drawing
   const svg = fig.querySelector(".stg > svg"), W = svg.clientWidth || 1000, u = Math.max(+fig.dataset.u, 11.5 * GEO.w / (15 * W));    // on a small screen the text grows, so it stays about 11.5 px
   svg.style.fontSize = (15 * u).toFixed(2) + "px"; cityW = svg.clientWidth;
   const { me, trips } = cityTrips(it, S), layer = fig.querySelector(".trips"), [px, py] = GEO.places[me], fx = v => v.toFixed(1);
@@ -163,7 +163,7 @@ function playFig(fig, it, slot) {
   // where every tag comes to rest: in the order they arrive, each clear of the places' names, the frame's edge and the tags before it
   const blocks = layPlaces(fig, E), pad = .35 * E, ease = v => v * v * (3 - 2 * v);
   trips.forEach((x, i) => { x.at = x.kind === "here" ? [px, py] : along(x.pts, x.stop); Object.assign(x, layTag(tags[i], x.at, blocks, E)); });
-  const put = (g, x, cx, cy) => g.setAttribute("transform", `translate(${fx(Math.max(pad, Math.min(GEO.w - pad - x.w, cx - x.w / 2)))} ${fx(Math.max(pad, Math.min(GEO.h - pad - x.h, cy - x.h / 2)))})`);
+  const put = (g, x, cx, cy) => g.setAttribute("transform", `translate(${fx(Math.max(pad, Math.min(G.w - pad - x.w, cx - x.w / 2)))} ${fx(Math.max(pad, Math.min(G.h - pad - x.h, cy - x.h / 2)))})`);
   const frame = now => {
     const t = (now - t0) / 1000;
     trips.forEach((x, i) => {
@@ -194,7 +194,7 @@ document.addEventListener("click", e => { if (e.target.closest && (e.target.clos
 function stageHTML(it, id) {       // both registers, every scene: the same messengers; only the background differs
   const S = stageOf(it); return S ? cityHTML(it, S, id) : "";
 }
-function centreStage() { playCity(); const f = $("stage"), s = f && f.querySelector && f.querySelector(".stw"); if (!s) return; if (s.scrollWidth > s.clientWidth) s.scrollLeft = +f.dataset.mx * s.scrollWidth - s.clientWidth / 2; }
+function centreStage() { showSide(pictSide); playCity(); const f = $("stage"), s = f && f.querySelector && f.querySelector(".stw"); if (!s) return; if (s.scrollWidth > s.clientWidth) s.scrollLeft = +f.dataset.mx * s.scrollWidth - s.clientWidth / 2; }
 function refreshStepper() { const it = viewOf(byKey(sel)), el = $("sctl"), sp = splitOf(); if (!it || !el) return; el.outerHTML = sp ? splitCtlHTML(sp) : ctlHTML(it); const on = document.querySelector(".stepbar .sgs .sd.on"), g = document.querySelector(".stepbar .sgs"); if (on && g) g.scrollLeft = on.offsetLeft - (g.clientWidth - on.offsetWidth) / 2; }
 function showStep(n) {
   const it = viewOf(byKey(sel)); if (!it) return;
@@ -213,7 +213,7 @@ function refreshStage() {
   const it = viewOf(byKey(sel)), sp = splitOf();
   if (sp && $("stage2")) $("stage2").querySelector(".places").innerHTML = cityPlaces(sp.other, stageOf(sp.other));
   const el = $("stage"); if (!it || !el) return;
-  if (el.classList.contains("city") && el.dataset.scene === it.key && el.dataset.reg === reg && (el.dataset.pic || "drawn") === (reg === "isle" && GEO.img3d && bg === "rendered" ? "rendered" : "drawn")) { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
+  if (el.classList.contains("city") && el.dataset.scene === it.key && el.dataset.reg === reg && (el.dataset.pic || "drawn") === (reg === "isle" && geoFor(stageOf(it)).img3d && bg === "rendered" ? "rendered" : "drawn")) { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
   const keep = el.querySelector(".stw").scrollLeft; el.outerHTML = stageHTML(it); const s = $("stage") && $("stage").querySelector(".stw"); if (s) s.scrollLeft = keep; playCity();
 }
 

@@ -109,32 +109,44 @@ function sheadHTML(it) {
 // the longer one's steps. The dots mark the first step where the two differ from inside, and the steps only one of them has.
 // The panel tells the open scene's step, then the twin's: the same, from inside, until they part; then its own words.
 function splitOf() {
-  if (!cmp) return null;
-  const it = byKey(sel), other = it && byKey(PAIR[it.key]); if (!other || !stageOf(it)) return null;
-  return { it, other, long: other.s.rows.length > it.s.rows.length ? other : it, short: other.s.rows.length > it.s.rows.length ? it : other, d: firstDiff(it.s, other.s) };
+  const it = byKey(sel), other = it && (beside ? byKey(beside) : cmp ? byKey(PAIR[it.key]) : null); if (!other || !stageOf(it) || !stageOf(other)) return null;
+  const far = other.p !== it.p;      // two results' scenes, set beside each other from a comparison: nothing is the same from inside
+  return { it, other, far, long: other.s.rows.length > it.s.rows.length ? other : it, short: other.s.rows.length > it.s.rows.length ? it : other, d: far ? 0 : firstDiff(it.s, other.s) };
 }
 function splitHTML(sp) {
-  const { it, other } = sp, half = (x, id, word) => `<div class="half"><p class="hcap"><span class="label">${word}</span><b>${esc(nameOf(x))}</b>${ocMark(x.oc)}</p>${stageHTML(x, id)}</div>`;
-  return `<div class="strip stepbar split" id="stepbar" role="group" aria-label="Steps of the two scenes"><div class="pict" id="pict">${half(it, "stage", "This scene")}${half(other, "stage2", "Beside it")}</div>${theaterHead(it.key)}`
+  // each caption carries two dots, its own filled: on an upright phone, where the pictures take turns, they say which is up and switch
+  const pg = i => `<span class="pg">${[0, 1].map(j => `<button type="button" data-pside="${j}" aria-label="${j ? "The second picture" : "The first picture"}"${i === j ? ` aria-current="true"` : ""}></button>`).join("")}</span>`;
+  const { it, other, far } = sp, half = (x, id, word, i) => `<div class="half"><p class="hcap">${pg(i)}<span class="label">${word}</span><b>${esc(nameOf(x))}</b>${ocMark(x.oc)}</p>${stageHTML(x, id)}</div>`;
+  const note = far ? "The two step together by number, not by kind: each picture plays its own scene's step. “Line up the steps”, on the comparison, matches them by kind."
+    : sp.d < 0 ? U().same : sp.d === 0 ? U().differ0 : U().until(sp.d);
+  const close = far ? `<button type="button" class="btn sm" data-key="${vsKey(it.p.id, other.p.id)}">Back to the comparison</button>` : `<button type="button" class="btn sm" data-cmp="1" aria-pressed="true">Close comparison</button>`;
+  return `<div class="strip stepbar split${far ? " far" : ""}" id="stepbar" role="group" aria-label="Steps of the two scenes"><div class="pict" id="pict">${half(it, "stage", far ? esc(paperName(it.p)) : "This scene", 0)}${half(other, "stage2", far ? esc(paperName(other.p)) : "Beside it", 1)}</div>${theaterHead(it.key)}`
     + `<div class="shead" id="shead">${sheetHandle()}<div class="sh-t"><h2>${esc(nameOf(it))} <span class="beside">beside “${esc(nameOf(other))}”</span></h2></div>`
-    + `<p class="cmpnote">${sp.d < 0 ? U().same : sp.d === 0 ? U().differ0 : U().until(sp.d)}</p><div class="ctl"><button type="button" class="btn sm" data-cmp="1" aria-pressed="true">Close comparison</button></div></div>`
+    + `<p class="cmpnote">${note}</p><div class="ctl">${close}</div></div>`
     + `${splitCtlHTML(sp)}${splitPanelHTML(sp)}</div>`;
 }
 function splitCtlHTML(sp) {      // the longer scene's dots, marked where the two part and where only one goes on
   const n = sp.short.s.rows.length, N = sp.long.s.rows.length, only = esc(nameOf(sp.long));
   return ctlHTML(sp.long).replace(/(<button type="button" class="sd [^"]*") data-step="(\d+)" title="([^"]*)"/g, (m, a, t, title) => {
-    t = +t; const mark = t === sp.d ? ` data-dv="1"` : t > n && t <= N ? ` data-only="1"` : "";
-    const note = t === sp.d ? " (the first difference)" : t > n && t <= N ? ` (only in “${only}”)` : "";
+    t = +t; const dv = !sp.far && t === sp.d, mark = dv ? ` data-dv="1"` : t > n && t <= N ? ` data-only="1"` : "";
+    const note = dv ? " (the first difference)" : t > n && t <= N ? ` (only in “${only}”)` : "";
     return `${a} data-step="${t}"${mark} title="${title}${note}"`;
   });
 }
 function splitPanelHTML(sp) {
-  const { other, d } = sp, n = stageStep, rows = tellOf(other).rows;
-  const head = `<p class="tw-h"><span class="label">Beside it</span><b>${esc(nameOf(other))}</b></p>`;
+  const { other, d, far } = sp, n = stageStep, rows = tellOf(other).rows;
+  const head = `<p class="tw-h"><span class="label">${far ? esc(paperName(other.p)) : "Beside it"}</span><b>${esc(nameOf(other))}</b>${far && n < rows.length ? `<span class="tw-n">step ${n}</span>` : ""}</p>`;
   const body = n >= rows.length ? sysHTML(other, `<p class="verdict">${ocMark(other.oc)}${VERDICT[other.oc]}</p><p>${esc(TAKE[other.key])}</p>`)
-    : (d < 0 || n < d ? `<p class="tw-same">${U().sameStep}</p>` : `<p class="say">${rows[n].say}</p>`) + (rows[n].aside ? sysHTML(other, `<p>${rows[n].aside}</p>`) : "");
+    : (!far && (d < 0 || n < d) ? `<p class="tw-same">${U().sameStep}</p>` : `<p class="say">${rows[n].say}</p>`) + (rows[n].aside ? sysHTML(other, `<p>${rows[n].aside}</p>`) : "");
   return panelHTML(sp.it).replace(/<\/div>$/, `<div class="twinp">${head}${body}</div></div>`);
 }
+// Which of the two pictures is up, where they take turns. It holds from step to step, and when the page is drawn again.
+let pictSide = 0;
+function showSide(i, smooth) {
+  const p = $("pict"); if (!p || document.documentElement.dataset.swipe !== "1") return;
+  pictSide = i; p.scrollTo({ left: i * p.clientWidth, behavior: smooth ? "smooth" : "auto" });
+}
+document.addEventListener("scroll", e => { const p = e.target; if (p.id === "pict" && p.clientWidth && document.documentElement.dataset.swipe === "1") pictSide = Math.round(p.scrollLeft / p.clientWidth); }, true);
 // On a phone, under the picture, the scene's column is a sheet: its handle (a tap, or a swipe up or down) pulls it up over
 // most of the picture to read, and back down to watch. It stays where the reader left it.
 let sheetUp = false;
@@ -244,6 +256,7 @@ function castHTML(it) {
 function sceneHTML(base) {
   const it = viewOf(base), { p, s } = it, I = isleOf(p);
   const other = it.pov ? null : byKey(PAIR[it.key]), both = cmp && other;      // a comparison is of the two scenes as told
+  if (beside && splitOf()) return `<div class="player">${splitHTML(splitOf())}</div>`;      // a scene of another result beside it, from a comparison
   const cmpBtn = other ? `<button type="button" class="btn sm" data-cmp="1" aria-pressed="${!!both}">${both ? "Close comparison" : `Compare with “${esc(nameOf(other))}”`}</button>` : "";
   let body;
   if (both) {

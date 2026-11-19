@@ -132,7 +132,7 @@ function pairHTML(pa, pb, a, b) {
   return `<section class="vp${open ? " open" : ""}${sameOc ? " same" : ""}">
     ${a && b ? `<p class="vp-oc label">${sameOc ? `Both: ${VERDICT[a.oc].toLowerCase()}` : "Different outcomes"}</p>` : ""}
     <div class="vp-pair">${card(a, pa, 0)}${card(b, pb, 1)}</div>
-    ${a && b ? `<button type="button" class="btn sm" data-vsopen="${id}" aria-expanded="${!!open}">${open ? "Hide the steps" : "Line up the steps"}</button>` : ""}
+    ${a && b ? `<div class="vp-go">${stageOf(a) && stageOf(b) ? `<button type="button" class="btn sm go-out" data-key="${a.key}~${b.key}">Watch side by side</button>` : ""}<button type="button" class="btn sm" data-vsopen="${id}" aria-expanded="${!!open}">${open ? "Hide the steps" : "Line up the steps"}</button></div>` : ""}
     ${open ? alignedHTML(a, b) : ""}</section>`;
 }
 

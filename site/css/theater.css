@@ -184,3 +184,18 @@
 :root[data-theater] .stepbar .skey { flex-wrap: nowrap; justify-content: safe center; }
 :root[data-theater] .stepbar .skey > span { flex: none; white-space: nowrap; }
 :root[data-theater] #sctl .skey .sd { width: 12px; height: 12px; }
+
+/* another result's scene beside this one: the panel numbers its step, since the two are not the same step from inside */
+.twinp .tw-n { font: var(--t-xs) var(--mono); color: var(--soft); }
+
+/* an upright phone, two pictures: not side by side but in turn, full width, a swipe apart. The dots in each caption say which is up */
+.split .pg { display: none; }
+:root[data-swipe] #stepbar.split #pict { display: flex; align-items: center; gap: 0; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+:root[data-swipe] #stepbar.split #pict::-webkit-scrollbar { display: none; }
+:root[data-swipe] #stepbar.split .half { flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+:root[data-swipe] #stepbar.split .stv { width: var(--tw); }
+:root[data-swipe] .split .hcap .label { display: inline; font-size: 10px; }
+:root[data-swipe] .split .pg { display: inline-flex; gap: 2px; margin-right: 2px; }
+:root[data-swipe] .split .pg button { width: 16px; height: 16px; display: grid; place-items: center; padding: 0; }
+:root[data-swipe] .split .pg button::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--soft); }
+:root[data-swipe] .split .pg button[aria-current]::before { background: var(--ink); border-color: var(--ink); }

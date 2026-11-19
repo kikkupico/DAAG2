@@ -31,7 +31,8 @@ function render() {
   if (theater !== was) setDrawer(theater ? false : WIDE.matches && savedDrawer() !== "closed", true);
   if (theater) $("main").scrollTop = 0;      // in theater mode a result's own page scrolls inside the window-filling frame
   centreStage(); playHome(); renderGuide();
-  try { if (location.hash.slice(1) !== (home ? "" : sel)) history.replaceState(null, "", home ? location.pathname + location.search : "#" + sel); } catch (e) {}
+  const h = home ? "" : beside ? sel + "~" + beside : sel;
+  try { if (location.hash.slice(1) !== h) history.replaceState(null, "", home ? location.pathname + location.search : "#" + h); } catch (e) {}
 }
 const WIDE = window.matchMedia("(min-width: 1100px)");
 const savedDrawer = () => { try { return localStorage.getItem("drawer"); } catch (e) { return null; } };
@@ -44,13 +45,16 @@ function setDrawer(open, keep) {
 function go(key, keep, to) {
   // the guide is not a page: it opens over the stage, or over the first result when there is no stage to open it over
   if (key === "intro") { if (theater) { setDrawer(false, true); return openGuide(); } key = ORDER[0]; guideOpen = true; }
+  const two = besideOf(key), full = key;      // "A~B": scene A with scene B beside it
+  if (two) key = two[0];
   const was = resolve(sel), it = resolve(key);
   if (!it && !isTop(key) && !vsValid(key)) return;
-  if (key !== sel) {
-    stageStep = 0; pov = null;
-    try { history.pushState(null, "", key === "home" ? location.pathname + location.search : "#" + key); } catch (e) {}   // a new history entry, so Back returns here
+  const nb = two ? two[1] : null;
+  if (key !== sel || nb !== beside) {
+    stageStep = 0; pov = null; pictSide = 0;
+    try { history.pushState(null, "", key === "home" ? location.pathname + location.search : "#" + full); } catch (e) {}   // a new history entry, so Back returns here
   }
-  sel = key;
+  sel = key; beside = nb;
   if (!keep) cmp = false;
   render();
   if (!WIDE.matches || theater) setDrawer(false, true);      // on the stage, or on a narrow screen, the drawer was over the page: it closes
@@ -77,8 +81,9 @@ function act(b) {
   else if (d.stage) showStep(stageStep + +d.stage);
   else if (d.step) showStep(+d.step);
   else if (d.pov) setPov(d.pov);
+  else if (d.pside) showSide(+d.pside, true);
 }
-const HOT = "[data-guideclose],[data-pov],[data-about],[data-sheet],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
+const HOT = "[data-guideclose],[data-pov],[data-about],[data-sheet],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap],[data-pside]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && guideOpen) { closeGuide(); return; }
@@ -96,11 +101,11 @@ document.addEventListener("change", e => {
   else go(d.vs === "a" ? vsKey(s.value, b) : vsKey(a, s.value), true);
   const el = document.querySelector(d.vs === "pair" ? `select[data-vs="pair"][data-a="${d.a}"]` : `select[data-vs="${d.vs}"]`); if (el) el.focus();
 });
-const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); if (!k) sel = "home"; else if (k === "intro") { sel = ORDER[0]; guideOpen = true; } else if (isTop(k) || resolve(k) || vsValid(k)) sel = k; };
+const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)), two = besideOf(k); beside = two ? two[1] : null; if (!k) sel = "home"; else if (k === "intro") { sel = ORDER[0]; guideOpen = true; } else if (two) sel = two[0]; else if (isTop(k) || resolve(k) || vsValid(k)) sel = k; };
 // Back/Forward (and hand-edited hashes): follow the address, as a fresh page
 window.addEventListener("hashchange", () => {
-  const was = sel; fromHash();
-  if (sel !== was) { stageStep = 0; cmp = false; pov = null; }
+  const was = sel, wb = beside; fromHash();
+  if (sel !== was || beside !== wb) { stageStep = 0; cmp = false; pov = null; }
   render();
   window.scrollTo(0, 0);
 });
