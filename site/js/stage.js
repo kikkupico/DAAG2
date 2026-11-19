@@ -68,15 +68,17 @@ function layTag(g, p, blocks, E) {     // sizes a message's tag and finds where 
   const box = fitBox(w, h, spots, blocks, E); blocks.push([box, 100]);
   return { w, h, fin: [(box[0] + box[2]) / 2 - p[0], (box[1] + box[3]) / 2 - p[1]] };
 }
+// A result's own page shows its picture at rest: every place any of its scenes uses, nobody marked as you, no couriers.
+const atRest = () => isPaper(sel);
 function cityCast(it, S) {
   useGeo(S);
-  const inScene = new Set([it.s.who, ...(it.s.peers.match(/\b[A-Z]\b/g) || [])]);
+  const inScene = new Set((atRest() ? it.p.scenes : [it.s]).flatMap(s => [s.who, ...(s.peers.match(/\b[A-Z]\b/g) || [])]));
   return [...new Set(["A", "B", "C", "D", "P", "Q", "S", "K"].filter(k => inScene.has(k)).map(k => S[k]).filter(k => k && GEO.places[k]))];
 }
 function cityTrips(it, S) {        // this step's messages as walks along the roads, and timers
   useGeo(S);
   const { rows } = tellOf(it), r = rows[Math.min(stageStep, rows.length - 1)], I = isleOf(it.p), me = S[it.s.who], trips = [];
-  const say = (text, peer, dir) => I ? lexT(I.msg && !PSEUDO.has(peer) ? I.msg(text, peer, dir) : text, I) : text;
+  const say = (text, peer, dir) => I ? lexT(I.msg && !PSEUDO.has(peer) ? I.msg(text, peer, dir, it.s.who) : text, I) : text;
   const add = ([peer, text, lost], dir) => {
     if (!text || peer === "nothing") return;
     if (peer === "timer") { trips.push({ kind: "here", icon: "⌛", label: say(text, peer, dir) }); return; }
@@ -86,7 +88,7 @@ function cityTrips(it, S) {        // this step's messages as walks along the ro
     const pl = peer === "outside" ? S.client : S[peer]; if (!pl || !GEO.doors[pl]) return;
     trips.push({ kind: "walk", dir, lost: !!lost, outside: peer === "outside", from: dir === "in" ? pl : me, to: dir === "in" ? me : pl, label: say(text, peer, dir) + (lost ? " ✕" : "") });
   };
-  r.recv.forEach(m => add(m, "in")); r.sent.forEach(m => add(m, "out"));
+  if (!atRest()) { r.recv.forEach(m => add(m, "in")); r.sent.forEach(m => add(m, "out")); }
   trips.forEach(x => { if (x.kind === "walk") { x.pts = cityRoute(x.from, x.to); x.len = polyLen(x.pts); } });
   return { r, me, trips };
 }
@@ -108,7 +110,7 @@ function cityPlaces(it, S) {       // the scene's places, each named as the step
   const shown = [...new Set([...cityCast(it, S), ...(trips.some(x => x.outside) ? [S.client] : []), ...(plain ? [] : (S.also || []).filter(k => GEO.places[k]))])];
   const d0 = decided(r), dv = d0 && I ? lexT(d0, I) : d0;
   return shown.map(k => {
-    const [x, y] = GEO.places[k], l = letterOf(k), cl = !l && k === S.client, you = k === me;
+    const [x, y] = GEO.places[k], l = letterOf(k), cl = !l && k === S.client, you = k === me && !atRest();
     const chip = plain ? "" : l ? nmOf(I, l) || l : cl ? I.client || "" : "";
     const name = plain ? (cl ? U().client : "") : site(k) === chip ? "" : site(k);
     const lb = (chip ? `<rect class="chip"/><text class="ct" dy=".35em">${esc(chip)}</text>` : "")
@@ -126,12 +128,12 @@ function cityHTML(it, S) {
     + (baked ? `<img class="wld" src="${Object.values(pic)[0]}" srcset="${Object.entries(pic).map(([w, f]) => f + " " + w + "w").join(", ")}" sizes="(max-width: 640px) 100vw, 900px" width="${GEO.w}" height="${GEO.h}" alt="" decoding="async">` : "")
     + `<svg viewBox="${[bx, by, bw, bh].map(v => v.toFixed(1)).join(" ")}" style="font-size:${(15 * u).toFixed(2)}px" role="img" aria-label="${plain ? "Nodes " + esc(cityCast(it, S).map(k => Object.keys(S).find(l => S[l] === k)).join(", ")) + " and the roads between them" : "The city from above: " + esc(cityCast(it, S).join(", ")) + ", and the roads between them"}. This step's messages travel the roads.">`
     + `<g class="world">${world}</g><g class="trips"></g><g class="places">${cityPlaces(it, S)}</g><g class="tags"></g></svg></div></div>`
-    + `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's couriers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>${theaterBtn()}</div></figure>`;
+    + (atRest() ? "" : `<button type="button" class="replay" data-replay="1" aria-label="Replay this step's couriers" title="Replay"><svg width="11" height="11" viewBox="0 0 14 14" aria-hidden="true"><path d="M11.5 7A4.5 4.5 0 1 1 7 2.5h2.5M8 .5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`) + `</div></figure>`;
 }
 let cityAnim = 0;
 function playCity() {
   cancelAnimationFrame(cityAnim);
-  const fig = $("stage"), it = byKey(sel), S = it && stageOf(it); if (!fig || !fig.classList.contains("city") || !S) return;
+  const base = byKey(sel) || (atRest() ? resolve(sel) : null), it = base && viewOf(base), S = it && stageOf(it), fig = $("stage"); if (!fig || !fig.classList.contains("city") || !S) return;
   useGeo(S);
   const svg = fig.querySelector(".stg > svg"), W = svg.clientWidth || 1000, u = Math.max(+fig.dataset.u, 11.5 * GEO.w / (15 * W));    // on a small screen the text grows, so it stays about 11.5 px
   svg.style.fontSize = (15 * u).toFixed(2) + "px"; cityW = svg.clientWidth;
@@ -187,9 +189,9 @@ function stageHTML(it) {       // both registers, every scene: the same messenge
   const S = stageOf(it); return S ? cityHTML(it, S) : "";
 }
 function centreStage() { playCity(); const f = $("stage"), s = f && f.querySelector && f.querySelector(".stw"); if (!s) return; if (s.scrollWidth > s.clientWidth) s.scrollLeft = +f.dataset.mx * s.scrollWidth - s.clientWidth / 2; }
-function refreshStepper() { const it = byKey(sel), el = $("sctl"); if (!it || !el) return; el.outerHTML = ctlHTML(it); const on = document.querySelector(".stepbar .sgs .sd.on"), g = document.querySelector(".stepbar .sgs"); if (on && g) g.scrollLeft = on.offsetLeft - (g.clientWidth - on.offsetWidth) / 2; }
+function refreshStepper() { const it = viewOf(byKey(sel)), el = $("sctl"); if (!it || !el) return; el.outerHTML = ctlHTML(it); const on = document.querySelector(".stepbar .sgs .sd.on"), g = document.querySelector(".stepbar .sgs"); if (on && g) g.scrollLeft = on.offsetLeft - (g.clientWidth - on.offsetWidth) / 2; }
 function showStep(n) {
-  const it = byKey(sel); if (!it) return;
+  const it = viewOf(byKey(sel)); if (!it) return;
   stageStep = Math.max(0, Math.min(it.s.rows.length + 1, n)); refreshStage(); refreshStepper();      // one past the last step is the end
   const p = $("panel"); if (p) p.outerHTML = panelHTML(it);
 }
@@ -201,7 +203,7 @@ document.addEventListener("keydown", e => {
   const b = document.querySelector(".stepbar .sd.on"); if (b && document.activeElement && document.activeElement.closest && document.activeElement.closest(".stepbar")) b.focus();
 });
 function refreshStage() {
-  const it = byKey(sel), el = $("stage"); if (!it || !el) return;
+  const it = viewOf(byKey(sel)), el = $("stage"); if (!it || !el) return;
   if (el.classList.contains("city") && el.dataset.scene === it.key && el.dataset.reg === reg && (el.dataset.pic || "drawn") === (reg === "isle" && GEO.img3d && bg === "rendered" ? "rendered" : "drawn")) { el.querySelector(".places").innerHTML = cityPlaces(it, stageOf(it)); playCity(); return; }   // same scene: keep the picture, replay the step
   const keep = el.querySelector(".stw").scrollLeft; el.outerHTML = stageHTML(it); const s = $("stage") && $("stage").querySelector(".stw"); if (s) s.scrollLeft = keep; playCity();
 }

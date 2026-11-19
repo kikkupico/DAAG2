@@ -163,3 +163,17 @@
 .stage.city.abs .lb .dec { stroke: var(--ink); }
 .stage.city.abs .tg .bg { fill: var(--room); stroke: var(--line); stroke-width: .07em; }
 .stage.city.abs .tg text { fill: var(--ink); }
+/* whose eyes (pov.js): tabs across the top of the stepper box, one per node of the scene, the narrator first */
+.stepbar .pov { flex: 1 1 100%; display: flex; gap: 2px; margin: calc(-1 * var(--s3)) calc(-1 * var(--s3)) 0; padding: 0 var(--s2); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.stepbar .pov::-webkit-scrollbar { display: none; }
+.pov [data-pov] { position: relative; flex: none; display: inline-flex; align-items: baseline; gap: 6px; padding: 10px 12px 9px; color: var(--soft); font: 500 var(--t-sm)/1.2 var(--sans); white-space: nowrap; }
+.pov [data-pov] b { font: 600 var(--t-sm)/1 var(--mono); color: inherit; }
+.pov [data-pov] b:empty { display: none; }
+.pov [data-pov] .told { font: italic var(--t-xs)/1 var(--serif); color: var(--soft); }
+.pov [data-pov]::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: transparent; transition: background .15s; }
+.pov [data-pov]:hover { color: var(--ink); }
+.pov [data-pov]:hover::after { background: var(--line); }
+.pov [aria-selected="true"] { color: var(--ink); }
+.pov [aria-selected="true"]::after { background: var(--node); }
+.pov [aria-selected="true"] b { color: var(--node); }
+:root[data-theater] .stepbar .pov { margin: -10px -12px 0; }

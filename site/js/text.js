@@ -81,7 +81,7 @@ function msgs(list, dir, seen, t, I) {
   const groups = [], ext = { outside: I ? I.client : U().client, timer: U().timer, nothing: U().nothing, coin: U().coin };
   list.forEach(([peer, text, lost]) => {
     const isExt = PSEUDO.has(peer), g = !isExt && groups.find(x => !x.ext && x.raw === text);
-    if (g) g.to.push([peer, lost]); else groups.push({ raw: text, text: lexT(I && I.msg && !isExt ? I.msg(text, peer, dir) : text, I), ext: isExt, kind: isExt ? peer : "peer", to: [[peer, lost]] });
+    if (g) g.to.push([peer, lost]); else groups.push({ raw: text, text: lexT(I && I.msg && !isExt ? I.msg(text, peer, dir, msgMe()) : text, I), ext: isExt, kind: isExt ? peer : "peer", to: [[peer, lost]] });
   });
   return groups.map(g => {
     const all = g.to.every(x => x[1]), gone = g.to.filter(x => x[1]).map(x => nmOf(I, x[0]) || x[0]);

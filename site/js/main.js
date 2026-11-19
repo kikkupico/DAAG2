@@ -25,15 +25,18 @@ function render() {
   $("paper").hidden = !land;
   $("paper").innerHTML = land ? paperHTML(it) : "";
   $("scene").innerHTML = vs ? vsHTML(sel) : land ? landHTML(it) : it ? sceneHTML(it) : home ? homeHTML() : sel === "intro" ? introHTML() : mapHTML();
-  layTheater();
+  // on the stage the drawer is an overlay, closed until asked for; back on an ordinary page it is as the reader left it
+  const was = theater; layTheater();
+  if (theater !== was) setDrawer(theater ? false : WIDE.matches && savedDrawer() !== "closed", true);
   if (theater) $("main").scrollTop = 0;      // in theater mode a result's own page scrolls inside the window-filling frame
   centreStage(); playHome();
   try { if (location.hash.slice(1) !== (home ? "" : sel)) history.replaceState(null, "", home ? location.pathname + location.search : "#" + sel); } catch (e) {}
 }
 const WIDE = window.matchMedia("(min-width: 1100px)");
+const savedDrawer = () => { try { return localStorage.getItem("drawer"); } catch (e) { return null; } };
 function setDrawer(open, keep) {
   $("shell").dataset.drawer = open ? "open" : "closed";
-  $("dtog").setAttribute("aria-expanded", String(open));
+  document.querySelectorAll('[data-drawer="toggle"]').forEach(b => b.setAttribute("aria-expanded", String(open)));
   if (!keep) try { localStorage.setItem("drawer", open ? "open" : "closed"); } catch (e) {}
 }
 // to: where the page lands. "top" (from the side menu) shows the top of the page; "scene" (from the pager) puts the scene's title under the bar.
@@ -41,13 +44,13 @@ function go(key, keep, to) {
   const was = resolve(sel), it = resolve(key);
   if (!it && !isTop(key) && !vsValid(key)) return;
   if (key !== sel) {
-    stageStep = 0;
+    stageStep = 0; pov = null;
     try { history.pushState(null, "", key === "home" ? location.pathname + location.search : "#" + key); } catch (e) {}   // a new history entry, so Back returns here
   }
   sel = key;
   if (!keep) cmp = false;
   render();
-  if (!WIDE.matches) setDrawer(false, true);
+  if (!WIDE.matches || theater) setDrawer(false, true);      // on the stage, or on a narrow screen, the drawer was over the page: it closes
   if (keep) return;
   if (to === "top" || (to === "scene" && (isTop(key) || isPaper(key))) || isVs(key) || isTop(key)) window.scrollTo(0, 0);
   else if (to === "scene") $("scene").scrollIntoView({ block: "start" });
@@ -57,7 +60,8 @@ function go(key, keep, to) {
 function act(b) {
   const d = b.dataset;
   if (d.key) go(d.key, !!d.keep, b.closest("#drawer") ? "top" : b.closest(".pager") ? "scene" : "");
-  else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("shell").dataset.drawer !== "open" : d.drawer === "open");
+  else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("shell").dataset.drawer !== "open" : d.drawer === "open", theater);      // the stage's overlay is not the reader's preference
+  else if (d.about) toggleAbout();
   else if (d.tog) { expanded.has(d.tog) ? expanded.delete(d.tog) : expanded.add(d.tog); renderDrawer(); }
   else if (d.reg) { reg = d.reg; try { localStorage.setItem("reg", reg); } catch (e) {} render(); }
   else if (d.cmp) { cmp = !cmp; render(); }
@@ -67,11 +71,12 @@ function act(b) {
   else if (d.vsswap) { const [a, b] = vsIds(sel), pk = vsPick[vsKey(a, b)]; if (pk) delete vsPick[vsKey(a, b)]; go(vsKey(b, a), true); }
   else if (d.stage) showStep(stageStep + +d.stage);
   else if (d.step) showStep(+d.step);
+  else if (d.pov) setPov(d.pov);
 }
-const HOT = "[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
+const HOT = "[data-pov],[data-about],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && !WIDE.matches && $("shell").dataset.drawer === "open") { setDrawer(false, true); $("dtog").focus(); return; }
+  if (e.key === "Escape" && (!WIDE.matches || theater) && $("shell").dataset.drawer === "open") { setDrawer(false, true); const b = theater ? document.querySelector(".thead .tmenu") : $("dtog"); if (b) b.focus(); return; }
   if (e.key !== "Enter" && e.key !== " ") return;
   const b = e.target.closest(".mn, .mx");
   if (b) { e.preventDefault(); act(b); }
@@ -89,13 +94,13 @@ const fromHash = () => { const k = decodeURIComponent(location.hash.slice(1)); i
 // Back/Forward (and hand-edited hashes): follow the address, as a fresh page
 window.addEventListener("hashchange", () => {
   const was = sel; fromHash();
-  if (sel !== was) { stageStep = 0; cmp = false; }
+  if (sel !== was) { stageStep = 0; cmp = false; pov = null; }
   render();
   window.scrollTo(0, 0);
 });
 try { history.scrollRestoration = "manual"; } catch (e) {}
 let stored = null; try { stored = localStorage.getItem("drawer"); } catch (e) {}
 setDrawer(WIDE.matches && stored !== "closed", true);
-WIDE.addEventListener("change", () => setDrawer(WIDE.matches && stored !== "closed", true));
+WIDE.addEventListener("change", () => { if (!theater) setDrawer(WIDE.matches && savedDrawer() !== "closed", true); });
 fromHash();
 render();

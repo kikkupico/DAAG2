@@ -3,7 +3,7 @@
 //
 // Allegory words are collected from TELL (roles, hats, node and place names, the words `lex`
 // swaps in, the left side of each `gloss`). The plain surfaces are scanned for them:
-// scene names, narration, state, messages and notes in SCENES, and the idea/frame of each paper.
+// scene names, narration, state, messages and notes in SCENES and in the global traces, and the idea/frame of each paper.
 // Exempt: PAPERS[].cite and PAPERS[].names. `names` is the glossary of the cited papers' own terms,
 // which is allowed to use the paper's story (the Byzantine commander, Dynamo's cart).
 const fs = require("fs"), path = require("path"), vm = require("vm");
@@ -11,9 +11,9 @@ const dir = path.join(__dirname, "..", "js");
 const ctx = vm.createContext({ console });
 const load = f => vm.runInContext(fs.readFileSync(path.join(dir, f), "utf8"), ctx, { filename: f });
 // the same order index.html loads them in (state.js and later need the DOM, so they are not loaded)
-["data/scenes.js", "rows.js", "data/papers.js", "data/telling-text.js", "data/scenes-extra.js", "data/telling.js"].forEach(load);
+["data/scenes.js", "rows.js", "data/papers.js", "data/telling-text.js", "data/scenes-extra.js", "data/telling.js", "data/traces.js"].forEach(load);
 const get = n => vm.runInContext(`typeof ${n} === "undefined" ? undefined : ${n}`, ctx);
-const SCENES = get("SCENES"), PAPERS = get("PAPERS"), TELL = get("TELL"), HAT = get("HAT");
+const SCENES = get("SCENES"), PAPERS = get("PAPERS"), TELL = get("TELL"), HAT = get("HAT"), TRACES = get("TRACES") || {};
 
 // ---- the Allegory's vocabulary
 const vocab = new Map();                       // lower-case phrase -> where it came from
@@ -60,6 +60,8 @@ const walk = (v, where) => {
 };
 for (const [pid, list] of Object.entries(SCENES)) list.forEach(s => walk(s, `SCENES.${pid}.${s.id}`));
 for (const p of PAPERS) for (const k of ["name", "idea", "frame"]) walk(p[k], `PAPERS.${p.id}.${k}`);
+const plainOf = o => JSON.parse(JSON.stringify(o, (k, v) => k === "isle" ? undefined : v));      // `isle` is the Allegory's own account
+for (const [k, T] of Object.entries(TRACES)) walk(plainOf(T), `TRACES.${k}`);      // the other nodes' accounts are shown as they are in the Abstraction
 
 const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const re = new Map([...vocab.keys()].map(w => [w, new RegExp(`(^|[^a-z])${esc(w)}(s|es)?([^a-z]|$)`, "i")]));

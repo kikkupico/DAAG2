@@ -1,56 +1,92 @@
-/* the theater button: on the picture's right edge, at mid-height, with the replay button above it (that edge is usually empty; the corner collided with labels) */
-.stage .thb { position: absolute; right: 10px; top: calc(50% + 4px); z-index: 3; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--room); color: var(--ink); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
-.stage .thb:hover { background: var(--line); }
-.stage .thb svg, .stage.city .thb svg { position: static; display: block; width: 13px; height: 13px; cursor: inherit; }
-.stage .thb[aria-pressed="false"] .ti-out, .stage .thb[aria-pressed="true"] .ti-in { display: none; }
-.stage .replay { right: 10px; top: calc(50% - 32px); }
-/* a phone held upright is asked to turn: theater mode starts once it is on its side */
-.turn { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: var(--s5); background: rgba(4, 12, 18, .72); }
-.turn-c { display: grid; justify-items: center; gap: var(--s4); max-width: 280px; padding: var(--s5); border-radius: 12px; background: var(--room); border: 1px solid var(--line); text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
-.turn-c p { font: var(--t-lg)/1.4 var(--serif); text-wrap: balance; }
-.turn-i { color: var(--node); }
-@media (prefers-reduced-motion: no-preference) { .turn-i { animation: turn-i 2.4s ease-in-out infinite; } @keyframes turn-i { 0%, 25% { transform: none; } 60%, 100% { transform: rotate(-90deg); } } }
-
-/* theater mode: the stepper box fills the window. theater.js picks the layout that leaves the picture largest and sets its width, --tw:
-   "side" puts the picture at the left, full height, with the stepper and the step's panel in a column beside it;
-   "stack" puts it across the top, with the stepper and the panel under it. Only the panel scrolls. */
+/* the stage: a result's own page and its scenes fill the window (theater.js). For a scene it is the stepper box, laid out
+   one of two ways; theater.js picks the one that leaves the picture largest and sets its width, --tw:
+   "side" puts the picture at the left, with the scene's head, the stepper and the step's panel in a column beside it;
+   "stack" puts it across the top, with the scene's head, the stepper and the panel under it.
+   The head spans the window over both. Only the panel scrolls (and the scene's ⓘ, when it is long). */
 :root[data-theater] { overflow: hidden; }
+:root[data-theater] .bar, :root[data-theater] .pager { display: none; }      /* the stage has its own head, and its own way on */
 :root[data-theater] #stepbar { position: fixed; inset: 0; z-index: 50; margin: 0; padding: 0; border: 0; border-radius: 0; display: grid; gap: 0; align-items: stretch; background: var(--room); }
-:root[data-theater="side"] #stepbar { grid-template: auto auto minmax(0, 1fr) / var(--tw) minmax(0, 1fr); }
-:root[data-theater="stack"] #stepbar { grid-template: auto auto auto minmax(0, 1fr) / minmax(0, 1fr); }
-:root[data-theater] #pict { display: grid; align-content: center; background: var(--ground); }
-:root[data-theater="side"] #pict { grid-area: 1 / 1 / -1 / 2; }
-:root[data-theater="stack"] #pict { grid-row: 1; }
+:root[data-theater="side"] #stepbar { grid-template: auto auto auto minmax(0, 1fr) / var(--tw) minmax(0, 1fr); }
+:root[data-theater="stack"] #stepbar { grid-template: auto auto auto auto minmax(0, 1fr) / minmax(0, 1fr); }
+:root[data-theater] #stepbar #thead { grid-column: 1 / -1; grid-row: 1; }
+:root[data-theater] #stepbar #pict { display: grid; align-content: center; background: var(--ground); }
+:root[data-theater="side"] #stepbar #pict { grid-area: 2 / 1 / -1 / 2; }
+:root[data-theater="stack"] #stepbar #pict { grid-row: 2; }
 :root[data-theater] #stepbar .stv { width: var(--tw); max-width: none; margin-inline: auto; border-radius: 0; }
-:root[data-theater] :is(#thead, #sctl, #panel) { grid-column: -2 / -1; }
-:root[data-theater="side"] #thead { grid-row: 1; } :root[data-theater="side"] #sctl { grid-row: 2; } :root[data-theater="side"] #panel { grid-row: 3; }
-:root[data-theater="stack"] #thead { grid-row: 2; } :root[data-theater="stack"] #sctl { grid-row: 3; } :root[data-theater="stack"] #panel { grid-row: 4; }
-:root[data-theater] #thead { display: flex; align-items: center; gap: var(--s2); padding: 8px 12px; border-bottom: 1px solid var(--line); }
+:root[data-theater] :is(#shead, #sctl, #panel) { grid-column: -2 / -1; }
+:root[data-theater="side"] #shead { grid-row: 2; } :root[data-theater="side"] #sctl { grid-row: 3; } :root[data-theater="side"] #panel { grid-row: 4; }
+:root[data-theater="stack"] #shead { grid-row: 3; } :root[data-theater="stack"] #sctl { grid-row: 4; } :root[data-theater="stack"] #panel { grid-row: 5; }
+:root[data-theater] #thead { display: flex; align-items: center; gap: var(--s2) var(--s3); padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--room); }
 :root[data-theater] #sctl { padding: 10px 12px; border-bottom: 1px solid var(--line); }
 :root[data-theater] #panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 14px 24px; }
 :root[data-theater="side"] #sctl .sfoot { padding-inline: 0; }
 :root[data-theater="side"] #panel .sp { padding-inline: 0; }
-/* the head: the result's name over the scene's, between the ways to the pages before and after */
+:root[data-theater="stack"] #sctl { padding-block: 6px; }
+
+/* the head: the menu; the pickers for the result and the scene, between the ways to the pages before and after; the tellings; the guide */
 .thead { display: none; }
-.thead .tt { flex: 1; min-width: 0; display: grid; gap: 1px; text-align: center; }
-.thead .tt > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.thead .tp { font: var(--t-sm)/1.35 var(--sans); color: var(--soft); }
-.thead .tp b { font-weight: 600; color: var(--ink); }
-.thead .tp i { font-style: normal; }
-.thead .ts { font: 500 var(--t-lg)/1.25 var(--serif); }
-:root[data-reg="isle"] .thead .ts { font-weight: 400; }
-.thead .tnav { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: var(--soft); }
+.thead .tgo { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: var(--s2) var(--s3); }
+.thead .tpick { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.thead .tpick.paper { flex: 0 1 220px; } .thead .tpick.scene { flex: 0 1 340px; }
+.thead .tpick .label { flex: none; }
+.thead select { appearance: none; width: 100%; min-width: 0; font: 500 var(--t-sm)/1.2 var(--sans); color: var(--ink); background: var(--ground) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23889' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 11px center / 10px; border: 1px solid var(--line); border-radius: 99px; padding: 8px 30px 8px 14px; cursor: pointer; text-overflow: ellipsis; }
+.thead select:hover { border-color: var(--node); }
+:root[data-reg="isle"] .thead select { font: 400 var(--t-md)/1.2 var(--serif); }
+.thead .reg { margin-left: auto; flex: none; }
+.thead .tnav { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 6px; color: var(--soft); }
 .thead .tnav:hover { background: var(--ground); color: var(--ink); }
 .thead .tnav[disabled] { opacity: .3; pointer-events: none; }
-/* a result's own page in theater mode: the page fills the window and scrolls, under the same head */
-:root[data-theater="intro"] main { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain; background: var(--ground); padding: 80px max(var(--s5), calc((100vw - 920px) / 2)) var(--s7); }
+@media (max-width: 1000px) { .thead .tpick .label { display: none; } .thead .reg button { padding: 7px 10px; } }
+/* a narrow window: the pickers and their arrows take a row of their own, under the menu, the tellings and the guide */
+@media (max-width: 720px) {
+  :root[data-theater] #thead { flex-wrap: wrap; padding: 6px 8px; }
+  .thead .tgo { order: 1; flex: 1 1 100%; }
+  .thead .tpick.paper { flex: 1 1 40%; } .thead .tpick.scene { flex: 1 1 60%; }
+  .thead .reg button { padding: 7px 9px; font-size: var(--t-xs); }
+}
+
+/* the scene's own head, in the panel's column: its name and its point; behind the ⓘ, what it rests on */
+.shead { display: none; }
+:root[data-theater] #shead { display: grid; gap: 4px; padding: 12px 14px 10px; border-bottom: 1px solid var(--line); min-width: 0; }
+.shead .sh-t { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+.shead h2 { margin: 0; min-width: 0; font: 500 var(--t-xl)/1.2 var(--serif); }
+:root[data-reg="isle"] .shead h2 { font-weight: 400; }
+.shead .sh-i { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: var(--soft); }
+.shead .sh-i:hover, .shead .sh-i[aria-expanded="true"] { background: var(--node-wash); color: var(--node); }
+.shead .point { margin: 0; font-size: var(--t-md); }
+.shead .sabout { display: grid; gap: var(--s3); max-height: 34vh; overflow-y: auto; overscroll-behavior: contain; margin-top: var(--s2); padding: var(--s3); border-radius: 10px; background: var(--ground); }
+.shead .sabout[hidden] { display: none; }
+.shead .sabout .basis { margin: 0; }
+.shead .sabout p { margin: 0; }
+:root[data-theater="stack"] .shead .point { font-size: var(--t-sm); }      /* under the picture there is little room */
+
+/* the replay button: on the picture's right edge, at mid-height (that edge is usually empty; the corner collided with labels) */
+.stage .replay { right: 10px; top: calc(50% - 14px); }
+
+/* the end of a scene: the way on */
+.endnav { margin-top: var(--s4); display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+/* the drawer, on the stage: an overlay over everything, with a scrim, closed until the menu asks for it */
+:root[data-theater] .drawer { position: fixed; left: 0; top: 0; bottom: 0; height: auto; width: min(320px, 88vw); z-index: 60; box-shadow: 0 0 40px rgb(0 0 0 / .3); }
+:root[data-theater] .scrim { display: block; position: fixed; inset: 0; background: rgb(0 0 0 / .55); z-index: 55; transition: opacity .2s; }
+:root[data-theater] .shell[data-drawer="closed"] .scrim { opacity: 0; pointer-events: none; }
+
+/* a result's own page: the page fills the window and scrolls under the head, with the result's picture at rest on the left
+   where the window is wide enough (--iw, from theater.js; 0 when it is not) */
+:root[data-theater="intro"] main { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overscroll-behavior: contain; background: var(--ground);
+  padding: calc(var(--hh, 56px) + var(--s6)) max(var(--s5), calc((100vw - var(--iw, 0px) - 760px) / 2)) var(--s7) calc(var(--iw, 0px) + max(var(--s5), calc((100vw - var(--iw, 0px) - 760px) / 2))); }
 :root[data-theater="intro"] #thead { position: fixed; top: 0; left: 0; right: 0; z-index: 51; background: var(--room); }
-:root[data-theater="stack"] #sctl { padding-block: 6px; }
+.ipict { display: none; }
+:root[data-theater="intro"] .ipict { display: grid; align-content: center; position: fixed; left: 0; top: var(--hh, 56px); bottom: 0; width: var(--iw, 0px); z-index: 51; background: var(--ground); border-right: 1px solid var(--line); overflow: hidden; }
+:root[data-theater="intro"] .ipict .stage { margin: 0; }
+:root[data-theater="intro"] .ipict .stv { width: var(--iw); max-width: none; border-radius: 0; }
+
 /* a short window, such as a phone on its side: tighter, so more of the step's text shows without scrolling */
 @media (max-height: 520px) {
   :root[data-theater] #thead { padding: 3px 8px; }
-  :root[data-theater] #thead .ts { font-size: var(--t-md); }
-  :root[data-theater="intro"] main { padding-top: 56px; }
+  :root[data-theater] #thead select { padding-block: 5px; }
+  :root[data-theater] #shead { padding: 6px 10px; }
+  :root[data-theater] .shead .point { display: none; }
   :root[data-theater] #sctl { padding: 6px 8px; gap: 6px; }
   :root[data-theater] #sctl .arrow { width: 30px; height: 30px; }
   :root[data-theater] #sctl .sd { width: 24px; height: 24px; }
@@ -61,7 +97,7 @@
   :root[data-theater] #panel .say { font-size: var(--t-md); }
   :root[data-theater] #panel .fcol { padding: 8px 12px 10px; gap: 6px; }
 }
-/* theater mode keeps the step groups' names and the key at any size, as on a desktop; the panel then need not repeat the phase */
+/* the stage keeps the step groups' names and the key at any size, as on a desktop; the panel then need not repeat the phase */
 :root[data-theater] .stepbar .sfoot { display: flex; }
 :root[data-theater] #panel .sp-ph:not(:has(i)) { display: none; }
 /* the key scrolls sideways, in one row, rather than wrapping to several lines; its dots keep their own small size */

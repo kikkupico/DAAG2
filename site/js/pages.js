@@ -39,7 +39,7 @@ function withHTML(p) {      // a way into a comparison: the results the map link
 function landHTML(it) {
   const xs = it.p.scenes.map(s => byKey(`${it.p.id}-${s.id}`));
   return `<div class="start"><div class="ctl"><button type="button" class="btn go-out" data-key="${it.key}">Start with the first scene</button>${withHTML(it.p)}</div>
-    <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol>${sumHTML(it.p, true)}</div>${theaterHead(it.p.id)}${pagerHTML(it.p.id)}`;
+    <ol class="toc">${xs.map((x, i) => `<li><button type="button" data-key="${x.key}"><span class="n">${i + 1}</span><span class="t">${esc(nameOf(x))}</span><span class="d">${esc(TAKE[x.key])}</span></button></li>`).join("")}</ol>${sumHTML(it.p, true)}</div>${theaterHead(it.p.id)}<div class="ipict" id="pict">${stageHTML(it)}</div>${pagerHTML(it.p.id)}`;
 }
 // The reading order: each result's own page, then its scenes. The pager under a page, and theater mode's arrows, walk it.
 const ORDER = ALL.flatMap((x, i) => i && ALL[i - 1].p === x.p ? [x.key] : [x.p.id, x.key]);
@@ -68,7 +68,12 @@ function paperHTML(it) {
 
 // What each step is told as, in the current register.
 function tellOf(it) {
-  const s = it.s, O = ovOf(it), rows = buildRows(s);
+  const s = it.s, O = ovOf(it), rows = buildRows(s), V = it.told;
+  if (V) {      // another node's view (pov.js): its accounts and asides are already told, in the current telling
+    const I = isleOf(it.p);
+    rows.forEach(r => { r.say = V.say[r.t] || (r.t ? "" : startOf(it)); r.sayPlain = r.say.replace(/<[^>]+>/g, ""); r.aside = V.asides[r.t] || ""; });
+    return { rows, phases: V.phases.map(([from, name, why, iname]) => [from, I ? iname || name : name, I ? "" : why]) };
+  }
   const brief = O ? mk(O.outside || "") : s.outside ? nodeText(s.outside, s) : "";     // how things stand beyond the node's sight, told with the starting step
   rows.forEach(r => {
     r.say = O ? mk(O.prose[r.t] || "") : nodeText(r.note, s);
@@ -79,11 +84,30 @@ function tellOf(it) {
   const phases = (s.phases || []).map(([from, name, why], i) => [from, O ? (O.phases || [])[i] || name : name, O ? "" : why]);
   return { rows, phases };
 }
+// Another node's starting step, which no telling writes: who it is, and that it has not acted yet.
+const startOf = it => { const I = isleOf(it.p), X = it.s.who, n = nmOf(I, X);
+  return n ? `The ${esc(n)} has done nothing yet.` : I ? `${cap(esc(roleOf(I, X)))} ${ND(X)} has done nothing yet.` : `${ND(X)}${it.s.role ? `, a ${esc(it.s.role)},` : ""} has done nothing yet.`; };
 // The scene at a glance: one dot per step.
 // The stepper box, the scene's main view: the controls, then the picture, which folds away, then what happens in the chosen step.
 function stripHTML(it) {
   const pic = stageHTML(it);
-  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${pic ? `<div class="pict" id="pict">${pic}</div>${theaterHead(it.key)}` : ""}${ctlHTML(it)}${panelHTML(it)}</div>`;
+  return `<div class="strip stepbar" id="stepbar" role="group" aria-label="Steps of the scene">${pic ? `<div class="pict" id="pict">${pic}</div>${theaterHead(it.key)}${sheadHTML(it)}` : ""}${ctlHTML(it)}${panelHTML(it)}</div>`;
+}
+// The scene's own head, on the stage: its name and its point, and behind the ⓘ what it rests on (the concept, the papers,
+// its place in the result's argument), who you are in it, its rule, and its near-twin to compare with. The ⓘ stays as the
+// reader left it from scene to scene.
+let aboutOpen = false;
+const twinBtn = it => { const other = it.pov ? null : byKey(PAIR[it.key]); return other ? `<button type="button" class="btn sm" data-cmp="1" aria-pressed="false">Compare with “${esc(nameOf(other))}”</button>` : ""; };
+function sheadHTML(it) {
+  const rule = noteOf(it), cmpB = twinBtn(it);
+  return `<div class="shead" id="shead"><div class="sh-t"><h2>${esc(nameOf(it))}</h2><button type="button" class="sh-i" data-about="1" aria-expanded="${aboutOpen}" aria-controls="sabout" aria-label="About this scene" title="About this scene">`
+    + `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 8v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="5.4" r="1" fill="currentColor"/></svg></button></div>`
+    + `${pointHTML(it)}<div class="sabout" id="sabout"${aboutOpen ? "" : " hidden"}>${basisHTML(it)}<p class="cast">${castHTML(it)}</p>${rule ? `<p class="rule">${rule}</p>` : ""}${cmpB ? `<div class="ctl">${cmpB}</div>` : ""}</div></div>`;
+}
+function toggleAbout() {
+  aboutOpen = !aboutOpen;
+  const a = $("sabout"), b = document.querySelector(".sh-i"); if (a) a.hidden = !aboutOpen; if (b) b.setAttribute("aria-expanded", String(aboutOpen));
+  layTheater();
 }
 function ctlHTML(it) {     // one circle per step
   const { rows, phases } = tellOf(it), atEnd = stageStep >= rows.length, n = atEnd ? -1 : stageStep;
@@ -95,7 +119,7 @@ function ctlHTML(it) {     // one circle per step
   const end = `<button type="button" class="sd fin${atEnd ? " on" : ""}" data-step="${rows.length}" title="${U().endStep}. ${VERDICT[it.oc]}" aria-label="${U().endStep}. ${VERDICT[it.oc]}"${atEnd ? ` aria-current="step"` : ""}><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">${OC[it.oc]}</svg></button>`;
   const groups = ph.map(([from, name], i) => `<div class="sg">${name ? `<span class="label">${esc(name)}</span>` : ""}<div class="dots">${rows.slice(from, i + 1 < ph.length ? ph[i + 1][0] : rows.length).map(dot).join("")}${i === ph.length - 1 ? end : ""}</div></div>`).join("");
   const k = U().strip;
-  return `<div class="sctl" id="sctl">
+  return `<div class="sctl" id="sctl">${povHTML(it)}
     <button type="button" class="btn sm arrow" data-stage="-1" aria-label="Previous step"${stageStep ? "" : " disabled"}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 2.5L4 7l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sgs">${groups}</div><button type="button" class="btn sm arrow" data-stage="1" aria-label="Next step"${atEnd ? " disabled" : ""}><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5.5 2.5L10 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="sfoot"><div class="skey"><span><i class="sd p"></i>${k[0]}</span><span><i class="sd t"></i>${k[1]}</span><span><i class="sd n"></i>${k[2]}</span><span><i class="sd n r"></i>${k[3]}</span><span><i class="sd n s"></i>${k[4]}</span></div></div></div>`;
 }
@@ -123,31 +147,34 @@ function timelineHTML(it, col, dv, only, bare) {      // only: one step's number
   if (!solo || only === "end") tl += `<div class="band end"><span class="tm" aria-hidden="true"></span>
       <p>That is everything ${I ? me : "node " + me} can know.${tw ? " At least two different worlds look exactly like this from in here." : ""}</p>
       ${sysHTML(it, `<p class="verdict">${ocMark(it.oc)}${VERDICT[it.oc]}</p><p>${esc(TAKE[it.key])}${tw ? " " + twinLine : ""}</p>`)}
-      ${solo && !bare && s === it.p.scenes[it.p.scenes.length - 1] ? sumHTML(it.p) : ""}
+      ${solo && !bare && s.id === it.p.scenes[it.p.scenes.length - 1].id ? sumHTML(it.p) : ""}
     </div>`;
   return `<div class="tlw"><div class="tl">${tl}</div></div>`;
 }
 // The panel under the picture: the chosen step told in full, then what arrives, what the node keeps, and what leaves, left to right.
 function panelHTML(it) {
   const s = it.s, I = isleOf(it.p), { rows, phases } = tellOf(it);
-  if (stageStep >= rows.length) return `<div class="panel" id="panel" aria-live="polite">${timelineHTML(it, 0, -1, "end")}</div>`;
+  if (stageStep >= rows.length) {      // the end: the verdict, then the way on (the next page in the reading order), again, or to the twin
+    const nx = ORDER[ORDER.indexOf(it.key) + 1], nn = nx && (isPaper(nx) ? `${paperName(resolve(nx).p)}, introduction` : nameOf(byKey(nx)));
+    return `<div class="panel" id="panel" aria-live="polite">${timelineHTML(it, 0, -1, "end")}<div class="ctl endnav">${nx ? `<button type="button" class="btn go-out" data-key="${nx}">Next: ${esc(nn)} →</button>` : ""}<button type="button" class="btn" data-step="0">Replay from the start</button>${twinBtn(it)}</div></div>`;
+  }
   const r = rows[stageStep], seen = new Map(), ph = phases.filter(([from]) => from <= r.t).pop();
   rows.filter(x => x.t < r.t).forEach(x => msgs(x.sent, "out", seen, x.t, I));          // so a repeat reads "same order as step 2"
   const col = (cls, label, body, none) => `<div class="fcol ${cls}"><span class="label">${label}</span>${body || `<p class="none">${none}</p>`}</div>`;
   return `<div class="panel" id="panel" aria-live="polite"><div class="sp">
     ${ph ? `<p class="sp-ph"><b>${esc(ph[1])}</b>${ph[2] ? ` <i>${nodeText(ph[2], s)}</i>` : ""}</p>` : ""}
     <p class="say">${r.say}</p>
-    <div class="flow">${col("fin", U().arrives, msgs(r.recv, "in", seen, r.t, I), U().noneIn)}${col("fst", U().kept, stateBox(r, I))}${col("fout", U().leaves, msgs(r.sent, "out", seen, r.t, I), U().noneOut)}</div>
+    <div class="flow">${col("fin", U().arrives, msgs(r.recv, "in", seen, r.t, I), U().noneIn)}${col("fst", U().kept, /class="kv/.test(stateBox(r, I)) ? stateBox(r, I) : "", U().noneKept)}${col("fout", U().leaves, msgs(r.sent, "out", seen, r.t, I), U().noneOut)}</div>
     ${r.aside ? sysHTML(it, `<p>${r.aside}</p>`) : ""}
   </div></div>`;
 }
-const noteOf = it => { const O = ovOf(it); return O ? mk(O.note || "") : it.s.note ? nodeText(it.s.note, it.s) : ""; };
+const noteOf = it => { if (it.pov) return ""; const O = ovOf(it); return O ? mk(O.note || "") : it.s.note ? nodeText(it.s.note, it.s) : ""; };
 // What a scene is based on: the idea in the literature's own terms, and the paper it comes from. The same in both registers.
 function basisHTML(it) {
   const b = BASIS[it.key]; if (!b) return "";
   const lines = it.p.cite.split("\n"), src = b[1].map(i => { const c = lines[i].replace(/^Related: /, ""), k = c.indexOf(" · "); return `<span>${esc(c.slice(0, k))}, <cite>${esc(c.slice(k + 3).replace(/ \(.*\)$/, ""))}</cite></span>`; }).join("");
   // the thread: each scene's part in the result's argument, this one marked, ending where the argument lands
-  const A = ARC[it.p.id], arc = !A ? "" : `<div><dt class="label">Argument</dt><dd><ol class="arc" aria-label="Scene ${it.p.scenes.indexOf(it.s) + 1} of ${it.p.scenes.length} in the argument">${it.p.scenes.map(s => `<li><button type="button" data-key="${it.p.id}-${s.id}"${s === it.s ? ` aria-current="true"` : ""}>${esc(A.steps[s.id])}</button></li>`).join("")}<li class="fin">${esc(A.end)}</li></ol></dd></div>`;
+  const A = ARC[it.p.id], arc = !A ? "" : `<div><dt class="label">Argument</dt><dd><ol class="arc" aria-label="Scene ${it.p.scenes.findIndex(x => x.id === it.s.id) + 1} of ${it.p.scenes.length} in the argument">${it.p.scenes.map(s => `<li><button type="button" data-key="${it.p.id}-${s.id}"${s.id === it.s.id ? ` aria-current="true"` : ""}>${esc(A.steps[s.id])}</button></li>`).join("")}<li class="fin">${esc(A.end)}</li></ol></dd></div>`;
   return `<dl class="basis"><div><dt class="label">Concept</dt><dd>${esc(b[0])}</dd></div><div><dt class="label">${b[1].length > 1 ? "Papers" : "Paper"}</dt><dd>${src}</dd></div>${arc}</dl>`;
 }
 // What a result's scenes add up to: each scene's outcome and takeaway side by side, then the idea that only follows from all of them.
@@ -161,17 +188,17 @@ function sumHTML(p, bare) {
 }
 const pointHTML = it => `<p class="point"><span class="label">${U().point}: </span>${esc(TAKE[it.key])}</p>`;
 function castHTML(it) {
-  const s = it.s, I = isleOf(it.p), O = ovOf(it);
+  const s = it.s, I = isleOf(it.p), O = it.pov ? {} : ovOf(it);      // another node's view has none of the narrator's own words
   if (!I) return `You are inside node <span class="nd">${esc(s.who)}</span>${s.role ? `, ${/^(coordinator|primary)$/.test(s.role) ? "the" : "a"} ${esc(s.role)}` : ""}. Out there: ${nodeText(s.peers, s)}.`;
   const ls = s.peers.match(/\b[A-Z]\b/g) || [];
   if (I.names) return `You run the ${esc(I.names[s.who])}. You hear from ${listAnd(ls.map(l => "the " + esc(I.names[l])))}, and only by courier.`;
   const r0 = roleOf(I, ls[0]), same = ls.every(l => roleOf(I, l) === r0);
-  const peers = O.peers ? mk(O.peers) : I.peers ? mk(I.peers) : same ? `${r0}${ls.length > 1 ? "s" : ""} ${listAnd(ls.map(ND))}` : listAnd(ls.map(l => `${roleOf(I, l)} ${ND(l)}`));
+  const peers = O.peers ? mk(O.peers) : I.peers && !it.pov ? mk(I.peers) : same ? `${r0}${ls.length > 1 ? "s" : ""} ${listAnd(ls.map(ND))}` : listAnd(ls.map(l => `${roleOf(I, l)} ${ND(l)}`));
   return `You are ${esc(roleOf(I, s.who))} ${ND(esc(s.who))}${O.as ? `, ${esc(O.as)}` : ""}. You hear from ${peers}, and only by courier.`;
 }
-function sceneHTML(it) {
-  const { p, s } = it, I = isleOf(p);
-  const other = byKey(PAIR[it.key]), both = cmp && other;
+function sceneHTML(base) {
+  const it = viewOf(base), { p, s } = it, I = isleOf(p);
+  const other = it.pov ? null : byKey(PAIR[it.key]), both = cmp && other;      // a comparison is of the two scenes as told
   const cmpBtn = other ? `<button type="button" class="btn sm" data-cmp="1" aria-pressed="${!!both}">${both ? "Close comparison" : `Compare with “${esc(nameOf(other))}”`}</button>` : "";
   let body;
   if (both) {
@@ -179,6 +206,7 @@ function sceneHTML(it) {
     const column = (x, n) => `<section class="col"><h3>${esc(nameOf(x))}${ocMark(x.oc)}</h3>${pointHTML(x)}${noteOf(x) ? `<p class="rule">${noteOf(x)}</p>` : ""}${timelineHTML(x, n, d)}</section>`;
     body = `<p class="cmpnote">${d < 0 ? U().same : d === 0 ? U().differ0 : U().until(d)}</p><div class="cmp">${column(it, 0)}${column(other, 1)}</div>`;
   } else body = `<div class="player">${stripHTML(it)}</div>`;
+  if (!both && stageOf(it)) return body;
   return `<div class="scene-head">
       <div class="stitle"><h2>${esc(nameOf(it))}</h2>${cmpBtn ? `<div class="ctl">${cmpBtn}</div>` : ""}</div>
       ${both ? "" : pointHTML(it)}

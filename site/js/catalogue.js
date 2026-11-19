@@ -172,7 +172,7 @@ const ALL = CHAPTERS.flatMap(([chapter, ids]) => ids.flatMap(id => {
   return p.scenes.map(s => ({ p, s, chapter, key: `${p.id}-${s.id}`, oc: outcomeOf(`${p.id}-${s.id}`) }));
 }));
 const byKey = k => ALL.find(x => x.key === k);
-const twinOf = it => it.s.twin ? byKey(`${it.p.id}-${it.s.twin}`) : ALL.find(x => x.p === it.p && x.s.twin === it.s.id);
+const twinOf = it => it.pov ? null : it.s.twin ? byKey(`${it.p.id}-${it.s.twin}`) : ALL.find(x => x.p === it.p && x.s.twin === it.s.id);
 // The first step at which two scenes look different from inside (0 is the starting state); -1 if they never do.
 const sig = (s, i) => { const r = i ? s.rows[i - 1] : s.init; return r ? JSON.stringify([r.perm || {}, r.temp || {}, i ? r.recv || [] : [], i ? (r.sent || []).map(m => m.slice(0, 2)) : []]) : null; };
 function firstDiff(a, b) {

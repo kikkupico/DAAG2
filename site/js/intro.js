@@ -30,11 +30,12 @@ function introHTML() {
     + `<div class="sys"><p class="sys-h">${EYE}<b>${U().seen}</b><span>shown like this</span></p><p>What the ${isle ? "person" : "node"} cannot see is never hidden from you. It is set beside the step it belongs to, in a dashed frame like this one, so that it never reads as something the ${isle ? "person" : "node"} knows.</p></div>`);
 
   const how = sect("A short guide", "How to use it", `<ol class="guide">${[
-      ["Pick a result", "The menu lists the sixteen in four chapters. Read in order, or open the " + UI.isle.map + " to see which result answers a problem another one raises."],
-      ["Read its page, then its scenes", "A result's own page gives the idea, the papers behind it and the words used. Its scenes follow, each marked as one that works, one that goes wrong, or one that never finishes."],
-      ["Step through a scene", "Use the arrows beside the row of dots, the dots themselves, or the left and right arrow keys. In the picture, couriers walk the roads; the replay button runs a step again. Under it, each step reads left to right: what arrives, what is kept, what leaves."],
+      ["Pick a result", "The menu, behind the three lines at the top left, lists the sixteen in four chapters. Read in order, or open the " + UI.isle.map + " to see which result answers a problem another one raises."],
+      ["Read its page, then its scenes", "A result opens on its Introduction: the idea, the papers behind it and the words used, beside its picture. Its scenes follow, each marked as one that works, one that goes wrong, or one that never finishes. The two pickers at the top jump to any result and any scene; the arrows beside them walk the reading order."],
+      ["Step through a scene", "Use the arrows beside the row of dots, the dots themselves, or the left and right arrow keys. In the picture, couriers walk the roads; the replay button runs a step again. Beside it, each step reads top to bottom: what arrives, what is kept, what leaves. The last dot is the end: what happened, and the way on."],
+      ["Know where you stand", "Each scene's name and its point sit over its steps. The ⓘ beside the name tells what the scene rests on, the paper it comes from, who you are in it, and the rule you follow."],
+      ["See through other eyes", "Some scenes have tabs over their steps, one for each participant. The first tells the scene as written; any other tells the same moments from inside someone else, with what they could not see in the dashed frame."],
       ["Switch the telling", "Allegory and Abstraction, at the top of every page, tell the same steps as islanders or as nodes A, B and C. Switch at any point without losing your place."],
-      ["Fill the window", "Theater mode, the button on the picture or the F key, gives the scene the whole screen."],
       ["Set two side by side", "Compare, in the menu, puts any two results next to each other. Some scenes also offer their near-twin for a step by step comparison."],
       ["Filter by what can go wrong", `Under “${U().inplay}” in the menu, pick a hazard, such as lost messages or liars, to find the results that have to live with it.`],
     ].map(([a, b]) => `<li><b>${a}.</b> ${b}</li>`).join("")}</ol>`);

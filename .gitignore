@@ -139,3 +139,6 @@ world/detail-plan-siege/
 
 # an allegory's working files: plates, diagrams, overlays, intermediate paintings (tools/allegory.py)
 allegories/*/work/
+
+# an archived experiment: the three.js visualiser (viz/), kept on disk only. Its global traces live on in site/js/data/traces.js
+viz/
