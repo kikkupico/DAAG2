@@ -11,6 +11,9 @@ computing twice, as an Allegory and as an Abstraction.
 - `site/allegories/<id>.js`, `site/js/data/allegories.js`: the allegories the page holds and the one it opens with; a menu in the drawer switches. Written by the tool.
 - `site/js/data/plain.js`: the Abstraction's own roads and positions. Fixed; no allegory changes it.
 - `world/`: the Blender build of the original Greek town and siege.
+- `viz/`: Distributed Computing Papers Visualised, a three.js app on the same data (serve the repo root, open `/viz/`).
+  It plays a scene's global trace (`viz/data/traces.js`: every node's state and every message's send and arrival),
+  from behind any node or from above the whole system. Abstraction first; the Allegory waits for a 3D world (`viz/js/worlds.js`).
 
 ## Skills
 
@@ -20,4 +23,5 @@ computing twice, as an Allegory and as an Abstraction.
 ## Checks
 
 - `python3 tools/allegory.py check <id>`: an allegory's networks keep every rule.
+- `node viz/tools/check-traces.js`: every global trace, projected onto its scene's narrator, gives back the scene's rows exactly.
 - `node site/tools/check-leaks.js`: the Abstraction's text uses none of the telling's own vocabulary (run it after editing scenes or the telling).
