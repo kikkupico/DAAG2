@@ -172,6 +172,9 @@
   :root[data-theater] #panel .say { font-size: var(--t-md); }
   :root[data-theater] #panel .fcol { padding: 8px 12px 10px; gap: 6px; }
 }
+/* a phone on its side: the scene's name is over the column, by its ⓘ, so the head names only the result: once is enough.
+   (An upright phone does the opposite: there the head names the scene and the column does not.) */
+@media (max-height: 520px) and (min-width: 640px) { :root:is([data-theater="side"], [data-theater="stack"]) .thead .ts { display: none; } }
 /* the stage keeps the step groups' names and the key at any size, as on a desktop; the panel then need not repeat the phase */
 :root[data-theater] .stepbar .sfoot { display: flex; }
 :root[data-theater] #panel .sp-ph:not(:has(i)) { display: none; }
