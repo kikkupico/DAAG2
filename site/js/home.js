@@ -102,7 +102,7 @@ function homeHTML() {
     <div class="htext">
       <p class="hey">Lamport did it first</p>
       <h1>Distributed algorithms, told as stories.</h1>
-      <p class="hlede">Leslie Lamport first published Paxos as an archaeologist's report on the lost parliament of a Greek island. This site tells sixteen classic results the same way: as scenes in one town, where every message is a courier walking the roads. One switch turns the story back into nodes A, B and C.</p>
+      <p class="hlede">Leslie Lamport first published Paxos as an archaeologist's report on the lost parliament of a Greek island. This site tells ${NUMWORD} classic results the same way: as scenes in one town, where every message is a courier walking the roads. One switch turns the story back into nodes A, B and C.</p>
       <div class="hcta"><button type="button" class="hbtn pri" data-key="${ORDER[0]}" data-guide="1">Start with the first paper</button><button type="button" class="hbtn" data-key="paxos" data-guide="1">Or step right into Paxos</button></div>
       <p class="hhint">Either way, a two-minute guide opens first, over the page. The first paper is ${esc(paperName(resolve(ORDER[0]).p))}; Paxos has the idea, the papers and four scenes.</p>
     </div>
@@ -131,10 +131,10 @@ function homeHTML() {
 
   <section class="hsec">
     <div class="hwide">
-      <p class="hlab">A sample of the sixteen</p>
+      <p class="hlab">A sample of the ${NUMWORD}</p>
       <h2>The papers everyone cites, and few remember</h2>
       <div class="hcards">${cards}</div>
-      <p class="hmore"><button type="button" class="hbtn" data-key="map">See all sixteen, and how they connect</button></p>
+      <p class="hmore"><button type="button" class="hbtn" data-key="map">See all the papers, and how they connect</button></p>
     </div>
   </section>
 
@@ -156,7 +156,7 @@ function homeHTML() {
       <h2>Step inside ${esc(ALLEGORY.town)}</h2>
       <div class="hpaths">
         <button type="button" class="hpath first" data-key="${ORDER[0]}" data-guide="1"><span class="hlab">Recommended · from the beginning</span><b>Start with the first paper</b>
-          <span>${esc(paperName(resolve(ORDER[0]).p))}, then the sixteen results in order. A two-minute guide opens over it first: how a scene is told, how to step through it, what the dashed frames mean, and how to switch between the tellings.</span><span class="hgo">${esc(paperName(resolve(ORDER[0]).p))} →</span></button>
+          <span>${esc(paperName(resolve(ORDER[0]).p))}, then the ${NUMWORD} results in order. A two-minute guide opens over it first: how a scene is told, how to step through it, what the dashed frames mean, and how to switch between the tellings.</span><span class="hgo">${esc(paperName(resolve(ORDER[0]).p))} →</span></button>
         <button type="button" class="hpath" data-key="paxos" data-guide="1"><span class="hlab">Or step right in</span><b>Explore Paxos</b>
           <span>${esc(F("The idea in a paragraph, the papers behind it, then four scenes: a clean round, one legislator's own view, a successor who inherits a ledger, and what breaks if promises are kept on the slate."))}</span><span class="hgo">Paxos →</span></button>
       </div>

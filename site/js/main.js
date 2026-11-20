@@ -71,6 +71,7 @@ function act(b) {
   else if (d.drawer) setDrawer(d.drawer === "toggle" ? $("shell").dataset.drawer !== "open" : d.drawer === "open", theater);      // the stage's overlay is not the reader's preference
   else if (d.about) toggleAbout();
   else if (d.sheet) toggleSheet();
+  else if (d.chap) { toggleChap(+d.chap); renderDrawer(); }
   else if (d.tog) { expanded.has(d.tog) ? expanded.delete(d.tog) : expanded.add(d.tog); renderDrawer(); }
   else if (d.reg) { reg = d.reg; try { localStorage.setItem("reg", reg); } catch (e) {} render(); }
   else if (d.cmp) { cmp = !cmp; render(); }
@@ -83,7 +84,7 @@ function act(b) {
   else if (d.pov) setPov(d.pov);
   else if (d.pside) showSide(+d.pside, true);
 }
-const HOT = "[data-guideclose],[data-pov],[data-about],[data-sheet],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap],[data-pside]";
+const HOT = "[data-guideclose],[data-chap],[data-pov],[data-about],[data-sheet],[data-key],[data-drawer],[data-tog],[data-reg],[data-cmp],[data-haz],[data-hazclear],[data-step],[data-stage],[data-vsopen],[data-vsswap],[data-pside]";
 document.addEventListener("click", e => { const b = e.target.closest(HOT); if (b) act(b); });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && guideOpen) { closeGuide(); return; }

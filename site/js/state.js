@@ -13,7 +13,7 @@ try { if (localStorage.getItem("reg") === "plain") reg = "plain"; } catch (e) {}
 const UI = {
   plain: {
     title: "Distributed Algorithms, One Node at a Time",
-    map: "Overview", arrives: "Arrives", leaves: "Leaves", perm: "permanent", temp: "temporary",
+    map: "Papers", arrives: "Arrives", leaves: "Leaves", perm: "permanent", temp: "temporary",
     permL: "permanent: handed to a replacement", tempL: "temporary: ends with the node",
     seen: "Global view", unseen: w => `${w} cannot see this`, point: "The point",
     endStep: "The end: what the node could know, and what happened",
@@ -25,7 +25,7 @@ const UI = {
   },
   isle: {
     title: ALLEGORY.title,
-    map: "Bird's Eye View", arrives: "Arrives", leaves: "Leaves", perm: "in the ledger", temp: "on the slate",
+    map: "Papers", arrives: "Arrives", leaves: "Leaves", perm: "in the ledger", temp: "on the slate",
     permL: "ledger: passes to a successor", tempL: "slate: wiped when its owner goes",
     seen: "World view", unseen: w => `${w} cannot see this`, point: "The point",
     endStep: "The end: what could be known, and what happened",

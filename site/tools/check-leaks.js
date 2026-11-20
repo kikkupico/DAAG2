@@ -11,7 +11,7 @@ const dir = path.join(__dirname, "..", "js");
 const ctx = vm.createContext({ console });
 const load = f => vm.runInContext(fs.readFileSync(path.join(dir, f), "utf8"), ctx, { filename: f });
 // the same order index.html loads them in (state.js and later need the DOM, so they are not loaded)
-["data/scenes.js", "rows.js", "data/papers.js", "data/telling-text.js", "data/scenes-extra.js", "data/telling.js", "data/traces.js"].forEach(load);
+["data/scenes.js", "rows.js", "data/papers.js", "data/telling-text.js", "data/scenes-extra.js", "data/scenes-more.js", "data/telling.js", "data/telling-more.js", "data/traces.js", "data/traces-more.js"].forEach(load);
 const get = n => vm.runInContext(`typeof ${n} === "undefined" ? undefined : ${n}`, ctx);
 const SCENES = get("SCENES"), PAPERS = get("PAPERS"), TELL = get("TELL"), HAT = get("HAT"), TRACES = get("TRACES") || {};
 
@@ -46,7 +46,7 @@ for (const [id, I] of Object.entries(TELL)) {
   }
 }
 // Words that are ordinary technical English in the plain text too (the Allegory merely reuses them).
-const OK = new Set(["client", "node", "value", "primary", "server", "view", "replica", "transaction", "student", "reader", "visitor", "write", "read", "total", "the total", "primary", "photo", "album"]);
+const OK = new Set(["client", "node", "value", "primary", "server", "view", "replica", "transaction", "student", "reader", "visitor", "write", "read", "total", "the total", "primary"]);
 OK.forEach(w => vocab.delete(w));
 if (fs.existsSync(path.join(__dirname, "leak-allow.txt")))
   fs.readFileSync(path.join(__dirname, "leak-allow.txt"), "utf8").split("\n").map(s => s.trim().toLowerCase()).filter(s => s && !s.startsWith("#")).forEach(w => vocab.delete(w));

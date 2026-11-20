@@ -44,7 +44,7 @@ Fixed. Do not change these, and do not edit the files that hold them:
   right edge (the replay and theater buttons are there) or the middle of the bottom edge. This spreads the landmarks
   evenly over the picture. The checker enforces it.
 - **The Abstraction.** It keeps its own roads and positions whatever you build. Never edit `site/js/data/plain.js`,
-  `scenes.js`, `scenes-extra.js`, `papers.js` or `site/js/rows.js`.
+  `scenes.js`, `scenes-extra.js`, `scenes-more.js`, `papers.js` or `site/js/rows.js`.
 - **Generated files.** `site/allegories/<id>.js` and `site/js/data/allegories.js` are written by the tool. Never edit them by hand.
 
 Yours:

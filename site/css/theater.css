@@ -142,11 +142,16 @@
 :root[data-theater="intro"] .ipict .stage { margin: 0; }
 :root[data-theater="intro"] .ipict .stv { width: var(--iw); max-width: none; border-radius: 0; }
 
-/* the overview on the stage: the map in the left pane, scaled to fit it; on a narrow window, at the top of the text */
-:root[data-theater="intro"] .mpict { align-content: center; padding: var(--s5); }
+/* the Papers page on the stage: the list of papers first, on the left; the map, secondary, in a pane on the right; on a narrow window, the map under the list */
+:root[data-theater="intro"]:has(.mpict) main { padding-left: max(var(--s5), calc((100vw - var(--iw, 0px) - 760px) / 2)); padding-right: calc(var(--iw, 0px) + max(var(--s5), calc((100vw - var(--iw, 0px) - 760px) / 2))); }
+:root[data-theater="intro"] .mpict { left: auto; right: 0; border-right: 0; border-left: 1px solid var(--line); }
+:root[data-theater="intro"] .mpict { align-content: start; padding: var(--s5); overflow-y: auto; }
 :root[data-theater="intro"] .mpict .mapbox { margin: 0; }
+:root[data-theater="intro"] .mpict .mapbox.lanes { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); padding: var(--s3); gap: var(--s2); }
 :root[data-theater="intro"] .mpict svg { width: 100%; height: auto; max-height: calc(100vh - var(--hh, 56px) - 48px); }
-@media (max-width: 959px) { :root[data-theater="intro"] .mpict { display: block; position: static; width: auto; padding: 0; margin-bottom: var(--s5); border: 0; background: none; } }
+@media (max-width: 959px) { :root[data-theater="intro"] .mpict { display: block; position: static; width: auto; padding: 0; margin-top: var(--s4); border: 0; background: none; }
+  /* the Papers page on a narrow window: the list first, the map under it */
+  :root[data-theater="intro"] #scene > .mpict { order: 2; } }
 
 /* the guide: a panel over the whole window, read and closed */
 .gmodal { position: fixed; inset: 0; z-index: 70; background: var(--ground); overflow: hidden; }

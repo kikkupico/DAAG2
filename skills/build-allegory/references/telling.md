@@ -1,6 +1,6 @@
 # The places, and how the telling names them
 
-The prose of the Allegory (`site/js/data/telling.js`) never names a place outright. It writes `{fishery}`, and the page
+The prose of the Allegory (`site/js/data/telling.js`, and `telling-more.js` for the results added last) never names a place outright. It writes `{fishery}`, and the page
 fills in the `label` you gave that place. So naming the places well is most of retelling the stories.
 
 ## The city's places
@@ -73,11 +73,11 @@ sardines, couriers, ledgers, the temple's columns. Much of that reads fine in an
 
 **Proper names and units are the first things to swap.** They place the story in Greece more firmly than any noun: the
 scholars' lists hold Homer, Hesiod and Sappho, the scrolls are the Iliad and the Odyssey, the Earth is measured in stadia, and the soldiers count spears. Search
-`site/js/data/telling.js` and `telling-text.js` for capitalised words and for units, and give each an equivalent from
+`site/js/data/telling.js`, `telling-more.js` and `telling-text.js` for capitalised words and for units, and give each an equivalent from
 your setting (authors or works its scholars would keep, its own measure of distance). Leave Ann and Bob, who are the
 papers' own, and the names of the papers' authors.
 
-To see what else there is to swap, search `site/js/data/telling.js` for the nouns of the results you care about. After
+To see what else there is to swap, search `site/js/data/telling.js` and `telling-more.js` for the nouns of the results you care about. After
 `build`, read at least one scene of each kind of people on the page (`shot`), prose included, and fix what still jars.
 
 ## The tokens, if you edit the prose itself

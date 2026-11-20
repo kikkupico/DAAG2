@@ -11,12 +11,12 @@ const onStage = () => isPaper(sel) || sel === "map" || (!!$("stepbar") && !!$("s
 function theaterHead(key) {
   const isMap = key === "map", it = isMap ? null : resolve(key), land = isPaper(key);
   const n = it ? it.p.scenes.findIndex(s => s.id === it.s.id) + 1 : 0;
-  const where = isMap ? `<span class="tp"><b>${U().map}</b></span><span class="ts">How the sixteen lead to one another</span>`
+  const where = isMap ? `<span class="tp"><b>${U().map}</b></span><span class="ts">The ${NUMWORD}, and how they connect</span>`
     : land ? `<span class="tp">Introduction</span><span class="ts">${esc(paperName(it.p))}</span>`
     : `<span class="tp"><b>${esc(paperName(it.p))}</b><i> · scene ${n} of ${it.p.scenes.length}</i></span><span class="ts">${esc(nameOf(it))}</span>`;
   const regs = `<div class="reg" role="group" aria-label="How the scenes are told">${[["isle", "Allegory"], ["plain", "Abstraction"]].map(([r, w]) => `<button type="button" data-reg="${r}" aria-pressed="${reg === r}">${w}</button>`).join("")}</div>`;
   const menu = `<button type="button" class="tnav tmenu" data-drawer="toggle" aria-label="Contents" title="Contents" aria-controls="drawer" aria-expanded="${$("shell").dataset.drawer === "open"}"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`;
-  const map = `<button type="button" class="tnav tmap" data-key="map" aria-label="${U().map}: how the sixteen connect" title="${U().map}"${isMap ? ` aria-current="page"` : ""}><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 4.5l5-2 5 2 5-2v11l-5 2-5-2-5 2z M6.5 2.5v11 M11.5 4.5v11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>`;
+  const map = `<button type="button" class="tnav tmap" data-key="map" aria-label="${U().map}: the ${NUMWORD}, and how they connect" title="${U().map}"${isMap ? ` aria-current="page"` : ""}><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 4.5l5-2 5 2 5-2v11l-5 2-5-2-5 2z M6.5 2.5v11 M11.5 4.5v11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>`;
   const guide = `<button type="button" class="tnav tguide" data-key="intro" aria-label="The guide: how this site works" title="How this site works"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.9 7a2.2 2.2 0 1 1 3 2c-.6.3-.9.7-.9 1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="12.9" r=".9" fill="currentColor"/></svg></button>`;
   return `<div class="thead" id="thead">${menu}<div class="tgo"><div class="tt">${where}</div></div>${map}${regs}${guide}</div>`;
 }
@@ -30,10 +30,10 @@ function layTheater() {
   if (!theater) { delete root.dataset.theater; if (bar) bar.style.removeProperty("--tw"); if (img) img.sizes = "(max-width: 640px) 100vw, 900px"; return; }
   // two twin scenes side by side are one picture twice as wide
   const vw = window.innerWidth, ar = (fig ? parseFloat(fig.style.getPropertyValue("--ar")) || 4 / 3 : 4 / 3) * ($("stage2") && !swipe ? 2 : 1);
-  if (isPaper(sel) || sel === "map") {      // a result's own page, or the overview: its picture (the town at rest, or the map) on the left where the window is wide enough; the text scrolls beside it
+  if (isPaper(sel) || sel === "map") {      // a result's own page: its picture at rest on the left; the Papers page: the map on the right (theater.css) where the window is wide enough; the text scrolls beside it
     root.dataset.theater = "intro";
     const map = sel === "map", hh = $("thead") ? $("thead").offsetHeight : 0, vh = window.innerHeight - hh;
-    const w = vw < 960 ? 0 : map ? Math.floor(Math.min(.6 * vw, vh * 1.7)) : fig ? Math.floor(Math.min(.5 * vw, vh * ar)) : 0;
+    const w = vw < 960 ? 0 : map ? Math.floor(.42 * vw) : fig ? Math.floor(Math.min(.5 * vw, vh * ar)) : 0;
     root.style.setProperty("--hh", hh + "px"); root.style.setProperty("--iw", w + "px");
     if (img) img.sizes = (w || 600) + "px";
     return;

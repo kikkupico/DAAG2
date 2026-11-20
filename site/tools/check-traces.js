@@ -11,8 +11,8 @@ const fs = require("fs"), path = require("path"), vm = require("vm");
 const root = path.join(__dirname, "..", "..");
 const ctx = vm.createContext({ console });
 const load = f => vm.runInContext(fs.readFileSync(path.join(root, f), "utf8"), ctx, { filename: f });
-["site/js/data/scenes.js", "site/js/rows.js", "site/js/data/papers.js", "site/js/data/telling-text.js", "site/js/data/scenes-extra.js",
- "site/js/data/telling.js", "site/js/data/plain.js", "site/js/data/traces.js", "site/js/trace.js"].forEach(load);
+["site/js/data/scenes.js", "site/js/rows.js", "site/js/data/papers.js", "site/js/data/telling-text.js", "site/js/data/scenes-extra.js", "site/js/data/scenes-more.js",
+ "site/js/data/telling.js", "site/js/data/telling-more.js", "site/js/data/plain.js", "site/js/data/traces.js", "site/js/data/traces-more.js", "site/js/trace.js"].forEach(load);
 const get = n => vm.runInContext(n, ctx);
 const PAPERS = get("PAPERS"), TELL = get("TELL"), TRACES = get("TRACES"), PLAIN = get("PLAIN");
 const project = get("traceRows"), traceLen = get("traceLen"), actSteps = get("actSteps");

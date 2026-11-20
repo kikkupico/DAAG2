@@ -83,7 +83,7 @@ const PAPERS = [
   id: "quorum", name: "Quorums", year: "1979 / 1983",
   cite: "Gifford 1979 · Weighted Voting for Replicated Data\nThomas 1979 · A Majority Consensus Approach to Concurrency Control for Multiple Copy Databases\nParker et al. 1983 · Detection of Mutual Inconsistency in Distributed Systems",
   idea: "Keep N copies. A write waits for W of them, a read for R. If R + W is more than N, every read group shares a node with every write group, so a read finds the latest write. Smaller groups answer sooner but can miss it.",
-  names: "copies = representatives of a file suite (Gifford) · two for a write = a write quorum of w votes · two for a read = a read quorum of r votes · overlapping groups = r + w greater than the total number of votes · the list on each version = version vector (Parker et al.) · one count per node = the number of updates made at that site · two versions, neither newer = conflicting version vectors, a mutual inconsistency",
+  names: "copies = representatives of a file suite (Gifford) · two for a write = a write quorum of w votes · two for a read = a read quorum of r votes · overlapping groups = r + w greater than the total number of votes · the list on each version = version vector (Parker et al.) · one count per node = the number of updates made at that site · two versions, neither newer = conflicting version vectors, a mutual inconsistency · the value, a set of x, y, z = a shopping cart and its items (Dynamo)",
   frame: {
     goal: "Read and write a replicated value while some copies are out of reach. With overlapping groups, a read sees the latest finished write. Where copies have changed apart, detect it.",
     shared: "Up front, the number of copies and the group sizes. Each node holds full versions, each carrying a list of counts, one per node.",
@@ -103,9 +103,9 @@ const PAPERS = [
   id: "bayou", name: "Tentative writes", year: "1995",
   cite: "Terry, Theimer, Petersen, Demers, Spreitzer & Hauser 1995 · Managing Update Conflicts in Bayou, a Weakly Connected Replicated Storage System",
   idea: "Accept writes anywhere and show them at once, but mark them tentative. Each write carries its own check and fallback, so it can be replayed in any order. One server fixes the final order, and every server replays its writes to match.",
-  names: "booking = a Write · first choice and fallback = dependency check and merge procedure · tentative = not yet stable · final order = commit sequence, set by the primary · A1, B1 = accept stamps · passing bookings on = anti-entropy",
+  names: "a write = a Write, such as booking a meeting room · a, b = two times the room could be booked · x, y = the two people booking · first choice and fallback = dependency check and merge procedure · tentative = not yet stable · final order = commit sequence, set by the primary · A1, B1 = accept stamps · passing writes on = anti-entropy",
   frame: {
-    goal: "Let anyone write at any server, even when cut off, and have every server end up with the same bookings in the same order.",
+    goal: "Let anyone write at any server, even when cut off, and have every server end up with the same writes in the same order.",
     shared: "The log of writes, held by every server. Up front, which server is the primary.",
     assumes: "Servers connect only now and then, so writes travel slowly and in any order, but each one eventually reaches every server. Logs are kept durably. Nobody lies." },
   scenes: SCENES.bayou },
@@ -113,7 +113,7 @@ const PAPERS = [
   id: "cops", name: "Causes first", year: "1991",
   cite: "Birman, Schiper & Stephenson 1991 · Lightweight Causal and Atomic Group Multicast\nRelated: Lloyd et al. 2011 · COPS, which applies the same rule to a wide-area store",
   idea: "Each message carries a list of counts saying how many messages each sender had sent when it was written. A receiver holds a message back until it has delivered all the earlier ones. Readers then never see an effect without its cause, and nobody waits for anything but the missing cause.",
-  names: "site = a process in a group · the list of counts on a message = its vector timestamp VT(m) · delivered = the receiver's own vector time · holding = the delay queue · write = a CBCAST multicast",
+  names: "site = a process in a group · the list of counts on a message = its vector timestamp VT(m) · delivered = the receiver's own vector time · holding = the delay queue · write = a CBCAST multicast · a=x, then b=y = a photo uploaded, then added to an album (COPS)",
   frame: {
     goal: "Answer every read and write at the local site at once, and never show an effect before its cause.",
     shared: "Each site holds a full copy, and a list of how many messages it has delivered from each sender.",

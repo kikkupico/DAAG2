@@ -3,6 +3,13 @@
 const tagsOf = p => PAPER_TAGS[p.id].split(" ");
 const matches = p => [...haz].every(h => tagsOf(p).includes(h));
 const expanded = new Set();
+// Chapters fold. The one holding the result in hand is open unless the reader shut it; a filter in play opens every chapter it leaves.
+const chapOpened = new Set(), chapShut = new Set();
+const chapIsOpen = (k, holdsCur) => haz.size > 0 || chapOpened.has(k) || (holdsCur && !chapShut.has(k));
+function toggleChap(k) {
+  const r = resolve(sel), holds = !!r && CHAPTERS[k][1].includes(r.p.id);
+  if (chapIsOpen(k, holds)) { chapOpened.delete(k); chapShut.add(k); } else { chapShut.delete(k); chapOpened.add(k); }
+}
 function facetsHTML() {
   const count = h => PAPERS.filter(p => [...new Set([...haz, h])].every(x => tagsOf(p).includes(x))).length;
   const hit = PAPERS.filter(matches).length, [one, many] = U().unit;
@@ -24,10 +31,11 @@ function indexHTML(it, land) {
     return `<div class="pg${matches(p) ? "" : " off"}${open ? " open" : ""}"><div class="prow"><button type="button" class="pl" data-key="${p.id}" aria-pressed="${here}"${inside ? ` aria-current="true"` : ""}><span>${esc(paperName(p))}</span><small>${esc(p.year)}</small></button><button type="button" class="chev" data-tog="${p.id}" aria-expanded="${open}" aria-label="Scenes in ${esc(paperName(p))}">${chev}</button></div>${scenes}</div>`;
   };
   return `<div class="chap"><button type="button" class="pl map" data-key="intro" aria-pressed="${guideOpen}"><span>The guide</span></button><button type="button" class="pl map" data-key="map" aria-pressed="${sel === "map"}"><span>${U().map}</span></button></div>`
-    + CHAPTERS.map(([name, ids]) => {
+    + CHAPTERS.map(([name, ids], k) => {
       const ps = ids.map(id => PAPERS.find(x => x.id === id)).filter(p => matches(p) || p === cur);
       if (!ps.length) return "";
-      return `<div class="chap"><span class="label">${reg === "isle" ? listAnd([...new Set(ids.map(id => HAT[TELL[id].hat][0]))]) + " · " : ""}${esc(name)}</span>${ps.map(paper).join("")}</div>`;
+      const open = chapIsOpen(k, ps.includes(cur)), who = reg === "isle" ? listAnd([...new Set(ids.map(id => HAT[TELL[id].hat][0]))]) : "";
+      return `<div class="chap${open ? " open" : ""}"><button type="button" class="chh" data-chap="${k}" aria-expanded="${open}"><span class="label">${k + 1} · ${esc(name)}</span><small>${who ? esc(who) + " · " : ""}${ps.length}</small>${chev}</button>${open ? ps.map(paper).join("") : ""}</div>`;
     }).join("");
 }
 // A result's own page: the shared header, then the way in.
@@ -278,46 +286,49 @@ function sceneHTML(base) {
 }
 
 // The map: which result answers a problem another one raises.
-const MAP_EDGES = [["clocks", "snapshot", "a state that could have been"], ["clocks", "cops", "causes before effects"], ["flp", "benor", "or flip a coin"], ["flp", "suspect", "so guess, and allow mistakes"],
-    ["suspect", "paxos", "stay safe whatever the timing"], ["paxos", "vr", "one value becomes a stream"], ["commit", "paxos", "a majority, not all"], ["flp", "cap", "the same blindness, for reads"],
-    ["linear", "cap", "what lost messages take away"], ["cap", "quorum", "wait for some copies, not all"], ["quorum", "merge", "or never wait, and merge"], ["merge", "bayou", "when merging needs one order"],
-    ["liars", "pbft", "the same, for a stream"], ["vr", "pbft", "the same, among liars"]];
+const MAP_EDGES = [
+  ["clocks", "mutex", "numbers settle whose turn"], ["clocks", "snapshot", "a state that could have been"], ["clocks", "cops", "causes before effects"],
+  ["leases", "truetime", "clocks that admit their error"], ["election", "leases", "so make leadership run out"],
+  ["twogen", "commit", "drop the deadline, and wait"], ["flp", "suspect", "so guess, and allow mistakes"], ["flp", "benor", "or flip a coin"],
+  ["flp", "election", "the same blindness, for leaders"], ["flp", "cap", "the same blindness, for reads"], ["suspect", "paxos", "stay safe whatever the timing"],
+  ["commit", "paxos", "a majority, not all"], ["paxos", "fpaxos", "overlap only where it counts"], ["paxos", "vr", "one value becomes a stream"],
+  ["linear", "abd", "one copy, from majorities"], ["linear", "cap", "what lost messages take away"], ["vr", "chain", "copies in a line"], ["vr", "pbft", "the same, among liars"],
+  ["liars", "signed", "unless lies can be caught"], ["liars", "pbft", "the same, for a stream"], ["pbft", "nakamoto", "when anyone may join"],
+  ["cap", "quorum", "wait for some copies, not all"], ["quorum", "chash", "which copies hold which key"], ["quorum", "merge", "or never wait, and merge"], ["merge", "bayou", "when merging needs one order"]];
+// The Papers page: the list of papers beside the map. The map: one lane per chapter, in reading order. Each result lists the results it leads to, with the arrow's words;
+// a result opens it, an arrow sets the two side by side. Lanes wrap where the pane is narrow, so the map grows with the list.
 function mapHTML() {
-  const X = [20, 260, 500, 740], Y = [30, 150, 270, 390, 510], W = 196, H = 58, isle = reg === "isle";
-  const at = { snapshot: [0, 0], clocks: [0, 1], cops: [0, 2], commit: [0, 3], benor: [1, 0], flp: [1, 1], suspect: [1, 2], paxos: [1, 3], vr: [1, 4],
-    liars: [2, 3], pbft: [2, 4], linear: [3, 0], cap: [3, 1], quorum: [3, 2], merge: [3, 3], bayou: [3, 4] };
-  let g = "";
-  MAP_EDGES.forEach(([a, b, label]) => {
-    const [ca, ra] = at[a], [cb, rb] = at[b];
-    g += `<g class="mx" role="button" tabindex="0" data-key="cmp=${a}~${b}" aria-label="Compare ${esc(paperName(pById(a)))} with ${esc(paperName(pById(b)))}: ${esc(label)}"><title>Compare the two</title>`;
-    if (ca === cb) {
-      const x = X[ca] + 26, down = rb > ra, y1 = down ? Y[ra] + H : Y[ra], y2 = down ? Y[rb] : Y[rb] + H, k = down ? -8 : 8;
-      g += `<path class="me" d="M${x} ${y1}V${y2 + k}"/><path class="mh" d="M${x - 5} ${y2 + k}L${x} ${y2}L${x + 5} ${y2 + k}z"/><text class="ml" x="${x + 12}" y="${(y1 + y2) / 2 + 4}">${esc(label)}</text><path class="mhit" d="M${x} ${y1}V${y2}"/></g>`;
-    } else {
-      const y = Y[ra] + H / 2, x1 = X[ca] + W, x2 = X[cb], far = cb - ca > 1;
-      g += `<path class="me" d="M${x1} ${y}H${x2 - 8}"/><path class="mh" d="M${x2 - 8} ${y - 5}L${x2} ${y}L${x2 - 8} ${y + 5}z"/><text class="ml" text-anchor="${far ? "middle" : "end"}" x="${far ? (x1 + x2) / 2 : x2 + 18}" y="${far ? y - 9 : Y[ra] + H + 18}">${esc(label)}</text><path class="mhit" d="M${x1} ${y}H${x2}"/></g>`;
-    }
-  });
-  PAPERS.forEach(p => {
-    const [c, r] = at[p.id], x = X[c], y = Y[r], n = p.scenes.length;
-    g += `<g class="mn" role="button" tabindex="0" data-key="${p.id}" aria-label="${esc(paperName(p))}: ${esc(p.name)}"><rect x="${x}" y="${y}" width="${W}" height="${H}" rx="5"/><text class="n1" x="${x + 13}" y="${y + 25}">${esc(paperName(p))}</text><text class="n2" x="${x + 13}" y="${y + 44}">${esc(isle ? HAT[TELL[p.id].hat][0] : `${p.year} · ${n} ${n === 1 ? "scene" : "scenes"}`)}</text></g>`;
-  });
-  const svg = `<div class="mapbox"><svg viewBox="0 0 980 610" role="group" aria-label="How the sixteen lead to one another">${g}</svg></div>`;
+  const isle = reg === "isle";
+  const card = p => {
+    const n = p.scenes.length, out = MAP_EDGES.filter(([a]) => a === p.id);
+    return `<li class="mcard"><button type="button" class="mcn" data-key="${p.id}"><span>${esc(paperName(p))}</span><small>${esc(isle ? HAT[TELL[p.id].hat][0] : `${p.year} · ${n} ${n === 1 ? "scene" : "scenes"}`)}</small></button>${out.length ? `<ul class="mto">${out.map(([a, b, l]) =>
+      `<li><button type="button" data-key="cmp=${a}~${b}" aria-label="Compare ${esc(paperName(p))} with ${esc(paperName(pById(b)))}: ${esc(l)}"><span class="mtn">→ ${esc(paperName(pById(b)))}</span><span class="mtl">${esc(l)}</span></button></li>`).join("")}</ul>` : ""}</li>`;
+  };
+  const lanes = `<div class="mapbox lanes" role="group" aria-label="How the ${NUMWORD} lead to one another">${CHAPTERS.map(([name, ids], k) =>
+    `<section class="mlane"><p class="label"><b>${k + 1}</b> ${esc(name)}</p><ol>${ids.map(id => card(pById(id))).join("")}</ol></section>`).join("")}</div>`;
   const words = [["Courier", "A message. It may be slow, lost, or overtaken by a later one."], ["Ledger", "Permanent state. It passes to whoever takes over."], ["Slate", "Temporary state. It is wiped when its owner goes."],
     ["Hourglass", "A timer. It says how long you have waited, never why."], ["Successor", "A replacement, who starts from the ledger alone."], ["World view", "Everything that happened, everywhere, seen from above. Nobody in " + ALLEGORY.town + " has it. Here it is set beside the telling, in a dashed frame."]];
   const items = list => `<ul class="customs">${list.map(([a, b]) => `<li><span class="label">${a}</span>${b}</li>`).join("")}</ul>`;
   const sect = (label, body) => `<section class="sect"><p class="label">${label}</p>${body}</section>`;
-  // on the stage: the map on the left, where the window is wide enough (else at the top of the text), the words on the right
-  const pane = `${theaterHead("map")}<div class="ipict mpict">${svg}</div>`;
+  // The papers: what the site explains, by chapter in reading order, each with the sources its scenes are checked against
+  const src = ln => { const rel = /^Related: /.test(ln), c = ln.replace(/^Related: /, ""), k = c.indexOf(" · "), who = c.slice(0, k), t = c.slice(k + 3), m = t.match(/^(.*?)(?: \((.*)\))?$/);
+    return `<span class="pp${rel ? " rel" : ""}"><cite class="pt">${esc(m[1])}</cite><span class="pw">${rel ? `<span class="label">Related</span> ` : ""}${esc(who)}${m[2] ? ` · ${esc(m[2])}` : ""}</span></span>`; };
+  // each card: the papers' titles first, and under them the result that tells them, which the card opens
+  const list = `<div class="plist">${CHAPTERS.map(([name, ids], k) => `<section class="pchap"><p class="label"><b>${k + 1}</b> ${esc(name)}</p><ol>${ids.map(id => { const p = pById(id), n = p.scenes.length;
+    return `<li class="pitem"><button type="button" data-key="${p.id}"><span class="psrc">${p.cite.split("\n").map(src).join("")}</span><span class="pin"><span>${esc(paperName(p))}</span> · ${n} ${n === 1 ? "scene" : "scenes"} →</span></button></li>`; }).join("")}</ol></section>`).join("")}</div>`;
+  // on the stage: the map on the left where the window is wide enough, the list of papers beside it (on a narrow window, the list first)
+  const pane = `${theaterHead("map")}<div class="ipict mpict">${lanes}</div>`;
+  const head = `<div class="intro"><h1>${U().map}</h1>
+      <p class="idea">The ${NUMWORD} results this site explains, and the papers they come from, in five chapters. Pick one to open it. The map beside the list shows which result answers a problem another one raises${isle ? ", and who tells each" : ""}: pick an arrow to set the two side by side.</p></div>`;
   if (isle) return `${pane}<div class="map">
-    <div class="intro"><h1>${U().map}</h1>
-      <p class="idea">The sixteen results, each marked with who tells it. An arrow leads from one result to another that answers the problem it raises, or builds on it. Pick a result to open it, or an arrow to set the two side by side.</p></div>
+    ${head}
+    ${list}
     ${sect("Four kinds of work, four kinds of problem", items(Object.values(HAT)))}
     ${sect("Six words used everywhere", items(words))}
-    ${sect("About the telling", `<p class="fine">Those who do the work have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, the ${esc(CITY.label.fishery)}, the ${esc(CITY.label.granary)} and the ${esc(CITY.label.winery)}, stand in for A, B and C, and a notary for K. A few of the people they serve are named, such as Ann and Bob, who book the reading room. What is asked for and decided is specific here, such as a colour for the ${esc(CITY.label.temple)} columns or an order for ${ALLEGORY.fill("grain")}, but the steps are the same.</p>`)}
+    ${sect("About the telling", `<p class="fine">Those who do the work have no names: a role and a letter, the same letter in both tellings. The merchants are the one exception. Their three businesses, the ${esc(CITY.label.fishery)}, the ${esc(CITY.label.granary)} and the ${esc(CITY.label.winery)}, stand in for A, B and C, the ${esc(CITY.label.pottery)} for M, and a notary for K. A few of the people they serve are named, such as Ann and Bob, who book the reading room. What is asked for and decided is specific here, such as a colour for the ${esc(CITY.label.temple)} columns or an order for ${ALLEGORY.fill("grain")}, but the steps are the same.</p>`)}
   </div>`;
   return `${pane}<div class="map">
-    <div class="intro"><h1>${U().map}</h1>
-      <p class="idea">The sixteen results and how they connect. An arrow leads from one result to another that answers the problem it raises, or builds on it. Pick a result to open it, or an arrow to compare the two.</p></div>
+    ${head}
+    ${list}
   </div>`;
 }

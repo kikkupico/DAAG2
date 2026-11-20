@@ -46,7 +46,7 @@ function introHTML() {
     + `<div class="sys"><p class="sys-h">${EYE}<b>${U().seen}</b><span>shown like this</span></p><p>What the ${isle ? "person" : "node"} cannot see is never hidden from you. It is set beside the step it belongs to, in a dashed frame like this one, so that it never reads as something the ${isle ? "person" : "node"} knows.</p></div>`);
 
   const how = sect("A short guide", "How to use it", `<ol class="guide">${[
-      ["Pick a result", "The menu, behind the three lines at the top left, lists the sixteen in four chapters. Read in order, or open the " + UI.isle.map + " to see which result answers a problem another one raises."],
+      ["Pick a result", "The menu, behind the three lines at the top left, lists the " + NUMWORD + " in five chapters; open a chapter to see its results. Read in order, or open " + UI.isle.map + " to see every paper, and which result answers a problem another one raises."],
       ["Read its page, then its scenes", "A result opens on its Introduction: the idea, the papers behind it and the words used, beside its picture. Its scenes follow, each marked as one that works, one that goes wrong, or one that never finishes. The head names the result and the scene, and the menu goes anywhere. The last step of a scene leads on to the next."],
       ["Step through a scene", "Use the arrows beside the row of dots, the dots themselves, or the left and right arrow keys. In the picture, couriers walk the roads; the replay button runs a step again. Beside it, each step reads top to bottom: what arrives, what is kept, what leaves. The last dot is the end: what happened, and the way on."],
       ["Know where you stand", "Each scene's name and its point sit over its steps. The ⓘ beside the name tells what the scene rests on, the paper it comes from, who you are in it, and the rule you follow."],
@@ -67,7 +67,7 @@ function introHTML() {
 
   return `<div class="map about">
     <div class="intro"><p class="label">The guide</p><h1 id="guide-t">How this site works</h1>
-      <p class="idea">Sixteen results from distributed computing, each told as a few short scenes from inside one participant. In the Allegory they are ${esc(ALLEGORY.people)}. In the Abstraction they are nodes A, B and C. The steps are the same. Here is how to find your way around.</p>
+      <p class="idea">${NUMWORD.charAt(0).toUpperCase() + NUMWORD.slice(1)} results from distributed computing, each told as a few short scenes from inside one participant. In the Allegory they are ${esc(ALLEGORY.people)}. In the Abstraction they are nodes A, B and C. The steps are the same. Here is how to find your way around.</p>
     </div>
     ${how}${one}${chamber}${fork}
     <p class="src">The code, the text and the pictures are on GitHub at ${ext(REPO, "kikkupico/DAAG2")}: the code under MIT, the text and pictures under CC BY 4.0. Corrections are welcome as issues.</p>

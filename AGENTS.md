@@ -1,9 +1,13 @@
 # Distributed Algorithms of Ancient Greece
 
-A static page (`site/`, no build step: open `site/index.html` or serve the folder) that tells sixteen results of distributed
+A static page (`site/`, no build step: open `site/index.html` or serve the folder) that tells twenty-seven results of distributed
 computing twice, as an Allegory and as an Abstraction.
 
-- `site/js/data/scenes*.js`, `papers.js`: the steps of every scene. Plain data, shared by both tellings.
+- `site/js/data/scenes*.js`, `papers.js`: the steps of every scene. Plain data, shared by both tellings. `scenes-more.js`
+  holds the eleven results added last (with their `PAPERS` entries), `telling-more.js` their Allegory, `traces-more.js` their traces.
+- `site/js/catalogue.js`: the five chapters (menu and overview order), hazards, outcomes, takeaways, sources and arcs.
+  `site/js/pages.js` `MAP_EDGES`: the overview's arrows. A new result needs an entry in each.
+- `sources/` (gitignored): the original papers every scene is checked against, named `author-year_slug.pdf`.
 - `site/js/home.js`, `site/css/home.css`: the front page, shown at the bare address (no hash). It plays Paxos's first scene in both tellings and wipes between them. `site/js/intro.js` (`#intro`) is the how-to-use page.
 - `site/js/theater.js`, `site/css/theater.css`: the stage. A result's own page (its Introduction, with its picture at rest)
   and every scene with a picture fill the window under one head (menu, result and scene pickers, the tellings, the guide);
