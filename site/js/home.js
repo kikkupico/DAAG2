@@ -103,8 +103,8 @@ function homeHTML() {
       <p class="hey">Lamport did it first</p>
       <h1>Distributed algorithms, told as stories.</h1>
       <p class="hlede">Leslie Lamport first published Paxos as an archaeologist's report on the lost parliament of a Greek island. This site tells ${NUMWORD} classic results the same way: as scenes in one town, where every message is a courier walking the roads. One switch turns the story back into nodes A, B and C.</p>
-      <div class="hcta"><button type="button" class="hbtn pri" data-key="${ORDER[0]}" data-guide="1">Start with the first paper</button><button type="button" class="hbtn" data-key="paxos" data-guide="1">Or step right into Paxos</button></div>
-      <p class="hhint">Either way, a two-minute guide opens first, over the page. The first paper is ${esc(paperName(resolve(ORDER[0]).p))}; Paxos has the idea, the papers and four scenes.</p>
+      <div class="hcta"><button type="button" class="hbtn pri" data-key="map">See all the papers</button><button type="button" class="hbtn" data-key="paxos" data-guide="1">Or step right into Paxos</button></div>
+      <p class="hhint">All ${NUMWORD} results in five chapters, with a map of which answers which; pick any to open it. Paxos opens with a two-minute guide over the page.</p>
     </div>
     ${homeStageHTML()}
   </section>
@@ -124,7 +124,7 @@ function homeHTML() {
     <div class="hcol">
       <p class="hlab">The allegory</p>
       <h2>One town for every paper</h2>
-      <p>The same treatment, given to fifteen more results. They all happen in ${esc(ALLEGORY.town)}, among ${esc(ALLEGORY.people)}. Nobody ever shares a room: a courier can be slow, lost, or overtaken by a later one, and you watch it happen on the road. Each result is a few short scenes, seen from inside one participant.</p>
+      <p>The same treatment, given to ${numWord(NUMBER - 1)} more results. They all happen in ${esc(ALLEGORY.town)}, among ${esc(ALLEGORY.people)}. Nobody ever shares a room: a courier can be slow, lost, or overtaken by a later one, and you watch it happen on the road. Each result is a few short scenes, seen from inside one participant.</p>
       <dl class="hmap">${pairs.map(([a, b]) => `<div><dt>${esc(F(a))}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>
     </div>
   </section>
@@ -155,8 +155,8 @@ function homeHTML() {
       <p class="hlab">Where to begin</p>
       <h2>Step inside ${esc(ALLEGORY.town)}</h2>
       <div class="hpaths">
-        <button type="button" class="hpath first" data-key="${ORDER[0]}" data-guide="1"><span class="hlab">Recommended · from the beginning</span><b>Start with the first paper</b>
-          <span>${esc(paperName(resolve(ORDER[0]).p))}, then the ${NUMWORD} results in order. A two-minute guide opens over it first: how a scene is told, how to step through it, what the dashed frames mean, and how to switch between the tellings.</span><span class="hgo">${esc(paperName(resolve(ORDER[0]).p))} →</span></button>
+        <button type="button" class="hpath first" data-key="map"><span class="hlab">Recommended · choose your own</span><b>See all the papers</b>
+          <span>The ${NUMWORD} results in five chapters, and a map of which one answers a problem another raises. Pick any to open it, or start at the top and read them in order.</span><span class="hgo">The papers →</span></button>
         <button type="button" class="hpath" data-key="paxos" data-guide="1"><span class="hlab">Or step right in</span><b>Explore Paxos</b>
           <span>${esc(F("The idea in a paragraph, the papers behind it, then four scenes: a clean round, one legislator's own view, a successor who inherits a ledger, and what breaks if promises are kept on the slate."))}</span><span class="hgo">Paxos →</span></button>
       </div>

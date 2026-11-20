@@ -7,8 +7,11 @@ const CHAPTERS = [
   ["Answering without waiting", ["cap", "quorum", "chash", "merge", "bayou"]],
 ];
 // The number of results, in words, for the prose that names it.
-const NUMWORD = (n => { const u = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"], t = { 1: ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"], 2: "twenty", 3: "thirty", 4: "forty" };
-  return n < 10 ? u[n] : n < 20 ? t[1][n - 10] : t[Math.floor(n / 10)] + (n % 10 ? "-" + u[n % 10] : ""); })(CHAPTERS.reduce((a, [, ids]) => a + ids.length, 0));
+// How many results there are, counted from the chapters, and the number as a word.
+const NUMBER = CHAPTERS.reduce((a, [, ids]) => a + ids.length, 0);
+const numWord = n => { const u = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"], t = { 1: ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"], 2: "twenty", 3: "thirty", 4: "forty" };
+  return n < 10 ? u[n] : n < 20 ? t[1][n - 10] : t[Math.floor(n / 10)] + (n % 10 ? "-" + u[n % 10] : ""); };
+const NUMWORD = numWord(NUMBER);
 const HAZARDS = [["lost", "messages lost", "couriers lost"], ["reorder", "messages out of order", "couriers out of order"], ["stop", "a node stops for good", "someone is gone for good"],
   ["replace", "a node is replaced", "someone is replaced"], ["lie", "nodes lie", "some are traitors"], ["noclock", "no clocks", "no clocks"]];
 const PAPER_TAGS = {

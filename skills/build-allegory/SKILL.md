@@ -5,7 +5,7 @@ description: Build a new allegory for Distributed Algorithms of Ancient Greece f
 
 # Build an allegory
 
-The page tells sixteen results of distributed computing twice: as an **Allegory** (people in a town and in a siege, sending
+The page tells twenty-seven results of distributed computing twice: as an **Allegory** (people in a town and in a siege, sending
 couriers along roads) and as an **Abstraction** (nodes A, B, C). This skill replaces the Allegory's world with one in a
 setting the user chooses. You produce, per world, three things: a **picture**, the **network** of roads in it, and the
 **names** of the places on it. Everything else follows from those: the couriers walk the routes worked out from your network,

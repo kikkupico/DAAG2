@@ -2,10 +2,12 @@
 
 **[kikkupico.github.io/DAAG2](https://kikkupico.github.io/DAAG2/)**
 
-Sixteen results from distributed computing, each told as a few short scenes from inside one
+Twenty-seven results from distributed computing, each told as a few short scenes from inside one
 participant: logical and vector clocks, Chandy–Lamport snapshots, causal multicast, FLP, failure
 detectors, Ben-Or, two-phase commit, Paxos, Viewstamped Replication, the Byzantine generals,
-PBFT, linearizability, CAP, quorums, gossip and CRDTs, and Bayou.
+PBFT, linearizability, CAP, quorums, gossip and CRDTs, Bayou, the two generals, signed messages,
+leader election, Ricart–Agrawala mutual exclusion, ABD registers, leases, Nakamoto's longest chain,
+consistent hashing, Flexible Paxos, chain replication and TrueTime.
 
 Every scene is told twice, with the same steps:
 

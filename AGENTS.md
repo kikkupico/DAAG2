@@ -7,6 +7,11 @@ computing twice, as an Allegory and as an Abstraction.
   holds the eleven results added last (with their `PAPERS` entries), `telling-more.js` their Allegory, `traces-more.js` their traces.
 - `site/js/catalogue.js`: the five chapters (menu and overview order), hazards, outcomes, takeaways, sources and arcs.
   `site/js/pages.js` `MAP_EDGES`: the overview's arrows. A new result needs an entry in each.
+- **The count of results.** The page counts them from `CHAPTERS` (`NUMBER`, `NUMWORD`, `numWord(n)`), so use those in page
+  text, never a written-out number. Text outside the code can't, so when a result is added or removed, update by hand:
+  the first line of this file, `README.md` (its count and its list of results), `skills/build-allegory/SKILL.md`, and the
+  `description` and `og:description` meta tags in `site/index.html` (which also says "and N more results"). Then
+  `grep -rniE "(twenty|thirty)[- ]?[a-z]*|sixteen|seventeen|eighteen|nineteen" --include=*.md --include=*.html --include=*.js .` for any left behind.
 - `sources/` (gitignored): the original papers every scene is checked against, named `author-year_slug.pdf`.
 - `site/js/home.js`, `site/css/home.css`: the front page, shown at the bare address (no hash). It plays Paxos's first scene in both tellings and wipes between them. `site/js/intro.js` (`#intro`) is the how-to-use page.
 - `site/js/theater.js`, `site/css/theater.css`: the stage. A result's own page (its Introduction, with its picture at rest)
